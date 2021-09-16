@@ -6,7 +6,7 @@
 #include <iostream>
 #include <strstream>
 #include <sstream>
-#include "/usr/local/include/python3.7m/Python.h"
+#include "include/python/Python.h"
 void initlog()
 {
     // change log pattern
