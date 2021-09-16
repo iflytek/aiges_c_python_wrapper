@@ -118,14 +118,16 @@ int WrapperAPI wrapperDestroy(const void *handle)
    return 0;
 }
 
-int WrapperAPI wrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt){
+int WrapperAPI wrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt)
+{
     return 0;
 }
-int WrapperAPI wrapperExecFree(const void *usrTag, pDataList *respData) { 
+int WrapperAPI wrapperExecFree(const void *usrTag, pDataList *respData)
+{ 
     return 0;
 }
 
-int WrapperAPI wrapperExecAsync(const void* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt){
+int WrapperAPI wrapperExecAsync(const void* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt)
 {
     return 0;
 }
