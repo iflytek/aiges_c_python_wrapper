@@ -1,4 +1,5 @@
-#program once
+#ifndef UTILS_H
+#define UTILS_H
 #include <vector>
 #include <iconv.h>
 #include <string>
@@ -94,3 +95,5 @@ int cLibClose(void *hdl)
     return -1;
   return 0;
 }
+
+#endif
