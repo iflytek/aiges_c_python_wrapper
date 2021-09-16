@@ -72,11 +72,14 @@ int WrapperAPI wrapperInit(pConfig cfg)
 
 
 
+    std::cout<<callWrapperInit()<<std::endl;
+
     return 0;
 }
 
 int WrapperAPI wrapperFini()
 {
+    std::cout<<callWrapperFini()<<std::endl;
     return 0;
 }
 
@@ -124,6 +127,7 @@ int WrapperAPI wrapperExec(const void* usrTag, pParamList params, pDataList reqD
 }
 int WrapperAPI wrapperExecFree(const void *usrTag, pDataList *respData)
 { 
+    std::cout<<callWrapperExec()<<std::endl;
     return 0;
 }
 
