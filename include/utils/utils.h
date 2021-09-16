@@ -1,3 +1,4 @@
+#program once
 #include <vector>
 #include <iconv.h>
 #include <string>
