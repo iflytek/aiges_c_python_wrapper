@@ -1,12 +1,12 @@
-#include "include/aiges/wrapper.h"
-#include "pyCall.h"
-//#include "a_ist_type.h"
-
 #include <string>
 #include <iostream>
 #include <strstream>
 #include <sstream>
-#include "include/python/Python.h"
+
+#include "include/aiges/wrapper.h"
+#include "pyCall.h"
+
+
 void initlog()
 {
     // change log pattern
