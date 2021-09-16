@@ -3,8 +3,7 @@
 #include <strstream>
 #include <sstream>
 
-#include "include/aiges/wrapper.h"
-#include "pyCall.h"
+
 
 
 void initlog()
@@ -123,11 +122,11 @@ int WrapperAPI wrapperDestroy(const void *handle)
 
 int WrapperAPI wrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt)
 {
+    std::cout<<callWrapperExec()<<std::endl;
     return 0;
 }
 int WrapperAPI wrapperExecFree(const void *usrTag, pDataList *respData)
 { 
-    std::cout<<callWrapperExec()<<std::endl;
     return 0;
 }
 
