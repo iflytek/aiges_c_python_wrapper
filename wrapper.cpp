@@ -2,6 +2,7 @@
 #include <iostream>
 #include <strstream>
 #include <sstream>
+#include "include/aiges/wrapper.h"
 #include "pyCall.h"
 void initlog()
 {
