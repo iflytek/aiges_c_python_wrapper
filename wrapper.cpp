@@ -2,10 +2,7 @@
 #include <iostream>
 #include <strstream>
 #include <sstream>
-
-
-
-
+#include "pyCall.h"
 void initlog()
 {
     // change log pattern
@@ -68,8 +65,6 @@ int WrapperAPI wrapperInit(pConfig cfg)
     }
 
     setlog(loglvl);
-
-
 
     std::cout<<callWrapperInit()<<std::endl;
 
