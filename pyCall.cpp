@@ -2,6 +2,7 @@
 
 int callWrapperInit(){
     Py_Initialize();
+    Py_Initialize();
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("import wrapper");
 

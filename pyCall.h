@@ -10,7 +10,5 @@
 #include "include/utils/json.hpp"
 int callWrapperInit();
 int callWrapperFini();
-
 int callWrapperExec();
-
 #endif
