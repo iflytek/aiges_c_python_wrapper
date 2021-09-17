@@ -52,8 +52,6 @@ typedef enum{
     CTMeterCustom =   0,      // 自定义计量接口
     CTMetricsLog  =   1,      // 自定义metrics日志接口
     CTTraceLog    =   2,      // 自定义trace日志接口
-
-    CTCalcCustom=99,        //自定义计量 chan func value
 } CtrlType;
 
 typedef enum{

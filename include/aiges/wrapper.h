@@ -26,17 +26,6 @@ typedef int (WrapperAPI *wrapperSetCtrlPtr)(CtrlType type, void* func);
 typedef int(*wrapperMeterCustom)(const void* usrTag, const char* meterKey, int count);
 
 /*
-    自定义计量回调接口v2,开发者回调该接口用于记录相关自定义的计量信息 可自定义计量所需的channel
-    @param  usrTag      用于关联用户请求实例的tag，通过wrapperCreate/wrapperExec接口参数获取
-    @param  channel     自定义计量领域
-    @param  func        自定义计量字段
-    @param  count       计量字段对应的计量值
-    @return             接口错误码，成功则返回0
-    @note               该接口调用需在会话周期内完成,即wrapperCreate-wrapperDestroy之间调用，或wrapperExec接口内完成调用
-*/
-typedef int(*wrapperCalc)(const void* usrTag,const char* channel, const char* func, const char* count);
-
-/*
     trace日志回调接口,开发者回调该接口用于跟踪请求过程中插件内部的关键执行路径及关键信息，日志以k-v方式存储
     @param  usrTag      用于关联用户请求实例的tag，通过wrapperCreate/wrapperExec接口参数获取
     @param  key         trace日志key值
