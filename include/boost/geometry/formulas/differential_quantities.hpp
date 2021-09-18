@@ -1,6 +1,6 @@
 // Boost.Geometry
 
-// Copyright (c) 2016 Oracle and/or its affiliates.
+// Copyright (c) 2016-2019 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -11,6 +11,7 @@
 #ifndef BOOST_GEOMETRY_FORMULAS_INVERSE_DIFFERENTIAL_QUANTITIES_HPP
 #define BOOST_GEOMETRY_FORMULAS_INVERSE_DIFFERENTIAL_QUANTITIES_HPP
 
+#include <boost/geometry/core/assert.hpp>
 
 #include <boost/geometry/util/condition.hpp>
 #include <boost/geometry/util/math.hpp>
@@ -64,16 +65,19 @@ public:
         CT const c1 = 1;
         CT const one_minus_f = c1 - f;
 
-        CT const sin_bet1 = one_minus_f * sin_lat1;
-        CT const sin_bet2 = one_minus_f * sin_lat2;
+        CT sin_bet1 = one_minus_f * sin_lat1;
+        CT sin_bet2 = one_minus_f * sin_lat2;
             
         // equator
         if (math::equals(sin_bet1, c0) && math::equals(sin_bet2, c0))
         {
-            CT const sig_12 = math::abs(dlon) / one_minus_f;
+            CT const sig_12 = dlon / one_minus_f;
             if (BOOST_GEOMETRY_CONDITION(EnableReducedLength))
             {
-                CT m12 = sin(sig_12) * b;
+                BOOST_GEOMETRY_ASSERT((-math::pi<CT>() <= azimuth && azimuth <= math::pi<CT>()));
+
+                int azi_sign = math::sign(azimuth) >= 0 ? 1 : -1; // for antipodal
+                CT m12 = azi_sign * sin(sig_12) * b;
                 reduced_length = m12;
             }
                 
@@ -89,13 +93,16 @@ public:
             CT const e2 = f * (c2 - f);
             CT const ep2 = e2 / math::sqr(one_minus_f);
 
-            CT const cos_bet1 = cos_lat1;
-            CT const cos_bet2 = cos_lat2;
-
             CT const sin_alp1 = sin(azimuth);
             CT const cos_alp1 = cos(azimuth);
             //CT const sin_alp2 = sin(reverse_azimuth);
             CT const cos_alp2 = cos(reverse_azimuth);
+
+            CT cos_bet1 = cos_lat1;
+            CT cos_bet2 = cos_lat2;
+
+            normalize(sin_bet1, cos_bet1);
+            normalize(sin_bet2, cos_bet2);
 
             CT sin_sig1 = sin_bet1;
             CT cos_sig1 = cos_alp1 * cos_bet1;
@@ -112,8 +119,8 @@ public:
                            J12_f(sin_sig1, cos_sig1, sin_sig2, cos_sig2, cos_alp0_sqr, f) :
                            J12_ep_sqr(sin_sig1, cos_sig1, sin_sig2, cos_sig2, cos_alp0_sqr, ep2) ;
 
-            CT const dn1 = math::sqrt(c1 + e2 * math::sqr(sin_lat1));
-            CT const dn2 = math::sqrt(c1 + e2 * math::sqr(sin_lat2));
+            CT const dn1 = math::sqrt(c1 + ep2 * math::sqr(sin_bet1));
+            CT const dn2 = math::sqrt(c1 + ep2 * math::sqr(sin_bet2));
 
             if (BOOST_GEOMETRY_CONDITION(EnableReducedLength))
             {

@@ -67,14 +67,12 @@ int WrapperAPI wrapperInit(pConfig cfg)
 
     setlog(loglvl);
 
-    std::cout<<callWrapperInit()<<std::endl;
-
-    return 0;
+    return callWrapperInit();
 }
 
 int WrapperAPI wrapperFini()
 {
-    std::cout<<callWrapperFini()<<std::endl;
+    callWrapperFini();
     return 0;
 }
 

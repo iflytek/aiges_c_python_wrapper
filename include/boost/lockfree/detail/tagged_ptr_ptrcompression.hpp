@@ -19,7 +19,7 @@ namespace boost {
 namespace lockfree {
 namespace detail {
 
-#ifdef BOOST_ARCH_X86_64
+#ifdef BOOST_LOCKFREE_PTR_COMPRESSION
 
 template <class T>
 class tagged_ptr

@@ -3,7 +3,11 @@
 // Copyright (c) 2007-2014 Barend Gehrels, Amsterdam, the Netherlands.
 // Copyright (c) 2008-2014 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2014 Mateusz Loskot, London, UK.
-// Copyright (c) 2014 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2014-2017 Adam Wulkiewicz, Lodz, Poland.
+
+// This file was modified by Oracle on 2017-2021.
+// Modifications copyright (c) 2017-2021 Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
@@ -20,6 +24,7 @@
 
 #include <boost/geometry/algorithms/detail/interior_iterator.hpp>
 #include <boost/geometry/algorithms/detail/normalize.hpp>
+#include <boost/geometry/algorithms/not_implemented.hpp>
 
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/core/interior_rings.hpp>
@@ -32,21 +37,36 @@
 #include <boost/geometry/util/math.hpp>
 #include <boost/geometry/util/range.hpp>
 
+#include <boost/geometry/views/detail/closed_clockwise_view.hpp>
+
+#include <boost/geometry/strategies/cartesian/side_by_triangle.hpp>
+#include <boost/geometry/strategies/spherical/ssf.hpp>
+#include <boost/geometry/strategies/normalize.hpp>
+
 
 namespace boost { namespace geometry
 {
 
 // Since these vectors (though ray would be a better name) are used in the
 // implementation of equals() for Areal geometries the internal representation
-// should be consistent with the default side strategy for CS because currently
-// it's used in other relops.
-
-template <
+// should be consistent with the side strategy.
+template
+<
     typename T,
     typename Geometry,
+    typename SideStrategy,
     typename CSTag = typename cs_tag<Geometry>::type
 >
 struct collected_vector
+    : nyi::not_implemented_tag
+{};
+
+// compatible with side_by_triangle cartesian strategy
+template <typename T, typename Geometry, typename CT, typename CSTag>
+struct collected_vector
+    <
+        T, Geometry, strategy::side::side_by_triangle<CT>, CSTag
+    >
 {
     typedef T type;
     
@@ -126,7 +146,7 @@ private:
         // For high precision arithmetic, we have to be
         // more relaxed then using ==
         // Because 2/sqrt( (0,0)<->(2,2) ) == 1/sqrt( (0,0)<->(1,1) )
-        // is not always true (at least, it is not for ttmath)
+        // is not always true (at least, not for some user defined types)
         return math::equals_with_epsilon(dx, other.dx)
             && math::equals_with_epsilon(dy, other.dy);
     }
@@ -136,13 +156,19 @@ private:
     //T dx_0, dy_0;
 };
 
-template <typename T, typename Geometry>
-struct collected_vector<T, Geometry, spherical_equatorial_tag>
+// Compatible with spherical_side_formula which currently
+// is the default spherical_equatorial and geographic strategy
+// so CSTag is spherical_equatorial_tag or geographic_tag
+template <typename T, typename Geometry, typename CT, typename CSTag>
+struct collected_vector
+    <
+        T, Geometry, strategy::side::spherical_side_formula<CT>, CSTag
+    >
 {
     typedef T type;
     
-    typedef typename coordinate_system<Geometry>::type cs_type;
-    typedef model::point<T, 2, cs_type> point_type;
+    typedef typename geometry::detail::cs_angular_units<Geometry>::type units_type;
+    typedef model::point<T, 2, cs::spherical_equatorial<units_type> > point_type;
     typedef model::point<T, 3, cs::cartesian> vector_type;
 
     collected_vector()
@@ -152,7 +178,9 @@ struct collected_vector<T, Geometry, spherical_equatorial_tag>
     collected_vector(Point const& p1, Point const& p2)
         : origin(get<0>(p1), get<1>(p1))
     {
-        origin = detail::return_normalized<point_type>(origin);
+        origin = detail::return_normalized<point_type>(
+                    origin,
+                    strategy::normalize::spherical_point());
 
         using namespace geometry::formula;
         prev = sph_to_cart3d<vector_type>(p1);
@@ -232,11 +260,27 @@ private:
     vector_type next; // used for collinearity check
 };
 
-template <typename T, typename Geometry>
-struct collected_vector<T, Geometry, spherical_polar_tag>
-    : public collected_vector<T, Geometry, spherical_equatorial_tag>
+// Specialization for spherical polar
+template <typename T, typename Geometry, typename CT>
+struct collected_vector
+    <
+        T, Geometry,
+        strategy::side::spherical_side_formula<CT>,
+        spherical_polar_tag
+    >
+    : public collected_vector
+        <
+            T, Geometry,
+            strategy::side::spherical_side_formula<CT>,
+            spherical_equatorial_tag
+        >
 {
-    typedef collected_vector<T, Geometry, spherical_equatorial_tag> base_type;
+    typedef collected_vector
+        <
+            T, Geometry,
+            strategy::side::spherical_side_formula<CT>,
+            spherical_equatorial_tag
+        > base_type;
 
     collected_vector() {}
 
@@ -247,7 +291,7 @@ struct collected_vector<T, Geometry, spherical_polar_tag>
 
 private:
     template <typename Point>
-    Point polar_to_equatorial(Point const& p)
+    Point to_equatorial(Point const& p)
     {
         typedef typename coordinate_type<Point>::type coord_type;
 
@@ -265,23 +309,8 @@ private:
     }
 };
 
-// This is consistent with the currently used default geographic side
-// and intersection strategies. Spherical strategies are used by default.
-// When default strategies are changed in the future this specialization
-// should be changed too.
-template <typename T, typename Geometry>
-struct collected_vector<T, Geometry, geographic_tag>
-    : public collected_vector<T, Geometry, spherical_equatorial_tag>
-{
-    typedef collected_vector<T, Geometry, spherical_equatorial_tag> base_type;
 
-    collected_vector() {}
-
-    template <typename Point>
-    collected_vector(Point const& p1, Point const& p2)
-        : base_type(p1, p2)
-    {}
-};
+// TODO: specialize collected_vector for geographic_tag
 
 
 #ifndef DOXYGEN_NO_DETAIL
@@ -297,6 +326,14 @@ struct range_collect_vectors
 
     static inline void apply(Collection& collection, Range const& range)
     {
+        apply_impl(collection,
+                   detail::closed_clockwise_view<Range const>(range));
+    }
+
+private:
+    template <typename ClosedClockwiseRange>
+    static inline void apply_impl(Collection& collection, ClosedClockwiseRange const& range)
+    {
         if (boost::size(range) < 2)
         {
             return;
@@ -305,14 +342,12 @@ struct range_collect_vectors
         typedef typename boost::range_size<Collection>::type collection_size_t;
         collection_size_t c_old_size = boost::size(collection);
 
-        typedef typename boost::range_iterator<Range const>::type iterator;
+        typedef typename boost::range_iterator<ClosedClockwiseRange const>::type iterator;
 
         bool is_first = true;
         iterator it = boost::begin(range);
 
-        for (iterator prev = it++;
-            it != boost::end(range);
-            prev = it++)
+        for (iterator prev = it++; it != boost::end(range); prev = it++)
         {
             typename boost::range_value<Collection>::type v(*prev, *it);
 

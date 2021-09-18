@@ -1,6 +1,8 @@
 // Boost.Geometry
 
-// Copyright (c) 2015-2016 Oracle and/or its affiliates.
+// Copyright (c) 2018 Adam Wulkiewicz, Lodz, Poland.
+
+// Copyright (c) 2015-2020 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -15,14 +17,12 @@
 #include <boost/math/constants/constants.hpp>
 
 #include <boost/geometry/core/radius.hpp>
-#include <boost/geometry/core/srs.hpp>
 
 #include <boost/geometry/util/condition.hpp>
 #include <boost/geometry/util/math.hpp>
 
-#include <boost/geometry/algorithms/detail/flattening.hpp>
-
 #include <boost/geometry/formulas/differential_quantities.hpp>
+#include <boost/geometry/formulas/flattening.hpp>
 #include <boost/geometry/formulas/result_inverse.hpp>
 
 
@@ -75,7 +75,7 @@ public:
         CT const c0 = CT(0);
         CT const c1 = CT(1);
         CT const pi = math::pi<CT>();
-        CT const f = detail::flattening<CT>(spheroid);
+        CT const f = formula::flattening<CT>(spheroid);
 
         CT const dlon = lon2 - lon1;
         CT const sin_dlon = sin(dlon);
@@ -97,7 +97,7 @@ public:
 
         CT const d = acos(cos_d); // [0, pi]
         CT const sin_d = sin(d);  // [-1, 1]
-        
+
         if ( BOOST_GEOMETRY_CONDITION(EnableDistance) )
         {
             CT const K = math::sqr(sin_lat1-sin_lat2);
@@ -106,7 +106,8 @@ public:
 
             CT const one_minus_cos_d = c1 - cos_d;
             CT const one_plus_cos_d = c1 + cos_d;
-            // cos_d = 1 or cos_d = -1 means that the points are antipodal
+            // cos_d = 1 means that the points are very close
+            // cos_d = -1 means that the points are antipodal
 
             CT const H = math::equals(one_minus_cos_d, c0) ?
                             c0 :
@@ -117,20 +118,50 @@ public:
 
             CT const dd = -(f/CT(4))*(H*K+G*L);
 
-            CT const a = get_radius<0>(spheroid);
+            CT const a = CT(get_radius<0>(spheroid));
 
             result.distance = a * (d + dd);
         }
 
         if ( BOOST_GEOMETRY_CONDITION(CalcAzimuths) )
         {
-            // sin_d = 0 <=> antipodal points
+            // sin_d = 0 <=> antipodal points (incl. poles) or very close
             if (math::equals(sin_d, c0))
             {
                 // T = inf
                 // dA = inf
                 // azimuth = -inf
-                result.azimuth = lat1 <= lat2 ? c0 : pi;
+
+                // TODO: The following azimuths are inconsistent with distance
+                // i.e. according to azimuths below a segment with antipodal endpoints
+                // travels through the north pole, however the distance returned above
+                // is the length of a segment traveling along the equator.
+                // Furthermore, this special case handling is only done in andoyer
+                // formula.
+                // The most correct way of fixing it is to handle antipodal regions
+                // correctly and consistently across all formulas.
+
+                // points very close
+                if (cos_d >= c0)
+                {
+                    result.azimuth = c0;
+                    result.reverse_azimuth = c0;
+                }
+                // antipodal points
+                else
+                {
+                    // Set azimuth to 0 unless the first endpoint is the north pole
+                    if (! math::equals(sin_lat1, c1))
+                    {
+                        result.azimuth = c0;
+                        result.reverse_azimuth = pi;
+                    }
+                    else
+                    {
+                        result.azimuth = pi;
+                        result.reverse_azimuth = c0;
+                    }
+                }
             }
             else
             {
@@ -138,7 +169,14 @@ public:
 
                 CT A = c0;
                 CT U = c0;
-                if ( ! math::equals(cos_lat2, c0) )
+                if (math::equals(cos_lat2, c0))
+                {
+                    if (sin_lat2 < c0)
+                    {
+                        A = pi;
+                    }
+                }
+                else
                 {
                     CT const tan_lat2 = sin_lat2/cos_lat2;
                     CT const M = cos_lat1*tan_lat2-sin_lat1*cos_dlon;
@@ -149,7 +187,14 @@ public:
 
                 CT B = c0;
                 CT V = c0;
-                if ( ! math::equals(cos_lat1, c0) )
+                if (math::equals(cos_lat1, c0))
+                {
+                    if (sin_lat1 < c0)
+                    {
+                        B = pi;
+                    }
+                }
+                else
                 {
                     CT const tan_lat1 = sin_lat1/cos_lat1;
                     CT const N = cos_lat2*tan_lat1-sin_lat2*cos_dlon;
@@ -175,11 +220,10 @@ public:
                 if (BOOST_GEOMETRY_CONDITION(CalcRevAzimuth))
                 {
                     CT const dB = -U*T + V;
-                    result.reverse_azimuth = pi - B - dB;
-                    if (result.reverse_azimuth > pi)
-                    {
-                        result.reverse_azimuth -= 2 * pi;
-                    }
+                    if (B >= 0)
+                        result.reverse_azimuth = pi - B - dB;
+                    else
+                        result.reverse_azimuth = -pi - B - dB;
                     normalize_azimuth(result.reverse_azimuth, B, dB);
                 }
             }
@@ -187,10 +231,12 @@ public:
 
         if (BOOST_GEOMETRY_CONDITION(CalcQuantities))
         {
+            CT const b = CT(get_radius<2>(spheroid));
+
             typedef differential_quantities<CT, EnableReducedLength, EnableGeodesicScale, 1> quantities;
             quantities::apply(dlon, sin_lat1, cos_lat1, sin_lat2, cos_lat2,
                               result.azimuth, result.reverse_azimuth,
-                              get_radius<2>(spheroid), f,
+                              b, f,
                               result.reduced_length, result.geodesic_scale);
         }
 
@@ -201,7 +247,7 @@ private:
     static inline void normalize_azimuth(CT & azimuth, CT const& A, CT const& dA)
     {
         CT const c0 = 0;
-        
+
         if (A >= c0) // A indicates Eastern hemisphere
         {
             if (dA >= c0) // A altered towards 0

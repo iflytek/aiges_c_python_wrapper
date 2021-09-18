@@ -3,7 +3,7 @@
 Defines the barebones `boost::hana::integral_constant` template, but no
 operations on it.
 
-@copyright Louis Dionne 2013-2016
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -231,7 +231,11 @@ BOOST_HANA_NAMESPACE_BEGIN
     };
 #else
     template <typename T, T v>
+#ifdef BOOST_HANA_WORKAROUND_MSVC_EMPTYBASE
+    struct __declspec(empty_bases) integral_constant
+#else
     struct integral_constant
+#endif
         : std::integral_constant<T, v>
         , detail::operators::adl<integral_constant<T, v>>
     {

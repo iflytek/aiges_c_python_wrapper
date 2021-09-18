@@ -1,7 +1,8 @@
 // Boost.Geometry
 
-// Copyright (c) 2015-2016 Oracle and/or its affiliates.
+// Copyright (c) 2015-2018 Oracle and/or its affiliates.
 
+// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -15,14 +16,12 @@
 #include <boost/math/constants/constants.hpp>
 
 #include <boost/geometry/core/radius.hpp>
-#include <boost/geometry/core/srs.hpp>
 
 #include <boost/geometry/util/condition.hpp>
 #include <boost/geometry/util/math.hpp>
 
-#include <boost/geometry/algorithms/detail/flattening.hpp>
-
 #include <boost/geometry/formulas/differential_quantities.hpp>
+#include <boost/geometry/formulas/flattening.hpp>
 #include <boost/geometry/formulas/result_inverse.hpp>
 
 
@@ -78,7 +77,7 @@ public:
         CT const c4 = 4;
 
         CT const pi_half = math::pi<CT>() / c2;
-        CT const f = detail::flattening<CT>(spheroid);
+        CT const f = formula::flattening<CT>(spheroid);
         CT const one_minus_f = c1 - f;
 
 //        CT const tan_theta1 = one_minus_f * tan(lat1);
@@ -179,7 +178,7 @@ public:
 
             CT const pi = math::pi<CT>();
 
-            if (BOOST_GEOMETRY_CONDITION(EnableAzimuth))
+            if (BOOST_GEOMETRY_CONDITION(CalcFwdAzimuth))
             {
                 CT alpha1 = v + u;
                 if (alpha1 > pi)
@@ -190,7 +189,7 @@ public:
                 result.azimuth = alpha1;
             }
 
-            if (BOOST_GEOMETRY_CONDITION(EnableReverseAzimuth))
+            if (BOOST_GEOMETRY_CONDITION(CalcRevAzimuth))
             {
                 CT alpha2 = pi - (v - u);
                 if (alpha2 > pi)

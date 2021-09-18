@@ -2,7 +2,7 @@
 @file
 Defines the `Logical` and `Comparable` models of `boost::hana::integral_constant`.
 
-@copyright Louis Dionne 2013-2016
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -182,8 +182,10 @@ BOOST_HANA_NAMESPACE_BEGIN
 
             for (std::size_t i = 0; i < N - offset; ++i) {
                 char c = arr[N - 1 - i];
-                number += to_int(c) * multiplier;
-                multiplier *= base;
+                if (c != '\'') { // skip digit separators
+                    number += to_int(c) * multiplier;
+                    multiplier *= base;
+                }
             }
 
             return number;
