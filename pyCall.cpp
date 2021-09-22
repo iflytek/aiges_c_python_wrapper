@@ -61,8 +61,8 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
         PyObject* pyKey=PyUnicode_FromString(p->key);
         PyDict_SetItemString(tmp,"key",pyKey);
 
-        std::string actualData=*(std::string*)(p->data);
-        PyObject* pyData=PyUnicode_FromString(actualData.c_str());
+        //std::string actualData=*(std::string*)(p->data);
+        PyObject* pyData=PyUnicode_FromString("hello world");
         PyDict_SetItemString(tmp,"data",pyData);
 
         PyObject*  pyStatus=Py_BuildValue("i",int(p->status));
