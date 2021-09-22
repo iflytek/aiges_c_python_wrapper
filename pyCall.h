@@ -9,8 +9,9 @@
 #include "include/utils/json.hpp"
 #include "include/aiges/type.h"
 #include "pyParam.h"
+#include "include/boost/python.hpp"
 
 int callWrapperInit(pConfig cfg);
 int callWrapperFini();
-int callWrapperExec();
+int callWrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
 #endif

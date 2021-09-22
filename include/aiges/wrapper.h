@@ -107,8 +107,8 @@ typedef int(*wrapperCallback)(const void* usrTag, pDataList respData, int ret);
     @param  errNum      接口错误码[in/out]
     @return             引擎服务实例句柄,用于关联上下文;
 */
-const void* WrapperAPI wrapperCreate(const void* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum);
-typedef const void* (WrapperAPI *wrapperCreatePtr)(const void* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum);
+const void* WrapperAPI wrapperCreate(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum);
+typedef const void* (WrapperAPI *wrapperCreatePtr)(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum);
 
 /*
     写入计算数据
@@ -149,16 +149,16 @@ typedef int (WrapperAPI *wrapperDestroyPtr)(const void* handle);
     @return 接口错误码
     @note   同步操作接口, 需考虑上层并发调用可能
 */
-int WrapperAPI wrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
-typedef int (WrapperAPI *wrapperExecPtr)(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
+int WrapperAPI wrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
+typedef int (WrapperAPI *wrapperExecPtr)(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
 
 
 /*
     同步接口响应数据缓存释放接口
     @param  respData    由同步接口exec获取的响应结果数据
 */
-int WrapperAPI wrapperExecFree(const void* usrTag, pDataList* respData);
-typedef int (WrapperAPI *wrapperExecFreePtr)(const void* usrTag, pDataList* respData);
+int WrapperAPI wrapperExecFree(const char* usrTag, pDataList* respData);
+typedef int (WrapperAPI *wrapperExecFreePtr)(const char* usrTag, pDataList* respData);
 
 /*
     非会话模式计算接口,对应oneShot请求
@@ -168,8 +168,8 @@ typedef int (WrapperAPI *wrapperExecFreePtr)(const void* usrTag, pDataList* resp
     @param  timeout     异步超时时间,集成方实现该超时控制,ms;
     @note   异步操作接口, 需考虑上层并发调用可能
 */
-int WrapperAPI wrapperExecAsync(const void* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
-typedef int (WrapperAPI *wrapperExecAsyncPtr)(const void* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
+int WrapperAPI wrapperExecAsync(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
+typedef int (WrapperAPI *wrapperExecAsyncPtr)(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
 
 /*
     调试信息输出接口

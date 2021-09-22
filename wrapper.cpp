@@ -67,7 +67,7 @@ int WrapperAPI wrapperInit(pConfig cfg)
 
     setlog(loglvl);
 
-    return callWrapperInit();
+    return callWrapperInit(cfg);
 }
 
 int WrapperAPI wrapperFini()
@@ -96,7 +96,7 @@ int WrapperAPI wrapperUnloadRes(unsigned int resId)
     return 0;
 }
 
-const void *WrapperAPI wrapperCreate(const void* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum)
+const void *WrapperAPI wrapperCreate(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum)
 {
     return NULL;
 }
@@ -114,17 +114,16 @@ int WrapperAPI wrapperDestroy(const void *handle)
    return 0;
 }
 
-int WrapperAPI wrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt)
+int WrapperAPI wrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt)
 {
-    std::cout<<callWrapperExec()<<std::endl;
-    return 0;
+    return callWrapperExec(usrTag,params,reqData,respData,psrIds,psrCnt);
 }
-int WrapperAPI wrapperExecFree(const void *usrTag, pDataList *respData)
+int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
 { 
     return 0;
 }
 
-int WrapperAPI wrapperExecAsync(const void* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt)
+int WrapperAPI wrapperExecAsync(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt)
 {
     return 0;
 }
