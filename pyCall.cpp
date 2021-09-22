@@ -81,7 +81,7 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
     PyTuple_SetItem(pArgsT, 2, pyData);
 
 
-    PyObject* pRet=PyEval_CallObject(execFunc,pArgsD);
+    PyObject* pRet=PyEval_CallObject(execFunc,pArgsT);
     if (pRet==NULL){
         return WRAPPER::CError::innerError;
     }
