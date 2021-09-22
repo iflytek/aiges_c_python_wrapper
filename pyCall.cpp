@@ -40,7 +40,7 @@ int callWrapperInit(pConfig cfg){
 int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt){    
     PyObject* execFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperOnceExec");
     //构建参数元组
-    PyObject *pArgsT = PyTuple_New(6);
+    PyObject *pArgsT = PyTuple_New(8);
     
     //构建请求句柄
     PyObject* pUsrTag=PyUnicode_FromString(usrTag);
@@ -82,6 +82,15 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
         p=p->next;
     }
     PyTuple_SetItem(pArgsT, 2, pyData);
+
+
+    //构建个性化请求id
+    PyObject* pyPsrIds = PyList_New(0);
+    PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+
+    //构建个性化请求个数
+    PyTuple_SetItem(pArgsT, 4, Py_BuildValue("0",0));
+
 
 
     PyObject* pRet=PyEval_CallObject(execFunc,pArgsT);
