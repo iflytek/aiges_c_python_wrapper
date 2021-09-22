@@ -11,5 +11,5 @@
 #include "pyParam.h"
 int callWrapperInit(pConfig cfg);
 int callWrapperFini();
-int callWrapperExec(const void* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
+int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
 #endif
