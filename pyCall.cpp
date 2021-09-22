@@ -8,6 +8,7 @@ const char * _wrapperName="wrapper";
 int callWrapperInit(pConfig cfg){
     Py_Initialize();
     PyRun_SimpleString("import sys");
+    PyRun_SimpleString("import wrapper");
 
     wrapperModule=PyImport_ImportModule(_wrapperName);
     PyObject* initFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperInit");
