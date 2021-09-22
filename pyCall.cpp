@@ -45,14 +45,14 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
 
     //构建请求参数
     PyObject* pParam = PyDict_New();
-    for (pParamList p = params; p != NULL; p = p->next)
-        PyDict_SetItemString(pArgsD,p->key, Py_BuildValue("s", p->value));
+    for (pParamList p = params; p != NULL; p = p->next){
+        PyDict_SetItemString(pParam,p->key, Py_BuildValue("s", p->value));
     }
     PyTuple_SetItem(pArgsT, 1, pParam);
     //构建请求数据
     PyObject* pyData = PyList_New(0);
     DataList *p = reqData;
-    while (p != NULL)
+    while (p != NULL){
         PyObject* tmp = PyDict_New();
 
         PyObject* pyKey=PyUnicode_FromString(p->key);
@@ -70,7 +70,7 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
 
 
         PyObject* tmpDesc = PyDict_New();
-        for (pParamList descP = p->desc; descP != NULL; descP = p->next)
+        for (pParamList descP = p->desc; descP != NULL; descP = p->next){
             PyDict_SetItemString(tmpDesc,descP->key, Py_BuildValue("s", descP->value));
         }
         PyDict_SetItemString(tmp,"desc",tmpDesc);
