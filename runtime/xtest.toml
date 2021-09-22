@@ -1,9 +1,9 @@
 [xtest]
-taddrs="AIservice@127.0.0.1:5090"
+taddrs="mocksvc@127.0.0.1:5090"
 trace-ip = "172.16.51.13"
 
 [svcMode]
-service = "AIservice"           # 请求目标服务名称, eg:sms
+service = "mocksvc"           # 请求目标服务名称, eg:sms
 svcId = "s12345678"             # 服务id
 timeout = 1000                  # 服务超时时间, 对应服务端waitTime
 multiThr = 50                    # 请求并发数
@@ -16,14 +16,14 @@ linearMs = 5000                 # 并发压测线性增长区间,单位:ms
 "uid" = "1234567890"
 
 [parameter]
-"ctrl" = "hahatestzsli"                 # 用户功能参数
+"ctrl" = "normal"                 # 用户功能参数
 
 [data]
-payload = "data1;data2"         # 输入数据流key,多个数据流以";"分割,如"dataKey1;dataKey2"
+payload = "data1"         # 输入数据流key,多个数据流以";"分割,如"dataKey1;dataKey2"
 expect = "result"               # 输出数据流key,多个数据流以";"分割
 
 [data1]  # 输入数据流data1描述
-inputSrc = "./image"            # 上行数据流数据源, 配置文件路径(配置为目录则循环读取目录中文件)
+inputSrc = "./cat.jpg"            # 上行数据流数据源, 配置文件路径(配置为目录则循环读取目录中文件)
 sliceOn = false                 # 切片开关, false:关闭切换, true:开启切片
 sliceSize = 1280                # 上行数据切片大小,用于会话模式: byte
 interval = 40                   # 上行数据发包间隔,用于会话模式: ms. 注：动态校准,每个包间隔非严格interval
