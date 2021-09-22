@@ -70,7 +70,7 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
 
 
         PyObject* tmpDesc = PyDict_New();
-        for (pParamList descP = p->desc; descP != NULL; descP = p->next){
+        for (pParamList descP = p->desc; descP != NULL; descP= descP->next){
             PyDict_SetItemString(tmpDesc,descP->key, Py_BuildValue("s", descP->value));
         }
         PyDict_SetItemString(tmp,"desc",tmpDesc);
