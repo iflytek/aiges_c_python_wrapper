@@ -6,6 +6,7 @@ PyObject* wrapperModule;
 const char * _wrapperName="wrapper";
 
 int callWrapperInit(pConfig cfg){
+    std::cout<<"start init"<<std::endl;
     Py_Initialize();
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("import wrapper");
@@ -32,6 +33,7 @@ int callWrapperInit(pConfig cfg){
     Py_DECREF(pRet);
 
     spdlog::debug("wrapperinit ret.{}",ret);
+    std::cout<<"finish init"<<std::endl;
     return ret;
 }
 
