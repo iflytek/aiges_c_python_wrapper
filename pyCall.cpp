@@ -5,7 +5,7 @@ PyObject* wrapperModule;
 
 const char * _wrapperName="wrapper";
 
-int callWrapperInit(pConfig config){
+int callWrapperInit(pConfig cfg){
     Py_Initialize();
     PyRun_SimpleString("import sys");
 
@@ -14,7 +14,7 @@ int callWrapperInit(pConfig config){
 
     PyObject *pArgsT = PyTuple_New(1);
     PyObject* pArgsD = PyDict_New();
-    for (pConfig p = cfg; p != NULL; p = p->next)
+    for (pConfig p = cfg; p != NULL; p = p->next){
         PyDict_SetItemString(pArgsD,p->key, Py_BuildValue("s", p->value));
     }
     PyTuple_SetItem(pArgsT, 0, pArgsD);
