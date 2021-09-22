@@ -40,7 +40,7 @@ int callWrapperInit(pConfig cfg){
 int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt){    
     PyObject* execFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperOnceExec");
     //构建参数元组
-    PyObject *pArgsT = PyTuple_New(8);
+    PyObject *pArgsT = PyTuple_New(5);
     
     //构建请求句柄
     PyObject* pUsrTag=PyUnicode_FromString(usrTag);
