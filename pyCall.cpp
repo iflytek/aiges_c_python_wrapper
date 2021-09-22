@@ -20,7 +20,7 @@ int callWrapperInit(pConfig cfg){
         PyDict_SetItemString(pArgsD,p->key, Py_BuildValue("s", p->value));
     }
     PyTuple_SetItem(pArgsT, 0, pArgsD);
-    PyObject* pRet=PyEval_CallObject(initFunc,pArgsD);
+    PyObject* pRet=PyEval_CallObject(initFunc,pArgsT);
     if (pRet==NULL){
         return WRAPPER::CError::innerError;
     }
