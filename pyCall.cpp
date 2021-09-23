@@ -44,7 +44,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 {
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperOnceExec");
     //构建参数元组
-    PyObject *pArgsT = PyTuple_New(5);
+    PyObject *pArgsT = PyTuple_New(4);
 
     //构建请求句柄
     PyObject *pUsrTag = PyUnicode_FromString(usrTag);
@@ -64,6 +64,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         dataNum++;
     }
     spdlog::debug("call wrapper exec ，datanum:{}",dataNum);
+    dataNum=0;
     if (dataNum > 0)
     {
         PyObject *pyDataList = PyTuple_New(dataNum);
@@ -104,13 +105,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     if(count!=0)
     {
         PyObject* pyPsrIds = PyTuple_New(count);
-        PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+        PyTuple_SetItem(pArgsT, 2, pyPsrIds);
     }else{
         PyObject* pyPsrIds = PyTuple_New(0);
-        PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+        PyTuple_SetItem(pArgsT, 2, pyPsrIds);
     }
+    spdlog::debug("call wrapper exec,psrIdsNum:{}",count);
     // //构建个性化请求个数
-    PyTuple_SetItem(pArgsT, 4, Py_BuildValue("0", psrCnt));
+    PyTuple_SetItem(pArgsT, 3, Py_BuildValue("0", psrCnt));
 
     PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
     if (pRet == NULL)
