@@ -40,18 +40,18 @@ int callWrapperInit(pConfig cfg){
 int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt){    
     PyObject* execFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperOnceExec");
     //构建参数元组
-    PyObject *pArgsT = PyTuple_New(5);
+    PyObject *pArgsT = PyTuple_New(4);
     
     //构建请求句柄
     PyObject* pUsrTag=PyUnicode_FromString(usrTag);
     PyTuple_SetItem(pArgsT, 0, pUsrTag);
 
     //构建请求参数
-    PyObject* pParam = PyDict_New();
+    PyObject* pyParam = PyDict_New();
     for (pParamList p = params; p != NULL; p = p->next){
-        PyDict_SetItemString(pParam,p->key, Py_BuildValue("s", p->value));
+        PyDict_SetItemString(pyParam,p->key, Py_BuildValue("s", p->value));
     }
-    PyTuple_SetItem(pArgsT, 1, pParam);
+    PyTuple_SetItem(pArgsT, 1, pyParam);
     //构建请求数据
     // PyObject* pyData = PyList_New(0);
     // DataList *p = reqData;
@@ -83,14 +83,12 @@ int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pD
     // }
     // PyTuple_SetItem(pArgsT, 2, pyData);
 
-
     //构建个性化请求id
     PyObject* pyPsrIds = PyList_New(0);
-    PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+    PyTuple_SetItem(pArgsT, 2, pyPsrIds);
 
     //构建个性化请求个数
-    PyTuple_SetItem(pArgsT, 4, Py_BuildValue("0",0));
-
+    PyTuple_SetItem(pArgsT, 3, Py_BuildValue("0",0));
 
 
     PyObject* pRet=PyEval_CallObject(execFunc,pArgsT);
