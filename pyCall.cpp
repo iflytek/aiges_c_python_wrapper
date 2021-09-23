@@ -1,115 +1,133 @@
 #include "pyCall.h"
 #include "wrapper_err.h"
 
-PyObject* wrapperModule;
+PyObject *wrapperModule;
 
-const char * _wrapperName="wrapper";
+const char *_wrapperName = "wrapper";
 
-int callWrapperInit(pConfig cfg){
-    std::cout<<"start init"<<std::endl;
+int callWrapperInit(pConfig cfg)
+{
+    std::cout << "start init" << std::endl;
     Py_Initialize();
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("import wrapper");
 
-    wrapperModule=PyImport_ImportModule(_wrapperName);
-    PyObject* initFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperInit");
+    wrapperModule = PyImport_ImportModule(_wrapperName);
+    PyObject *initFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperInit");
 
     PyObject *pArgsT = PyTuple_New(1);
-    PyObject* pArgsD = PyDict_New();
-    for (pConfig p = cfg; p != NULL; p = p->next){
-        PyDict_SetItemString(pArgsD,p->key, Py_BuildValue("s", p->value));
+    PyObject *pArgsD = PyDict_New();
+    for (pConfig p = cfg; p != NULL; p = p->next)
+    {
+        PyDict_SetItemString(pArgsD, p->key, Py_BuildValue("s", p->value));
     }
     PyTuple_SetItem(pArgsT, 0, pArgsD);
-    PyObject* pRet=PyEval_CallObject(initFunc,pArgsT);
-    if (pRet==NULL){
+    PyObject *pRet = PyEval_CallObject(initFunc, pArgsT);
+    if (pRet == NULL)
+    {
         return WRAPPER::CError::innerError;
     }
-    int ret=0;
-    PyArg_Parse(pRet,"i",&ret);
+    int ret = 0;
+    PyArg_Parse(pRet, "i", &ret);
 
     Py_DECREF(initFunc);
     Py_DECREF(pArgsT);
     Py_DECREF(pArgsD);
     Py_DECREF(pRet);
 
-    spdlog::debug("wrapperinit ret.{}",ret);
-    std::cout<<"finish init"<<std::endl;
+    spdlog::debug("wrapperinit ret.{}", ret);
+    std::cout << "finish init" << std::endl;
     return ret;
 }
 
-int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt){    
-    PyObject* execFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperOnceExec");
+int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt)
+{
+    PyObject *execFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperOnceExec");
     //构建参数元组
-    PyObject *pArgsT = PyTuple_New(4);
-    
+    PyObject *pArgsT = PyTuple_New(5);
+
     //构建请求句柄
-    PyObject* pUsrTag=PyUnicode_FromString(usrTag);
+    PyObject *pUsrTag = PyUnicode_FromString(usrTag);
     PyTuple_SetItem(pArgsT, 0, pUsrTag);
 
     //构建请求参数
-    PyObject* pyParam = PyDict_New();
-    for (pParamList p = params; p != NULL; p = p->next){
-        PyDict_SetItemString(pyParam,p->key, Py_BuildValue("s", p->value));
+    PyObject *pyParam = PyDict_New();
+    for (pParamList p = params; p != NULL; p = p->next)
+    {
+        PyDict_SetItemString(pyParam, p->key, Py_BuildValue("s", p->value));
     }
     PyTuple_SetItem(pArgsT, 1, pyParam);
     //构建请求数据
-    PyObject* pyData = PyList_New(0);
-    DataList *p = reqData;
-    while (p != NULL){
-        PyObject* tmp = PyDict_New();
-
-        PyObject* pyKey=PyUnicode_FromString(p->key);
-        PyDict_SetItemString(tmp,"key",pyKey);
-
-        //std::string actualData=*(std::string*)(p->data);
-        PyObject* pyData=PyUnicode_FromString("hello world");
-        PyDict_SetItemString(tmp,"data",pyData);
-
-        PyObject*  pyStatus=Py_BuildValue("i",int(p->status));
-        PyDict_SetItemString(tmp,"status",pyStatus);
-        
-        PyObject*  pyType=Py_BuildValue("i",int(p->type));
-        PyDict_SetItemString(tmp,"type",pyType);
-
-
-        PyObject* tmpDesc = PyDict_New();
-        for (pParamList descP = p->desc; descP != NULL; descP= descP->next){
-            PyDict_SetItemString(tmpDesc,descP->key, Py_BuildValue("s", descP->value));
-        }
-        PyDict_SetItemString(tmp,"desc",tmpDesc);
-
-        PyList_Append(pyData,tmp);
-        p=p->next;
+    int dataNum = 0;
+    for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next)
+    {
+        dataNum++;
     }
-    PyTuple_SetItem(pArgsT, 2, pyData);
+    spdlog::debug("call wrapper exec ，datanum:{}",dataNum);
+    if (dataNum > 0)
+    {
+        PyObject *pyData = PyTuple_New(dataNum);
+        DataList *p = reqData;
+        for (int tmpIdx = 0; tempIdx < dataNum; tempIdx++)
+        {
+            PyObject *tmp = PyDict_New();
+
+            PyObject *pyKey = PyUnicode_FromString(p->key);
+            PyDict_SetItemString(tmp, "key", pyKey);
+
+            //std::string actualData=*(std::string*)(p->data);
+            PyObject *pyData = PyUnicode_FromString("hello world");
+            PyDict_SetItemString(tmp, "data", pyData);
+
+            PyObject *pyStatus = Py_BuildValue("i", int(p->status));
+            PyDict_SetItemString(tmp, "status", pyStatus);
+
+            PyObject *pyType = Py_BuildValue("i", int(p->type));
+            PyDict_SetItemString(tmp, "type", pyType);
+
+            PyObject *tmpDesc = PyDict_New();
+            for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
+            {
+                PyDict_SetItemString(tmpDesc, descP->key, Py_BuildValue("s", descP->value));
+            }
+            PyDict_SetItemString(tmp, "desc", tmpDesc);
+
+            PyTuple_SetItem(pyData, tempIdx, tmp);
+            p = p->next;
+        }
+        PyTuple_SetItem(pArgsT, 2, pyData);
+    }
 
     //构建个性化请求id
-    // PyObject* pyPsrIds = PyList_New(0);
-    // PyTuple_SetItem(pArgsT, 2, pyPsrIds);
-
+    // int count=sizeof(psrIds)/sizeof(unsigned int);
+    // if(count!=0)
+    // {
+    //     PyObject* pyPsrIds = PyList_New(count);
+    //     PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+    // }
     // //构建个性化请求个数
-    PyTuple_SetItem(pArgsT, 3, Py_BuildValue("0",0));
+    PyTuple_SetItem(pArgsT, 4, Py_BuildValue("0", psrCnt));
 
-
-    PyObject* pRet=PyEval_CallObject(execFunc,pArgsT);
-    if (pRet==NULL){
+    PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
+    if (pRet == NULL)
+    {
         return WRAPPER::CError::innerError;
     }
-    int ret=0;
-    PyArg_Parse(pRet,"i",&ret);
-    spdlog::debug("wrapperinit ret.{}",ret);
+    int ret = 0;
+    PyArg_Parse(pRet, "i", &ret);
+    spdlog::debug("wrapperinit ret.{}", ret);
     return 0;
 }
 
+int callWrapperFini()
+{
+    PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperFini");
+    PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
 
-int callWrapperFini(){
-    PyObject* FiniFunc=PyObject_GetAttrString(wrapperModule,(char *)"wrapperFini");
-    PyObject* pRet=PyEval_CallObject(FiniFunc,NULL);
+    int ret = 0;
+    PyArg_Parse(pRet, "i", &ret);
+    spdlog::debug("wrapperFini ret.{}", ret);
 
-    int ret=0;
-    PyArg_Parse(pRet,"i",&ret);
-    spdlog::debug("wrapperFini ret.{}",ret);
-    
     Py_DECREF(FiniFunc);
     Py_DECREF(pRet);
 
