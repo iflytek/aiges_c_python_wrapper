@@ -68,7 +68,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     {
         PyObject *pyData = PyTuple_New(dataNum);
         DataList *p = reqData;
-        for (int tmpIdx = 0; tempIdx < dataNum; tempIdx++)
+        for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++)
         {
             PyObject *tmp = PyDict_New();
 
@@ -92,7 +92,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             }
             PyDict_SetItemString(tmp, "desc", tmpDesc);
 
-            PyTuple_SetItem(pyData, tempIdx, tmp);
+            PyTuple_SetItem(pyData, tmpIdx, tmp);
             p = p->next;
         }
         PyTuple_SetItem(pArgsT, 2, pyData);
