@@ -66,7 +66,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     spdlog::debug("call wrapper exec ，datanum:{}",dataNum);
     if (dataNum > 0)
     {
-        PyObject *pyData = PyTuple_New(dataNum);
+        PyObject *pyDataList = PyTuple_New(dataNum);
         DataList *p = reqData;
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++)
         {
@@ -92,10 +92,10 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             }
             PyDict_SetItemString(tmp, "desc", tmpDesc);
 
-            PyTuple_SetItem(pyData, tmpIdx, tmp);
+            PyTuple_SetItem(pyDataList, tmpIdx, tmp);
             p = p->next;
         }
-        PyTuple_SetItem(pArgsT, 2, pyData);
+        PyTuple_SetItem(pArgsT, 2, pyDataList);
     }
 
     //构建个性化请求id
