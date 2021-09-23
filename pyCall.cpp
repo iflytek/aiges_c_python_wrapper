@@ -101,18 +101,13 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     }
 
     //构建个性化请求id
-    int count=sizeof(psrIds)/sizeof(unsigned int);
-    if(count!=0)
-    {
-        PyObject* pyPsrIds = PyTuple_New(count);
-        PyTuple_SetItem(pArgsT, 2, pyPsrIds);
-    }else{
-        PyObject* pyPsrIds = PyTuple_New(0);
-        PyTuple_SetItem(pArgsT, 2, pyPsrIds);
-    }
+    PyObject* pyPsrIds = PyTuple_New(1);
+    PyTuple_SetItem(pyPsrIds, 0, Py_BuildValue("i", 1));
+    PyTuple_SetItem(pArgsT, 2, pyPsrIds);
+
     spdlog::debug("call wrapper exec,psrIdsNum:{}",count);
     // //构建个性化请求个数
-    PyTuple_SetItem(pArgsT, 3, Py_BuildValue("0", psrCnt));
+    PyTuple_SetItem(pArgsT, 3, Py_BuildValue("i", psrCnt));
 
     PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
     if (pRet == NULL)
