@@ -67,7 +67,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     if (dataNum > 0)
     {
         PyObject *pyDataList = PyTuple_New(dataNum);
-        DataList *p = reqData;
+        pDataList p = reqData;
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++)
         {
             PyObject *tmp = PyDict_New();
@@ -95,16 +95,20 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             PyTuple_SetItem(pyDataList, tmpIdx, tmp);
             p = p->next;
         }
+        pyDataList= PyTuple_New(dataNum);
         PyTuple_SetItem(pArgsT, 2, pyDataList);
     }
 
     //构建个性化请求id
-    // int count=sizeof(psrIds)/sizeof(unsigned int);
-    // if(count!=0)
-    // {
-    //     PyObject* pyPsrIds = PyList_New(count);
-    //     PyTuple_SetItem(pArgsT, 3, pyPsrIds);
-    // }
+    int count=sizeof(psrIds)/sizeof(unsigned int);
+    if(count!=0)
+    {
+        PyObject* pyPsrIds = PyTuple_New(count);
+        PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+    }else{
+        PyObject* pyPsrIds = PyTuple_New(0);
+        PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+    }
     // //构建个性化请求个数
     PyTuple_SetItem(pArgsT, 4, Py_BuildValue("0", psrCnt));
 
