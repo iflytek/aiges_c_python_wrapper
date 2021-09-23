@@ -67,35 +67,35 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     if (dataNum > 0)
     {
         PyObject *pyDataList = PyTuple_New(dataNum);
-        pDataList p = reqData;
-        for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++)
-        {
-            PyObject *tmp = PyDict_New();
+        // pDataList p = reqData;
+        // for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++)
+        // {
+        //     PyObject *tmp = PyDict_New();
 
-            PyObject *pyKey = PyUnicode_FromString(p->key);
-            PyDict_SetItemString(tmp, "key", pyKey);
+        //     PyObject *pyKey = PyUnicode_FromString(p->key);
+        //     PyDict_SetItemString(tmp, "key", pyKey);
 
-            //std::string actualData=*(std::string*)(p->data);
-            PyObject *pyData = PyUnicode_FromString("hello world");
-            PyDict_SetItemString(tmp, "data", pyData);
+        //     //std::string actualData=*(std::string*)(p->data);
+        //     PyObject *pyData = PyUnicode_FromString("hello world");
+        //     PyDict_SetItemString(tmp, "data", pyData);
 
-            PyObject *pyStatus = Py_BuildValue("i", int(p->status));
-            PyDict_SetItemString(tmp, "status", pyStatus);
+        //     PyObject *pyStatus = Py_BuildValue("i", int(p->status));
+        //     PyDict_SetItemString(tmp, "status", pyStatus);
 
-            PyObject *pyType = Py_BuildValue("i", int(p->type));
-            PyDict_SetItemString(tmp, "type", pyType);
+        //     PyObject *pyType = Py_BuildValue("i", int(p->type));
+        //     PyDict_SetItemString(tmp, "type", pyType);
 
-            PyObject *tmpDesc = PyDict_New();
-            for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
-            {
-                PyDict_SetItemString(tmpDesc, descP->key, Py_BuildValue("s", descP->value));
-            }
-            PyDict_SetItemString(tmp, "desc", tmpDesc);
+        //     PyObject *tmpDesc = PyDict_New();
+        //     for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
+        //     {
+        //         PyDict_SetItemString(tmpDesc, descP->key, Py_BuildValue("s", descP->value));
+        //     }
+        //     PyDict_SetItemString(tmp, "desc", tmpDesc);
 
-            PyTuple_SetItem(pyDataList, tmpIdx, tmp);
-            p = p->next;
-        }
-        pyDataList= PyTuple_New(dataNum);
+        //     PyTuple_SetItem(pyDataList, tmpIdx, tmp);
+        //     p = p->next;
+        // }
+        // pyDataList= PyTuple_New(dataNum);
         PyTuple_SetItem(pArgsT, 2, pyDataList);
     }
 
