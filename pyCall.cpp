@@ -104,8 +104,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     PyObject* pyPsrIds = PyTuple_New(1);
     PyTuple_SetItem(pyPsrIds, 0, Py_BuildValue("i", 1));
     PyTuple_SetItem(pArgsT, 2, pyPsrIds);
-
-    spdlog::debug("call wrapper exec,psrIdsNum:{}",count);
     // //构建个性化请求个数
     PyTuple_SetItem(pArgsT, 3, Py_BuildValue("i", psrCnt));
 
