@@ -175,7 +175,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             PyTuple_SetItem(pArgsT, 2, pyDataList);
         }
         //构建响应数据体
-        PyObject *pyRespData = PyTuple_New(0);
+        PyObject *pyRespData = PyList_New(0);
         PyTuple_SetItem(pArgsT, 3, pyRespData);
         //构建个性化请求id
         int num = psrCnt;
