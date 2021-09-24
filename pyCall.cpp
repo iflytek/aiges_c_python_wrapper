@@ -121,7 +121,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     try
     {
         //构建参数元组
-        PyObject *pArgsT = PyTuple_New(5);
+        PyObject *pArgsT = PyTuple_New(6);
 
         //构建请求句柄
         PyObject *pUsrTag = PyUnicode_FromString(usrTag);
@@ -174,7 +174,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             }
             PyTuple_SetItem(pArgsT, 2, pyDataList);
         }
-
+        //构建响应数据体
+        PyObject *pyRespData = PyTuple_New(0);
+        PyTuple_SetItem(pArgsT, 3, pyRespData);
         //构建个性化请求id
         int num = psrCnt;
         if (num != 0)
@@ -185,16 +187,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyTuple_SetItem(pyPsrIds, idx, Py_BuildValue("i", psrIds[idx]));
                 spdlog::debug("wrapper exec psrId:{},sid:{}", psrIds[idx], sid);
             }
-            PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+            PyTuple_SetItem(pArgsT, 4, pyPsrIds);
         }
         else
         {
             PyObject *pyPsrIds = PyTuple_New(0);
             spdlog::debug("wrapper exec psrIds is empty.sid:{}", sid);
-            PyTuple_SetItem(pArgsT, 3, pyPsrIds);
+            PyTuple_SetItem(pArgsT, 4, pyPsrIds);
         }
         // //构建个性化请求个数
-        PyTuple_SetItem(pArgsT, 4, Py_BuildValue("i", psrCnt));
+        PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
 
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
@@ -208,6 +210,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             }
             return WRAPPER::CError::innerError;
         }
+
+        std::cout<<"修改后的size"<<PyList_Size(pyRespData)<<std::endl;
+
         PyArg_Parse(pRet, "i", &ret);
     }
     catch (const std::exception &e)
