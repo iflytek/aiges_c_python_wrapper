@@ -11,6 +11,7 @@ const char *callWrapperError(int ret)
 {
     if (errStrMap.count(ret) != 0)
     {
+        spdlod::debug("wrapper Error,ret:{}.errStr:{}",ret,errStrMap[ret]);
         return errStrMap[ret].c_str();
     }
     PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
@@ -28,7 +29,7 @@ const char *callWrapperError(int ret)
     Py_DECREF(pRet);
 
     errStrMap[ret] = errorStr;
-
+    spdlod::debug("wrapper Error,ret:{}.errStr:{}",ret,errStrMap[ret]);
     return errStrMap[ret].c_str();
 }
 
