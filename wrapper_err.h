@@ -7,7 +7,12 @@ namespace WRAPPER{
         NotImplementError=-1000,
         NotImplementInit=-1001,
         NotImplementExec=-1002,
-        NotImplementFini=-1003
+        NotImplementFini=-1003,
+
+        RltDataKeyInvalid=-1010,
+        RltDataLenInvalid=-1011,
+        RltDataStatusInvalid=-1012,
+        RltDataTypeInvalid=-1013,
     };
 
 };

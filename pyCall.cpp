@@ -38,6 +38,11 @@ void initErrorStrMap()
     errStrMap[WRAPPER::CError::NotImplementInit] = "wrapper init need to implement";
     errStrMap[WRAPPER::CError::NotImplementExec] = "wrapper exec need to implement";
     errStrMap[WRAPPER::CError::NotImplementFini] = "wrapper fini need to implement";
+
+    errStrMap[WRAPPER::CError::RltDataKeyInvalid] = "respdata need key item";
+    errStrMap[WRAPPER::CError::RltDataLenInvalid] = "respdata need len item";
+    errStrMap[WRAPPER::CError::RltDataStatusInvalid] = "respdata need status item";
+    errStrMap[WRAPPER::CError::RltDataTypeInvalid] = "respdata need type item";
 }
 
 int callWrapperInit(pConfig cfg)
@@ -210,10 +215,47 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             }
             return WRAPPER::CError::innerError;
         }
-
-        std::cout<<"修改后的size"<<PyList_Size(pyRespData)<<std::endl;
-
         PyArg_Parse(pRet, "i", &ret);
+        if (ret == 0)
+        {
+            int rltSize = PyList_Size(pyRespData);
+            if (rltSize != 0)
+            {
+                pDataList rltPtr = respData;
+                for (int idx = 0; idx < rltSzie; idx++)
+                {
+                    pDataList tmpData = new (DataList);
+
+                    PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
+                    ret=pyDictStrToChar(tmpDict,DATA_KEY,tmpData->key,sid);
+                    if(ret!=0){
+                        return ret;
+                    }
+
+                    int integerVal=0;
+                    ret=pyDictIntToInt(tmpDict,DATA_LEN,integerVal,sid);
+                    if(ret!=0){
+                        return ret;
+                    }else{
+                        tmpData->len=integerVal;
+                    }
+
+                    ret=pyDictIntToInt(tmpDict,DATA_STATUS,integerVal,sid);
+                    if(ret!=0){
+                        return ret;
+                    }else{
+                        tmpData->status=DataStatus(integerVal);
+                    }
+                    ret=pyDictIntToInt(tmpDict,DATA_TYPE,integerVal,sid);
+                    if(ret!=0){
+                        return ret;
+                    }else{
+                        tmpData->type=DataType(integerVal);
+                    }
+                    *respData=tmpData;
+                }
+            }
+        }
     }
     catch (const std::exception &e)
     {
@@ -326,4 +368,66 @@ std::string log_python_exception()
         Py_XDECREF(traceback_obj);
     }
     return strErrorMsg;
+}
+
+int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::string sid)
+{
+    std::string rltStr = "";
+
+    PyObject *pyValue = PyDict_GetItemString(obj, itemKey.c_str());
+    if (pyValue == NULL)
+    {
+        std::string errRlt = "";
+        errRlt = log_python_exception();
+        if (errRlt != "")
+        {
+            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret, sid);
+        }
+        if (itemKey == DATA_KEY)
+        {
+            return WRAPPER::CError::RltDataKeyInvalid;
+        }
+        else
+        {
+            return WRAPPER::CError::innerError;
+        }
+    }
+    PyArg_Parse(pyValue, "s", &rltStr);
+    rlt_ch = (char *)malloc(strlen(rltStr.c_str()));
+    memcpy(rlt_ch, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
+
+    return 0;
+}
+
+int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, sid::string sid)
+{
+
+    PyObject *pyValue = PyDict_GetItemString(obj, itemKey.c_str());
+    if (pyValue == NULL)
+    {
+        std::string errRlt = "";
+        errRlt = log_python_exception();
+        if (errRlt != "")
+        {
+            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret, sid);
+        }
+        if (itemKey == DATA_LEN)
+        {
+            return WRAPPER::CError::RltDataLenInvalid;
+        }
+        else if (itemKey == DATA_STATUS)
+        {
+            return WRAPPER::CError::RltDataStatusInvalid;
+        }
+        else if (itemKey == DATA_TYPE)
+        {
+            return WRAPPER::CError::RltDataTypeInvalid;
+        }
+        else
+        {
+            return WRAPPER::CError::innerError;
+        }
+    }
+    PyArg_Parse(pyValue, "i", &itemVal);
+    return 0;
 }
