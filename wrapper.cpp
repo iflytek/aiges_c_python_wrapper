@@ -4,6 +4,7 @@
 #include <sstream>
 #include "include/aiges/wrapper.h"
 #include "pyCall.h"
+
 void initlog()
 {
     // change log pattern
@@ -78,7 +79,7 @@ int WrapperAPI wrapperFini()
 
 const char *WrapperAPI wrapperError(int errNum)
 {
-    return "inner success";
+    return callWrapperError(errNum);
 }
 
 const char *WrapperAPI wrapperVersion()

@@ -57,3 +57,7 @@ def wrapperRead(handle: str) -> []:
 
 def wrapperDestroy(handle: str) -> int:
     return 0
+
+
+def wrapperError(ret:int)->str:
+    return ""

@@ -3,7 +3,11 @@
 
 namespace WRAPPER{
     enum CError{
-        innerError=-1        
+        innerError=-1,
+        NotImplementError=-1000,
+        NotImplementInit=-1001,
+        NotImplementExec=-1002,
+        NotImplementFini=-1003
     };
 
 };
