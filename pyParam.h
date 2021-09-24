@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "include/python/Python.h"
-
+std::string log_python_exception();
 class PythonParamBuilder{
 public:
     PythonParamBuilder();

@@ -146,8 +146,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                //std::string actualData=*(std::string*)(p->data);
-                PyObject *pyData = PyUnicode_FromString("hello world");
+                std::string actualData=*(std::string*)(p->data);
+                PyObject *pyData = PyUnicode_FromString(actualData);
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyStatus = Py_BuildValue("i", int(p->status));
@@ -259,13 +259,13 @@ std::string log_python_exception()
         PyErr_NormalizeException(&type_obj, &value_obj, 0);
         if (PyString_Check(PyObject_Str(value_obj)))
         {
-            strErrorMsg = PyString_AsString(PyObject_Str(value_obj));
+            strErrorMsg = PyUnicode_FromString(PyObject_Str(value_obj));
         }
 
         if (traceback_obj != NULL)
         {
             strErrorMsg += "Traceback:";
-            PyObject *pModuleName = PyString_FromString("traceback");
+            PyObject *pModuleName = PyUnicode_FromString("traceback");
             PyObject *pTraceModule = PyImport_Import(pModuleName);
             Py_XDECREF(pModuleName);
             if (pTraceModule != NULL)
@@ -282,7 +282,7 @@ std::string log_python_exception()
                             int listSize = PyList_Size(errList);
                             for (int i = 0; i < listSize; ++i)
                             {
-                                strErrorMsg += PyString_AsString(PyList_GetItem(errList, i));
+                                strErrorMsg += PyUnicode_FromString(PyList_GetItem(errList, i));
                             }
                         }
                     }
