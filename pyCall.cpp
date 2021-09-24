@@ -171,13 +171,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
         //构建个性化请求id
         int num = sizeof(psrIds) / sizeof(unsigned int);
+        std::cout<<"个性化请求id个数"<<num<<std::endl;
+        num=*(&psrIds + 1) - psrIds;
+        std::cout<<"个性化请求id个数"<<num<<std::endl;
         if (num != 0)
         {
             PyObject *pyPsrIds = PyTuple_New(num);
             for (int idx=0;idx<num;idx++)
             {
                 PyTuple_SetItem(pyPsrIds, idx, Py_BuildValue("i", psrIds[idx]));
-                spdlog::debug("wraperr exec psrId:{},sid:{}",psrIds[idx],sid);
+                spdlog::debug("wrapper exec psrId:{},sid:{}",psrIds[idx],sid);
             }
             PyTuple_SetItem(pArgsT, 3, pyPsrIds);
         }
