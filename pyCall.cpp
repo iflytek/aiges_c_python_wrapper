@@ -11,7 +11,7 @@ const char *callWrapperError(int ret)
 {
     if (errStrMap.count(ret) != 0)
     {
-        spdlog::debug("wrapper Error,ret:{}.errStr:{}",ret,errStrMap[ret]);
+        spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
         return errStrMap[ret].c_str();
     }
     PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
@@ -29,7 +29,7 @@ const char *callWrapperError(int ret)
     Py_DECREF(pRet);
 
     errStrMap[ret] = errorStr;
-    spdlog::debug("wrapper Error,ret:{}.errStr:{}",ret,errStrMap[ret]);
+    spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
     return errStrMap[ret].c_str();
 }
 
@@ -71,6 +71,12 @@ int callWrapperInit(pConfig cfg)
         PyObject *pRet = PyEval_CallObject(initFunc, pArgsT);
         if (pRet == NULL)
         {
+            std::string errRlt = "";
+            errRlt = log_python_exception();
+            if (errRlt != "")
+            {
+                spdlog::error("wrapperInit error:{}", errRlt);
+            }
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
@@ -147,7 +153,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                
                 PyObject *pyData = PyBytes_FromString((char *)(p->data));
                 PyDict_SetItemString(tmp, "data", pyData);
 
@@ -171,30 +176,36 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         }
 
         //构建个性化请求id
-        int num=psrCnt;
+        int num = psrCnt;
         if (num != 0)
         {
             PyObject *pyPsrIds = PyTuple_New(num);
-            for (int idx=0;idx<num;idx++)
+            for (int idx = 0; idx < num; idx++)
             {
                 PyTuple_SetItem(pyPsrIds, idx, Py_BuildValue("i", psrIds[idx]));
-                spdlog::debug("wrapper exec psrId:{},sid:{}",psrIds[idx],sid);
+                spdlog::debug("wrapper exec psrId:{},sid:{}", psrIds[idx], sid);
             }
             PyTuple_SetItem(pArgsT, 3, pyPsrIds);
         }
         else
         {
-            PyObject *pyPsrIds = PyTuple_New(0); 
-            spdlog::debug("wrapper exec psrIds is empty.sid:{}",sid);
+            PyObject *pyPsrIds = PyTuple_New(0);
+            spdlog::debug("wrapper exec psrIds is empty.sid:{}", sid);
             PyTuple_SetItem(pArgsT, 3, pyPsrIds);
         }
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 4, Py_BuildValue("i", psrCnt));
-        spdlog::debug("wrapper exec psrCnt .val :{}",psrCnt);
+        spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
 
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
         if (pRet == NULL)
         {
+            std::string errRlt = "";
+            errRlt = log_python_exception();
+            if (errRlt != "")
+            {
+                spdlog::error("wrapperExec error:{},sid:{}", errRlt, sid);
+            }
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
@@ -207,6 +218,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         {
             spdlog::error("wrapperExec error:{}, ret:{}", errRlt, ret);
         }
+        return WRAPPER::CError::innerError;
     }
     spdlog::debug("wrapperExec ret.{}", ret);
     return ret;
@@ -223,6 +235,18 @@ int callWrapperFini()
     try
     {
         PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
+        if (pRet == NULL)
+        {
+            std::string errRlt = "";
+            errRlt = log_python_exception();
+            if (errRlt != "")
+            {
+                spdlog::error("wrapperFini error:{}", errRlt);
+            }
+            Py_DECREF(FiniFunc);
+            Py_DECREF(pRet);
+            return WRAPPER::CError::innerError;
+        }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
         Py_DECREF(FiniFunc);
@@ -237,6 +261,7 @@ int callWrapperFini()
         {
             spdlog::error("wrapperFini error:{}, ret:{}", errRlt, ret);
         }
+        return WRAPPER::CError::innerError;
     }
 
     return ret;
