@@ -35,12 +35,11 @@ def wrapperFini() -> int:
     reqDat
     ret:错误码。无错误码时返回0
 '''
-#def wrapperOnceExec(usrTag:str,params:{},reqData:[],psrIds:[],psrCnt:int) -> int:
 def wrapperOnceExec(usrTag:str,params:{},reqData:[],psrIds:[],psrCnt:int) -> int:
     print("hello world")
     print(usrTag)
     print(params)
-    return 0
+    return 100
 
 
 def wrapperCreate(usrTag: str, params: [], psrIds: [], psrCnt: int) -> str:
@@ -60,4 +59,6 @@ def wrapperDestroy(handle: str) -> int:
 
 
 def wrapperError(ret:int)->str:
+    if ret==100:
+        return "this is a tese error return"
     return ""
