@@ -170,10 +170,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         }
 
         //构建个性化请求id
-        int num = sizeof(psrIds) / sizeof(unsigned int);
-        std::cout<<"个性化请求id个数"<<num<<std::endl;
-        num=*(&psrIds + 1) - psrIds;
-        std::cout<<"个性化请求id个数"<<num<<std::endl;
+        int num=psrCnt;
         if (num != 0)
         {
             PyObject *pyPsrIds = PyTuple_New(num);
