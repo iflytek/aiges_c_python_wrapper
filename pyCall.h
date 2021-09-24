@@ -9,6 +9,8 @@
 #include "include/utils/json.hpp"
 #include "include/aiges/type.h"
 #include "pyParam.h"
+
+const char * callWrapperError(int errNum);
 int callWrapperInit(pConfig cfg);
 int callWrapperFini();
 int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
