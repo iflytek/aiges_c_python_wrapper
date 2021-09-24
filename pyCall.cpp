@@ -207,8 +207,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             spdlog::error("wrapperExec error:{}, ret:{}", errRlt, ret);
         }
     }
-    spdlog::debug("wrapperinit ret.{}", ret);
-    return 0;
+    spdlog::debug("wrapperExec ret.{}", ret);
+    return ret;
 }
 
 int callWrapperFini()
