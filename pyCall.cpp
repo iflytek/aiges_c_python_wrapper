@@ -402,6 +402,7 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
         }
     }
     PyArg_Parse(pyValue, "s", &rltStr);
+    std::cout<<rltStr<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rltStr,sid);
     char* actRlt = (char *)malloc(strlen(rltStr.c_str()));
     memcpy(actRlt, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
