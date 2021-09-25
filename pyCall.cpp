@@ -236,7 +236,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         return ret;
                     }
 
-                    PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
                     ret = pyDictStrToChar(tmpDict, DATA_DATA, tmpData->data, sid);
                     if (ret != 0)
                     {
