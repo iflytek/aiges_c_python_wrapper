@@ -235,11 +235,13 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         return ret;
                     }
-
-                    ret = pyDictStrToChar(tmpDict, DATA_DATA, (char*)tmpData->data, sid);
+                    char *dat;
+                    ret = pyDictStrToChar(tmpDict, DATA_DATA,dat, sid);
                     if (ret != 0)
                     {
                         return ret;
+                    }else{
+                        tmpData->data=dat;
                     }
 
                     int integerVal = 0;
