@@ -158,8 +158,11 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                PyObject *pyData = PyBytes_FromString((char *)(p->data));
+                PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data),p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
+
+                PyObject *pyDataLen=Py_BuildValue("i", int(p->len));
+                PyDict_SetItemString(tmp, "len", pyDataLen);  
 
                 PyObject *pyStatus = Py_BuildValue("i", int(p->status));
                 PyDict_SetItemString(tmp, "status", pyStatus);
@@ -401,12 +404,12 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
             return WRAPPER::CError::innerError;
         }
     }
-    PyArg_Parse(pyValue, "s", &rltStr);
-    std::cout<<rltStr<<std::endl;
-    spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rltStr,sid);
-    char* actRlt = (char *)malloc(strlen(rltStr.c_str()));
-    memcpy(actRlt, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
-    rlt_ch=actRlt;
+    PyArg_Parse(pyValue, "s", &rlt_ch);
+    std::cout<<rlt_ch<<std::endl;
+    spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);
+    // char* actRlt = (char *)malloc(strlen(rltStr.c_str()));
+    // memcpy(actRlt, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
+    // rlt_ch=actRlt;
     
     return 0;
 }
