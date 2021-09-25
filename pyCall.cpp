@@ -239,7 +239,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         return ret;
                     }else{
                         std::cout<<tmpRltKey<<std::endl;
-                        tmpData->key=tmpRltKey;
+                        tmpData->key = (char *)malloc(strlen(tmpRltKey));
+	                    memcpy(tmpData->key,tmpRltKey, strlen(tmpRltKey));
                         std::cout<<tmpData->key<<std::endl;
                     }
                     
@@ -262,7 +263,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         return ret;
                     }else{
                         std::cout<<tmpRltData<<std::endl;
-                        tmpData->data=tmpRltData;
+                        char* dataSrc= (char *)malloc(strlen(tmpRltData));
+	                    memcpy(dataSrc,tmpRltData, strlen(tmpRltData));
+                        tmpData->data=dataSrc;
                         std::cout<<(char*)tmpData->data<<std::endl;
                     }
 
