@@ -222,6 +222,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         PyArg_Parse(pRet, "i", &ret);
         if (ret == 0)
         {
+            //读取响应
             int rltSize = PyList_Size(pyRespData);
             if (rltSize != 0)
             {
@@ -417,6 +418,7 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
         }
     }
     PyArg_Parse(pyValue, "s", &rlt_ch);
+    std::cout<<rlt_ch<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);
     // char* actRlt = (char *)malloc(strlen(rltStr.c_str()));
     // memcpy(actRlt, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
