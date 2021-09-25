@@ -240,7 +240,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     }else{
                         std::cout<<tmpRltKey<<std::endl;
                         memcpy(tmpData->key, tmpRltKey, strlen(tmpRltKey));
-                        std::cout<<tempData->key<<std::endl;
+                        std::cout<<tmpData->key<<std::endl;
                     }
                     
 
@@ -263,7 +263,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     }else{
                         std::cout<<tmpRltData<<std::endl;
                         memcpy(tmpData->data, tmpRltData,integerVal);
-                        std::cout<<(char*)tempData->data<<std::endl;
+                        std::cout<<(char*)tmpData->data<<std::endl;
                     }
 
                     ret = pyDictIntToInt(tmpDict, DATA_STATUS, integerVal, sid);
