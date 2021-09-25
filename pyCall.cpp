@@ -390,7 +390,7 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
         errRlt = log_python_exception();
         if (errRlt != "")
         {
-            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret, sid);
+            spdlog::error("wrapperExec error:{}, sid:{}", errRlt, sid);
         }
         if (itemKey == DATA_KEY)
         {
@@ -418,7 +418,7 @@ int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string
         errRlt = log_python_exception();
         if (errRlt != "")
         {
-            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret, sid);
+            spdlog::error("wrapperExec error:{},sid:{}", errRlt, sid);
         }
         if (itemKey == DATA_LEN)
         {
