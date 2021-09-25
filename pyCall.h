@@ -11,6 +11,7 @@
 #include "pyParam.h"
 
 std::string DATA_KEY="key";
+std::string DATA_DATA="data";
 std::string DATA_LEN="len";
 std::string DATA_STATUS="status";
 std::string DATA_TYPE="type";

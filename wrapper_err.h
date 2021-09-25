@@ -10,9 +10,10 @@ namespace WRAPPER{
         NotImplementFini=-1003,
 
         RltDataKeyInvalid=-1010,
-        RltDataLenInvalid=-1011,
-        RltDataStatusInvalid=-1012,
-        RltDataTypeInvalid=-1013,
+        RltDataDataInvalid=-1011,
+        RltDataLenInvalid=-1012,
+        RltDataStatusInvalid=-1013,
+        RltDataTypeInvalid=-1014,
     };
 
 };

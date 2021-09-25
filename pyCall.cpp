@@ -40,6 +40,7 @@ void initErrorStrMap()
     errStrMap[WRAPPER::CError::NotImplementFini] = "wrapper fini need to implement";
 
     errStrMap[WRAPPER::CError::RltDataKeyInvalid] = "respdata need key item";
+    errStrMap[WRAPPER::CError::RltDataDataInvalid] = "respdata need data item";
     errStrMap[WRAPPER::CError::RltDataLenInvalid] = "respdata need len item";
     errStrMap[WRAPPER::CError::RltDataStatusInvalid] = "respdata need status item";
     errStrMap[WRAPPER::CError::RltDataTypeInvalid] = "respdata need type item";
@@ -235,6 +236,13 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         return ret;
                     }
 
+                    PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
+                    ret = pyDictStrToChar(tmpDict, DATA_DATA, tmpData->data, sid);
+                    if (ret != 0)
+                    {
+                        return ret;
+                    }
+
                     int integerVal = 0;
                     ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
                     if (ret != 0)
@@ -399,6 +407,8 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
         if (itemKey == DATA_KEY)
         {
             return WRAPPER::CError::RltDataKeyInvalid;
+        }else if(itemKey==DATA_DATA){
+            return WRAPPER::CError::RltDataDataInvalid;
         }
         else
         {
