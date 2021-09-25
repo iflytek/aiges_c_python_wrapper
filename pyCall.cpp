@@ -221,38 +221,47 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             int rltSize = PyList_Size(pyRespData);
             if (rltSize != 0)
             {
-                pDataList rltPtr = respData;
-                for (int idx = 0; idx < rltSzie; idx++)
+                for (int idx = 0; idx < rltSize; idx++)
                 {
                     pDataList tmpData = new (DataList);
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
-                    ret=pyDictStrToChar(tmpDict,DATA_KEY,tmpData->key,sid);
-                    if(ret!=0){
+                    ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpData->key, sid);
+                    if (ret != 0)
+                    {
                         return ret;
                     }
 
-                    int integerVal=0;
-                    ret=pyDictIntToInt(tmpDict,DATA_LEN,integerVal,sid);
-                    if(ret!=0){
+                    int integerVal = 0;
+                    ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
+                    if (ret != 0)
+                    {
                         return ret;
-                    }else{
-                        tmpData->len=integerVal;
+                    }
+                    else
+                    {
+                        tmpData->len = integerVal;
                     }
 
-                    ret=pyDictIntToInt(tmpDict,DATA_STATUS,integerVal,sid);
-                    if(ret!=0){
+                    ret = pyDictIntToInt(tmpDict, DATA_STATUS, integerVal, sid);
+                    if (ret != 0)
+                    {
                         return ret;
-                    }else{
-                        tmpData->status=DataStatus(integerVal);
                     }
-                    ret=pyDictIntToInt(tmpDict,DATA_TYPE,integerVal,sid);
-                    if(ret!=0){
+                    else
+                    {
+                        tmpData->status = DataStatus(integerVal);
+                    }
+                    ret = pyDictIntToInt(tmpDict, DATA_TYPE, integerVal, sid);
+                    if (ret != 0)
+                    {
                         return ret;
-                    }else{
-                        tmpData->type=DataType(integerVal);
                     }
-                    *respData=tmpData;
+                    else
+                    {
+                        tmpData->type = DataType(integerVal);
+                    }
+                    *respData = tmpData;
                 }
             }
         }
@@ -399,7 +408,7 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
     return 0;
 }
 
-int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, sid::string sid)
+int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string sid)
 {
 
     PyObject *pyValue = PyDict_GetItemString(obj, itemKey.c_str());
