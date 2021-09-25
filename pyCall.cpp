@@ -231,19 +231,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     pDataList tmpData = new (DataList);
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
-                    ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpData->key, sid);
-                    if (ret != 0)
-                    {
-                        return ret;
-                    }
-                    char *dat;
-                    ret = pyDictStrToChar(tmpDict, DATA_DATA,dat, sid);
+
+                    char *tmpRltKey;
+                    ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpRltKey, sid);
                     if (ret != 0)
                     {
                         return ret;
                     }else{
-                        tmpData->data=dat;
+                        memcpy(tmpData->key, tmpRltKey, strlen(tmpRltKey));
                     }
+                    
 
                     int integerVal = 0;
                     ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
@@ -254,6 +251,15 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     else
                     {
                         tmpData->len = integerVal;
+                    }
+
+                    char *tmpRltData;
+                    ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData, sid);
+                    if (ret != 0)
+                    {
+                        return ret;
+                    }else{
+                        memcpy(tmpData->data, tmpRltData,integerVal);
                     }
 
                     ret = pyDictIntToInt(tmpDict, DATA_STATUS, integerVal, sid);
