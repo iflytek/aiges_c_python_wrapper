@@ -265,6 +265,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         tmpData->type = DataType(integerVal);
                     }
                     *respData = tmpData;
+                    spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}",tmpData->key,tmpData->len,tmpData->type,tmpData->status,sid);
                 }
             }
         }
@@ -405,12 +406,10 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, char *rlt_ch, std::strin
         }
     }
     PyArg_Parse(pyValue, "s", &rlt_ch);
-    std::cout<<rlt_ch<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);
     // char* actRlt = (char *)malloc(strlen(rltStr.c_str()));
     // memcpy(actRlt, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
-    // rlt_ch=actRlt;
-    
+    // rlt_ch=actRlt;    
     return 0;
 }
 
