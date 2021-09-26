@@ -444,8 +444,8 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int 
             return WRAPPER::CError::innerError;
         }
     }
-    PyObject *utf8string;
-    utf8string = PyUnicode_AsUTF8String (pyValue);
+    PyObject* repr = PyObject_Repr(pyValue);
+    PyObject *utf8string= PyUnicode_AsUTF8String (repr);
     if (itemKey==DATA_DATA){
         //以字节为单位
         rlt_ch=PyBytes_AsString (utf8string);
