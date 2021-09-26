@@ -226,6 +226,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             int rltSize = PyList_Size(pyRespData);
             if (rltSize != 0)
             {
+                pdataList headPtr;
+                pdataList prePtr;
+                pdataList curPtr;
                 for (int idx = 0; idx < rltSize; idx++)
                 {
                     pDataList tmpData = new (DataList);
@@ -287,9 +290,19 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         tmpData->type = DataType(integerVal);
                     }
-                    *respData = tmpData;
+                    tmpData->next=NULL;
+                    if (idx==0){
+                        headPtr=tmpData;
+                        prePtr=tmpData;
+                        curPtr=tmpData;
+                    }else{
+                        curPtr=tmpData;
+                        prePtr->next=curPtr;
+                        prePtr=curPtr;
+                    }
                     spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}",tmpData->key,tmpData->len,tmpData->type,tmpData->status,sid);
                 }
+                *respData=headPtr;
             }
         }
     }
