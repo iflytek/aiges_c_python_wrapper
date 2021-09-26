@@ -256,7 +256,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     }
 
                     std::string tmpRltData;
-                    ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData, sid);
+                    ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData,integerVal, sid);
                     if (ret != 0)
                     {
                         return ret;
