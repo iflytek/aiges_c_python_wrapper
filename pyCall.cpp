@@ -159,7 +159,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data),p->len);
+                PyObject *pyData = PyBytes_FromString
+                ((char *)(p->data),p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyDataLen=Py_BuildValue("i", int(p->len));
@@ -431,7 +432,7 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int 
         }
     }
     if (itemKey==DATA_DATA){
-        rlt_ch=PyUnicode_AsUTF8AndSize(pyValue,dataLen);
+        rlt_ch=PyUnicode_AsUTF8AndSize(pyValue,(unsigned int)dataLen);
     }else{
         rlt_ch=PyUnicode_AsUTF8(pyValue);
     }
