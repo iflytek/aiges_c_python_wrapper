@@ -238,6 +238,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         return ret;
                     }else{
+                        std::cout<<"转换后的字符串"<<tmpRltKey<<std::endl;
                         tmpData->key = (char *)malloc(strlen(tmpRltKey.c_str()));
 	                    memcpy(tmpData->key,(char*)tmpRltKey.c_str(), strlen(tmpRltKey.c_str()));
                         std::cout<<tmpData->key<<std::endl;
@@ -261,6 +262,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         return ret;
                     }else{
+                        std::cout<<"转换后的字符串"<<tmpRltData<<std::endl;
                         char* dataSrc= (char *)malloc(integerVal);
 	                    memcpy(dataSrc,(char*)tmpRltData.c_str(), integerVal);
                         tmpData->data=(void*)dataSrc;
