@@ -226,9 +226,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             int rltSize = PyList_Size(pyRespData);
             if (rltSize != 0)
             {
-                pdataList headPtr;
-                pdataList prePtr;
-                pdataList curPtr;
+                pDataList headPtr;
+                pDataList prePtr;
+                pDataList curPtr;
                 for (int idx = 0; idx < rltSize; idx++)
                 {
                     pDataList tmpData = new (DataList);
