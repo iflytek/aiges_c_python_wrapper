@@ -430,11 +430,13 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int 
             return WRAPPER::CError::innerError;
         }
     }
+    PyObject *utf8string;
+    utf8string = PyUnicode_AsUTF8String (pyValue);
     if (itemKey==DATA_DATA){
         //以字节为单位
-        rlt_ch=PyUnicode_AsUTF8(pyValue);
+        rlt_ch=PyBytes_AsString (utf8string);
     }else{
-        rlt_ch=PyUnicode_AsUTF8(pyValue);
+        rlt_ch=PyBytes_AsString (utf8string);
     }
     std::cout<<rlt_ch<<" length"<<rlt_ch.length()<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);   
