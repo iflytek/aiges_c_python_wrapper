@@ -429,13 +429,16 @@ char * pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& 
         }
         if (itemKey == DATA_KEY)
         {
-            return WRAPPER::CError::RltDataKeyInvalid;
+            ret=WRAPPER::CError::RltDataKeyInvalid;
+            return NULL;
         }else if(itemKey==DATA_DATA){
-            return WRAPPER::CError::RltDataDataInvalid;
+            ret=WRAPPER::CError::RltDataDataInvalid;
+            return NULL;
         }
         else
         {
-            return WRAPPER::CError::innerError;
+            ret= WRAPPER::CError::innerError;
+            return NULL;
         }
     }
     PyObject *utf8string= PyUnicode_AsUTF8String (pyValue);
@@ -447,7 +450,7 @@ char * pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& 
     }
     std::cout<<rlt_ch<<" length"<<strlen(rlt_ch)<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);   
-    return 0;
+    return rlt_ch;
 }
 
 int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string sid)
