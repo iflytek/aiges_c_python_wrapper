@@ -235,16 +235,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
 
-                    std::string tmpRltKey;
-                    ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpRltKey,0, sid);
+                    char *tmpRltKey=NULL;
+                    ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpRltKey,sid);
                     if (ret != 0)
                     {
                         return ret;
                     }else{
-                        boost::trim(tmpRltKey);
-                        std::cout<<"转换后的字符串"<<tmpRltKey<<"长度"<<strlen(tmpRltKey.c_str())<<std::endl;
-                        tmpData->key = (char *)malloc(strlen(tmpRltKey.c_str()));
-	                    memcpy(tmpData->key,(char*)tmpRltKey.c_str(), strlen(tmpRltKey.c_str()));
+                        std::cout<<"转换后的字符串"<<tmpRltKey<<"长度"<<strlen(tmpRltKey)<<std::endl;
+                        tmpData->key =tmpRltKey;
                         std::cout<<std::string(tmpData->key)<<strlen(tmpData->key)<<std::endl;
                     }
                     
@@ -260,16 +258,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         tmpData->len = integerVal;
                     }
 
-                    std::string tmpRltData;
-                    ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData,integerVal, sid);
+                    char* tmpRltData=NULL;
+                    ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData, sid);
                     if (ret != 0)
                     {
                         return ret;
                     }else{
                         std::cout<<"转换后的字符串"<<tmpRltData<<std::endl;
-                        char* dataSrc= (char *)malloc(integerVal);
-	                    memcpy(dataSrc,(char*)tmpRltData.c_str(), integerVal);
-                        tmpData->data=(void*)dataSrc;
+                        tmpData->data=(void*)tmpRltData;
                         std::cout<<(char*)tmpData->data<<std::endl;
                     }
 
@@ -420,7 +416,7 @@ std::string log_python_exception()
     return strErrorMsg;
 }
 
-int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int dataLen, std::string sid)
+int pyDictStrToChar(PyObject *obj, std::string itemKey,char* rlt_ch, std::string sid)
 {
     std::string rltStr = "";
 
@@ -444,15 +440,14 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int 
             return WRAPPER::CError::innerError;
         }
     }
-    PyObject* repr = PyObject_Repr(pyValue);
-    PyObject *utf8string= PyUnicode_AsUTF8String (repr);
+    PyObject *utf8string= PyUnicode_AsUTF8String (pyValue);
     if (itemKey==DATA_DATA){
         //以字节为单位
-        rlt_ch=PyBytes_AsString (utf8string);
+        rlt_ch=strdup(PyBytes_AsString (utf8string));
     }else{
-        rlt_ch=PyBytes_AsString (utf8string);
+        rlt_ch=strdup(PyBytes_AsString (utf8string));
     }
-    std::cout<<rlt_ch<<" length"<<rlt_ch.length()<<std::endl;
+    std::cout<<rlt_ch<<" length"<<strlen(rlt_ch)<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);   
     return 0;
 }

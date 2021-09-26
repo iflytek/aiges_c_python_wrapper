@@ -10,14 +10,14 @@
 #include "include/utils/json.hpp"
 #include "include/aiges/type.h"
 #include "pyParam.h"
-
+#include<string.h>
 std::string DATA_KEY="key";
 std::string DATA_DATA="data";
 std::string DATA_LEN="len";
 std::string DATA_STATUS="status";
 std::string DATA_TYPE="type";
 
-int pyDictStrToChar(PyObject *obj, std::string itemKey,std::string &rlt_ch,int dataLen, std::string sid);
+int pyDictStrToChar(PyObject *obj, std::string itemKey,char *rlt_ch, std::string sid);
 int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string sid);
 const char * callWrapperError(int errNum);
 int callWrapperInit(pConfig cfg);
