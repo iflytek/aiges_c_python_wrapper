@@ -286,6 +286,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         tmpData->type = DataType(integerVal);
                     }
                     tmpData->next=NULL;
+                    tmpData->desc=NULL;
                     if (idx==0){
                         headPtr=tmpData;
                         prePtr=tmpData;
