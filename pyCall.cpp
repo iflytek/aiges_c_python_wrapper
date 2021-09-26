@@ -232,15 +232,15 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
 
-                    std::string tmpRltKey="";
+                    char *tmpRltKey;
                     ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpRltKey, sid);
                     if (ret != 0)
                     {
                         return ret;
                     }else{
-                        std::cout<<tmpRltKey<<":"<<strlen(tmpRltKey.c_str())<<std::endl;
-                        tmpData->key = (char *)malloc(strlen(tmpRltKey.c_str()));
-	                    memcpy(tmpData->key,(char *)tmpRltKey.c_str(), strlen(tmpRltKey.c_str()));
+                        std::cout<<tmpRltKey<<":"<<strlen(tmpRltKey)<<std::endl;
+                        tmpData->key = (char *)malloc(strlen(tmpRltKey));
+	                    memcpy(tmpData->key,tmpRltKey, strlen(tmpRltKey));
                         std::cout<<tmpData->key<<std::endl;
                     }
                     
@@ -256,15 +256,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         tmpData->len = integerVal;
                     }
 
-                    std::string tmpRltData="";
+                    char* tmpRltData;
                     ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData, sid);
                     if (ret != 0)
                     {
                         return ret;
                     }else{
-                        std::cout<<tmpRltData<<" :"<<strlen(tmpRltData.c_str())<<std::endl;
-                        char* dataSrc= (char *)malloc(strlen(tmpRltData.c_str()));
-	                    memcpy(dataSrc,(char *)tmpRltData.c_str(), strlen(tmpRltData.c_str()));
+                        std::cout<<"获取的数据长:"<<integerVal<<std::endl;
+                        std::cout<<tmpRltData<<" :"<<strlen(tmpRltData)<<std::endl;
+                        char* dataSrc= (char *)malloc(integerVal);
+	                    memcpy(dataSrc,tmpRltData, integerVal);
                         tmpData->data=dataSrc;
                         std::cout<<(char*)tmpData->data<<std::endl;
                     }
@@ -406,7 +407,7 @@ std::string log_python_exception()
     return strErrorMsg;
 }
 
-int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string & rlt_ch, std::string sid)
+int pyDictStrToChar(PyObject *obj, std::string itemKey, char* rlt_ch, std::string sid)
 {
     std::string rltStr = "";
 
@@ -431,7 +432,7 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string & rlt_ch, st
         }
     }
     PyArg_Parse(pyValue, "s", &rlt_ch);
-    std::cout<<rlt_ch<<std::endl;
+    std::cout<<rlt_ch<<" length"<<strlen(rlt_ch)<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);
     // char* actRlt = (char *)malloc(strlen(rltStr.c_str()));
     // memcpy(actRlt, (char *)rltStr.c_str(), strlen(rltStr.c_str()));
