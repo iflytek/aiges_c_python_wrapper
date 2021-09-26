@@ -235,8 +235,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
 
-                    char *tmpRltKey=NULL;
-                    ret = pyDictStrToChar(tmpDict, DATA_KEY, tmpRltKey,sid);
+                    char *tmpRltKey=pyDictStrToChar(tmpDict, DATA_KEY, tmpRltKey,sid,ret);
                     if (ret != 0)
                     {
                         return ret;
@@ -258,8 +257,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         tmpData->len = integerVal;
                     }
 
-                    char* tmpRltData=NULL;
-                    ret = pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData, sid);
+                    char* tmpRltData=pyDictStrToChar(tmpDict, DATA_DATA,tmpRltData, sid,ret);
                     if (ret != 0)
                     {
                         return ret;
@@ -416,10 +414,10 @@ std::string log_python_exception()
     return strErrorMsg;
 }
 
-int pyDictStrToChar(PyObject *obj, std::string itemKey,char* rlt_ch, std::string sid)
+char * pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& ret)
 {
     std::string rltStr = "";
-
+    char *rlt_ch=NULL;
     PyObject *pyValue = PyDict_GetItemString(obj, itemKey.c_str());
     if (pyValue == NULL)
     {

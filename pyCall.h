@@ -17,7 +17,7 @@ std::string DATA_LEN="len";
 std::string DATA_STATUS="status";
 std::string DATA_TYPE="type";
 
-int pyDictStrToChar(PyObject *obj, std::string itemKey,char *rlt_ch, std::string sid);
+char * pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& ret);
 int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string sid);
 const char * callWrapperError(int errNum);
 int callWrapperInit(pConfig cfg);
