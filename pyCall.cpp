@@ -432,7 +432,8 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int 
         }
     }
     if (itemKey==DATA_DATA){
-        rlt_ch=PyUnicode_AsUTF8AndSize(pyValue,(unsigned int)dataLen);
+        //以字节为单位
+        rlt_ch=PyUnicode_AsUTF8(pyValue);
     }else{
         rlt_ch=PyUnicode_AsUTF8(pyValue);
     }
