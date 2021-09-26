@@ -3,6 +3,7 @@
 // log
 #include "include/spdlog/include/spdlog/spdlog.h"
 #include "include/spdlog/include/spdlog/sinks/rotating_file_sink.h"
+#include "include/boost/algorithm/string.hpp"
 
 // utils
 #include "include/utils/utils.h"
