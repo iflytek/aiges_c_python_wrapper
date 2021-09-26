@@ -241,6 +241,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         return ret;
                     }else{
+                        std::cout<<tmpRltKey.size()<<std::endl;
+                        std::cout<<tmpRltKey.length()<<std::endl;
+                        
                         std::cout<<"转换后的字符串"<<tmpRltKey<<"长度"<<strlen(tmpRltKey.c_str())<<std::endl;
                         tmpData->key = (char *)malloc(strlen(tmpRltKey.c_str()));
 	                    memcpy(tmpData->key,(char*)tmpRltKey.c_str(), strlen(tmpRltKey.c_str()));
