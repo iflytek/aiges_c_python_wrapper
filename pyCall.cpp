@@ -430,12 +430,10 @@ int pyDictStrToChar(PyObject *obj, std::string itemKey, std::string &rlt_ch,int 
             return WRAPPER::CError::innerError;
         }
     }
-    char *rlt;
-    PyArg_Parse(pyValue, "s", &rlt);
     if (itemKey==DATA_DATA){
-        rlt_ch=std::string(rlt,rlt+dataLen);
+        rlt_ch=PyUnicode_AsUTF8AndSize(pyValue,dataLen);
     }else{
-        rlt_ch=std::string(rlt,rlt+strlen(rlt));
+        rlt_ch=PyUnicode_AsUTF8(pyValue);
     }
     std::cout<<rlt_ch<<" length"<<rlt_ch.length()<<std::endl;
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);   
