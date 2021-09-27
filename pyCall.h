@@ -5,6 +5,7 @@
 #include "include/spdlog/include/spdlog/sinks/rotating_file_sink.h"
 #include "include/boost/algorithm/string.hpp"
 
+#include <dlfcn.h>
 // utils
 #include "include/utils/utils.h"
 #include "include/utils/json.hpp"

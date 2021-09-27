@@ -67,7 +67,7 @@ int WrapperAPI wrapperInit(pConfig cfg)
     }
 
     setlog(loglvl);
-
+    dlopen("libpython3.7m.so.1.0", RTLD_LAZY | RTLD_GLOBAL);
     return callWrapperInit(cfg);
 }
 
