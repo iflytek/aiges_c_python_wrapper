@@ -23,7 +23,9 @@ const char *callWrapperError(int ret)
     PyObject *pArgsT = PyTuple_New(1);
     PyTuple_SetItem(pArgsT, 0, Py_BuildValue("i", ret));
 
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
+    PyGILState_Release(gstate);
     std::string errorStr = PyUnicode_AsUTF8(pRet);
     Py_DECREF(errFunc);
     Py_DECREF(pRet);
@@ -74,7 +76,10 @@ int callWrapperInit(pConfig cfg)
     try
     {
         PyTuple_SetItem(pArgsT, 0, pArgsD);
+        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(initFunc, pArgsT);
+        PyGILState_Release(gstate);
+
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -207,8 +212,10 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
-
+        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
+        PyGILState_Release(gstate);
+
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -332,8 +339,10 @@ int callWrapperFini()
         return WRAPPER::CError::NotImplementFini;
     }
     try
-    {
+    {   
+        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
+        PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";

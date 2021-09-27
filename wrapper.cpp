@@ -67,6 +67,7 @@ int WrapperAPI wrapperInit(pConfig cfg)
     }
 
     setlog(loglvl);
+    //加下一行的原因https://stackoverflow.com/questions/49784583/numpy-import-fails-on-multiarray-extension-library-when-called-from-embedded-pyt
     dlopen("libpython3.7m.so.1.0", RTLD_LAZY | RTLD_GLOBAL);
     return callWrapperInit(cfg);
 }
