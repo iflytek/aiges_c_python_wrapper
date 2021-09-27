@@ -491,7 +491,8 @@ pDescList pyDictToDesc(PyObject* obj,std::string descKey,std::string sid,int& re
                     PyObject *utf8string= PyUnicode_AsUTF8String (PyList_GetItem(descKeys,idx));
                     
                     tmpDesc->key=strdup(PyBytes_AsString (utf8string));
-                    tmpDesc->value=pyDictStrToChar(obj,std::string(tmpDesc->key),sid,ret);
+                    std::string tmpKey=tmpDesc->key;
+                    tmpDesc->value=pyDictStrToChar(obj,tmpKey,sid,ret);
                     if (ret!=0){
                         return NULL;
                     }
