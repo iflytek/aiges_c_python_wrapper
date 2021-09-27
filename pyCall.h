@@ -16,9 +16,13 @@ std::string DATA_DATA="data";
 std::string DATA_LEN="len";
 std::string DATA_STATUS="status";
 std::string DATA_TYPE="type";
-
+std::string DATA_DESC="desc";
 char* pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& ret);
+
+pDescList pyDictToDesc(PyObject* obj,std::string itemKey,std::string sid,int& ret);
+
 int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string sid);
+
 const char * callWrapperError(int errNum);
 int callWrapperInit(pConfig cfg);
 int callWrapperFini();
