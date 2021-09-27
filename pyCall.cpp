@@ -461,8 +461,8 @@ char* pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& r
 pDescList pyDictToDesc(PyObject* obj,std::string descKey,std::string sid,int& ret){
     std::string rltStr = "";
     pDescList headPtr=NULL;
-    PyObject *pyValue = PyDict_GetItem(obj,Py_BuildValue("s",descKey.c_str()));
-    if(pyValue==NULL){
+    PyObject *pyDesc = PyDict_GetItem(obj,Py_BuildValue("s",descKey.c_str()));
+    if(pyDesc==NULL){
         spdlog::debug("pyDictToDesc ,desc is empty,sid:{}",sid);
         return NULL;
     }else{
@@ -474,25 +474,25 @@ pDescList pyDictToDesc(PyObject* obj,std::string descKey,std::string sid,int& re
             ret=WRAPPER::CError::innerError;
             return NULL;
         }else{
-            int descDictSzie=PyDict_Size(obj);
-            if(descDictSzie==0){
+            int descDictSize=PyDict_Size(pyDesc);
+            if(descDictSize==0){
                 spdlog::info("pyDictToDesc desc dict is empty,sid:{}",sid);
                 return NULL;
             }else{
-              PyObject* descKeys=PyDict_Keys(obj);
+              PyObject* descKeys=PyDict_Keys(pyDesc);
               if(descKeys==NULL){
                 ret=WRAPPER::CError::innerError;
                 return NULL;
               }else{
                 pDescList prePtr;
                 pDescList curPtr;
-                for(int idx=0;idx<descDictSzie;idx++){
+                for(int idx=0;idx<descDictSize;idx++){
                     pDescList tmpDesc=new(ParamList);
                     PyObject *utf8string= PyUnicode_AsUTF8String (PyList_GetItem(descKeys,idx));
                     
                     tmpDesc->key=strdup(PyBytes_AsString (utf8string));
                     std::string tmpKey=tmpDesc->key;
-                    tmpDesc->value=pyDictStrToChar(obj,tmpKey,sid,ret);
+                    tmpDesc->value=pyDictStrToChar(pyDesc,tmpKey,sid,ret);
                     if (ret!=0){
                         return NULL;
                     }
