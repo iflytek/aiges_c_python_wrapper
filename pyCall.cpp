@@ -102,7 +102,7 @@ int callWrapperInit(pConfig cfg)
         }
     }
     spdlog::debug("wrapperinit ret:{}", ret);
-    std::cout << "finish init" << std::endl;
+    std::cout << " init success"<< std::endl;
     return ret;
 }
 
@@ -159,11 +159,11 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data),p->len);
+                PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data), p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
 
-                PyObject *pyDataLen=Py_BuildValue("i", int(p->len));
-                PyDict_SetItemString(tmp, "len", pyDataLen);  
+                PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
+                PyDict_SetItemString(tmp, "len", pyDataLen);
 
                 PyObject *pyStatus = Py_BuildValue("i", int(p->status));
                 PyDict_SetItemString(tmp, "status", pyStatus);
@@ -235,16 +235,15 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
 
-                    char *tmpRltKey=pyDictStrToChar(tmpDict, DATA_KEY,sid,ret);
+                    char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
                     if (ret != 0)
                     {
                         return ret;
-                    }else{
-                        std::cout<<"转换后的字符串"<<tmpRltKey<<"长度"<<strlen(tmpRltKey)<<std::endl;
-                        tmpData->key =tmpRltKey;
-                        std::cout<<std::string(tmpData->key)<<strlen(tmpData->key)<<std::endl;
                     }
-                    
+                    else
+                    {
+                        tmpData->key = tmpRltKey;
+                    }
 
                     int integerVal = 0;
                     ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
@@ -257,14 +256,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         tmpData->len = integerVal;
                     }
 
-                    char* tmpRltData=pyDictStrToChar(tmpDict, DATA_DATA, sid,ret);
+                    char *tmpRltData = pyDictStrToChar(tmpDict, DATA_DATA, sid, ret);
                     if (ret != 0)
                     {
                         return ret;
-                    }else{
-                        std::cout<<"转换后的字符串"<<tmpRltData<<std::endl;
-                        tmpData->data=(void*)tmpRltData;
-                        std::cout<<(char*)tmpData->data<<std::endl;
+                    }
+                    else
+                    {
+                        tmpData->data = (void *)tmpRltData;
                     }
 
                     ret = pyDictIntToInt(tmpDict, DATA_STATUS, integerVal, sid);
@@ -285,24 +284,28 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         tmpData->type = DataType(integerVal);
                     }
-                    tmpData->next=NULL;
+                    tmpData->next = NULL;
                     //检查下是否需要desc吧
-                    tmpData->desc=pyDictToDesc(tmpDict,DATA_DESC,sid,ret);       
-                    if(ret!=0){
+                    tmpData->desc = pyDictToDesc(tmpDict, DATA_DESC, sid, ret);
+                    if (ret != 0)
+                    {
                         return ret;
-                    }         
-                    if (idx==0){
-                        headPtr=tmpData;
-                        prePtr=tmpData;
-                        curPtr=tmpData;
-                    }else{
-                        curPtr=tmpData;
-                        prePtr->next=curPtr;
-                        prePtr=curPtr;
                     }
-                    spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}",tmpData->key,tmpData->len,tmpData->type,tmpData->status,sid);
+                    if (idx == 0)
+                    {
+                        headPtr = tmpData;
+                        prePtr = tmpData;
+                        curPtr = tmpData;
+                    }
+                    else
+                    {
+                        curPtr = tmpData;
+                        prePtr->next = curPtr;
+                        prePtr = curPtr;
+                    }
+                    spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}", tmpData->key, tmpData->len, tmpData->type, tmpData->status, sid);
                 }
-                *respData=headPtr;
+                *respData = headPtr;
             }
         }
     }
@@ -419,10 +422,10 @@ std::string log_python_exception()
     return strErrorMsg;
 }
 
-char* pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& ret)
+char *pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid, int &ret)
 {
     std::string rltStr = "";
-    char *rlt_ch=NULL;
+    char *rlt_ch = NULL;
     PyObject *pyValue = PyDict_GetItemString(obj, itemKey.c_str());
     if (pyValue == NULL)
     {
@@ -434,86 +437,106 @@ char* pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid,int& r
         }
         if (itemKey == DATA_KEY)
         {
-            ret=WRAPPER::CError::RltDataKeyInvalid;
+            ret = WRAPPER::CError::RltDataKeyInvalid;
             return NULL;
-        }else if(itemKey==DATA_DATA){
-            ret=WRAPPER::CError::RltDataDataInvalid;
+        }
+        else if (itemKey == DATA_DATA)
+        {
+            ret = WRAPPER::CError::RltDataDataInvalid;
             return NULL;
         }
         else
         {
-            ret= WRAPPER::CError::innerError;
+            ret = WRAPPER::CError::innerError;
             return NULL;
         }
     }
-    PyObject *utf8string= PyUnicode_AsUTF8String (pyValue);
-    if (itemKey==DATA_DATA){
+    PyObject *utf8string = PyUnicode_AsUTF8String(pyValue);
+    if (itemKey == DATA_DATA)
+    {
         //以字节为单位
-        rlt_ch=strdup(PyBytes_AsString (utf8string));
-    }else{
-        rlt_ch=strdup(PyBytes_AsString (utf8string));
+        rlt_ch = strdup(PyBytes_AsString(utf8string));
     }
-    std::cout<<rlt_ch<<" length"<<strlen(rlt_ch)<<std::endl;
-    spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}",itemKey,rlt_ch,sid);   
+    else
+    {
+        rlt_ch = strdup(PyBytes_AsString(utf8string));
+    }
+    spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}", itemKey, rlt_ch, sid);
     return rlt_ch;
 }
 
-pDescList pyDictToDesc(PyObject* obj,std::string descKey,std::string sid,int& ret){
+pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int &ret)
+{
     std::string rltStr = "";
-    pDescList headPtr=NULL;
-    PyObject *pyDesc = PyDict_GetItem(obj,Py_BuildValue("s",descKey.c_str()));
-    if(pyDesc==NULL){
-        spdlog::debug("pyDictToDesc ,desc is empty,sid:{}",sid);
+    pDescList headPtr = NULL;
+    PyObject *pyDesc = PyDict_GetItem(obj, Py_BuildValue("s", descKey.c_str()));
+    if (pyDesc == NULL)
+    {
+        spdlog::debug("pyDictToDesc ,desc is empty,sid:{}", sid);
         return NULL;
-    }else{
+    }
+    else
+    {
         std::string errRlt = "";
         errRlt = log_python_exception();
         if (errRlt != "")
         {
             spdlog::error("wrapperExec pyDictToDesc error:{}, sid:{}", errRlt, sid);
-            ret=WRAPPER::CError::innerError;
+            ret = WRAPPER::CError::innerError;
             return NULL;
-        }else{
-            int descDictSize=PyDict_Size(pyDesc);
-            if(descDictSize==0){
-                spdlog::info("pyDictToDesc desc dict is empty,sid:{}",sid);
+        }
+        else
+        {
+            int descDictSize = PyDict_Size(pyDesc);
+            if (descDictSize == 0)
+            {
+                spdlog::info("pyDictToDesc desc dict is empty,sid:{}", sid);
                 return NULL;
-            }else{
-              PyObject* descKeys=PyDict_Keys(pyDesc);
-              if(descKeys==NULL){
-                ret=WRAPPER::CError::innerError;
-                return NULL;
-              }else{
-                pDescList prePtr;
-                pDescList curPtr;
-                for(int idx=0;idx<descDictSize;idx++){
-                    pDescList tmpDesc=new(ParamList);
-                    PyObject *utf8string= PyUnicode_AsUTF8String (PyList_GetItem(descKeys,idx));
-                    
-                    tmpDesc->key=strdup(PyBytes_AsString (utf8string));
-                    std::string tmpKey=tmpDesc->key;
-                    tmpDesc->value=pyDictStrToChar(pyDesc,tmpKey,sid,ret);
-                    if (ret!=0){
-                        return NULL;
-                    }
-                    tmpDesc->vlen=strlen(tmpDesc->value);
-                    tmpDesc->next=NULL;
-                    if (idx==0){
-                        headPtr=tmpDesc;
-                        prePtr=tmpDesc;
-                        curPtr=tmpDesc;
-                    }else{
-                        curPtr=tmpDesc;
-                        prePtr->next=curPtr;
-                        prePtr=curPtr;
-                    }
+            }
+            else
+            {
+                PyObject *descKeys = PyDict_Keys(pyDesc);
+                if (descKeys == NULL)
+                {
+                    ret = WRAPPER::CError::innerError;
+                    return NULL;
                 }
-                return headPtr;
-              }
+                else
+                {
+                    pDescList prePtr;
+                    pDescList curPtr;
+                    for (int idx = 0; idx < descDictSize; idx++)
+                    {
+                        pDescList tmpDesc = new (ParamList);
+                        PyObject *utf8string = PyUnicode_AsUTF8String(PyList_GetItem(descKeys, idx));
+
+                        tmpDesc->key = strdup(PyBytes_AsString(utf8string));
+                        std::string tmpKey = tmpDesc->key;
+                        tmpDesc->value = pyDictStrToChar(pyDesc, tmpKey, sid, ret);
+                        if (ret != 0)
+                        {
+                            return NULL;
+                        }
+                        tmpDesc->vlen = strlen(tmpDesc->value);
+                        tmpDesc->next = NULL;
+                        if (idx == 0)
+                        {
+                            headPtr = tmpDesc;
+                            prePtr = tmpDesc;
+                            curPtr = tmpDesc;
+                        }
+                        else
+                        {
+                            curPtr = tmpDesc;
+                            prePtr->next = curPtr;
+                            prePtr = curPtr;
+                        }
+                    }
+                    return headPtr;
+                }
             }
         }
-    }   
-
+    }
 }
 
 int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string sid)

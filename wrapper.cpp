@@ -121,6 +121,14 @@ int WrapperAPI wrapperExec(const char* usrTag, pParamList params, pDataList reqD
 }
 int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
 { 
+    if (NULL != *respData)
+	{
+		if ((*respData)->len > 0)
+		{
+			free((*respData)->data);
+		}
+		delete *respData;
+	}
     return 0;
 }
 
