@@ -23,9 +23,9 @@ const char *callWrapperError(int ret)
     PyObject *pArgsT = PyTuple_New(1);
     PyTuple_SetItem(pArgsT, 0, Py_BuildValue("i", ret));
 
-    PyGILState_STATE gstate = PyGILState_Ensure();
+    //PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
-    PyGILState_Release(gstate);
+    //PyGILState_Release(gstate);
     std::string errorStr = PyUnicode_AsUTF8(pRet);
     Py_DECREF(errFunc);
     Py_DECREF(pRet);
@@ -340,9 +340,9 @@ int callWrapperFini()
     }
     try
     {   
-        PyGILState_STATE gstate = PyGILState_Ensure();
+        //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
-        PyGILState_Release(gstate);
+        //PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
