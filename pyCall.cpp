@@ -268,7 +268,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     pDataList tmpData = new (DataList);
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
-
+                    Py_XINCREF(tmpDict);
                     char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
                     if (ret != 0)
                     {
@@ -299,24 +299,25 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         tmpData->data = (void *)tmpRltData;
                     }
-
-                    ret = pyDictIntToInt(tmpDict, DATA_STATUS, integerVal, sid);
+                    int interValSta=0;
+                    ret = pyDictIntToInt(tmpDict, DATA_STATUS, interValSta, sid);
                     if (ret != 0)
                     {
                         return ret;
                     }
                     else
                     {
-                        tmpData->status = DataStatus(integerVal);
+                        tmpData->status = DataStatus(interValSta);
                     }
-                    ret = pyDictIntToInt(tmpDict, DATA_TYPE, integerVal, sid);
+                    int interValType=0;
+                    ret = pyDictIntToInt(tmpDict, DATA_TYPE, interValType, sid);
                     if (ret != 0)
                     {
                         return ret;
                     }
                     else
                     {
-                        tmpData->type = DataType(integerVal);
+                        tmpData->type = DataType(interValType);
                     }
                     tmpData->next = NULL;
                     //检查下是否需要desc吧
