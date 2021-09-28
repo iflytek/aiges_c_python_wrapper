@@ -217,7 +217,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         //PyGILState_Release(gstate);
 
         //去除引用计数
-        Py_XDECREF(pArgsT);
         Py_XDECREF(pUsrTag);
         Py_XDECREF(pyParam);
         Py_XDECREF(pyDataList);
@@ -320,9 +319,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         prePtr = curPtr;
                     }
                     spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}", tmpData->key, tmpData->len, tmpData->type, tmpData->status, sid);
+                    Py_XDECREF(tmpDict);
                 }
                 *respData = headPtr;
             }
+            Py_XDECREF(pyRespData);
+            Py_XDECREF(pArgsT);
         }
     }
     catch (const std::exception &e)
