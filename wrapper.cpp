@@ -41,7 +41,7 @@ void setlog(std::string loglvl)
     spdlog::set_level(lvl); // Set global log level to debug
 }
 
-int WrapperAPI wrapperSetCtrl(CtrlType type, void* func)
+int WrapperAPI wrapperSetCtrl(CtrlType type, void *func)
 {
     return 0;
 }
@@ -63,19 +63,18 @@ int WrapperAPI wrapperInit(pConfig cfg)
             loglvl = p->value;
             continue;
         }
-
     }
 
     setlog(loglvl);
     //加下一行的原因https://stackoverflow.com/questions/49784583/numpy-import-fails-on-multiarray-extension-library-when-called-from-embedded-pyt
     dlopen("libpython3.7m.so.1.0", RTLD_LAZY | RTLD_GLOBAL);
-    printf("now tid is %d \n",gettid());
+    printf("now tid is %d \n", gettid());
     return callWrapperInit(cfg);
 }
 
 int WrapperAPI wrapperFini()
 {
-    printf("now tid is %d \n",gettid());
+    printf("now tid is %d \n", gettid());
     callWrapperFini();
     return 0;
 }
@@ -100,42 +99,56 @@ int WrapperAPI wrapperUnloadRes(unsigned int resId)
     return 0;
 }
 
-const void *WrapperAPI wrapperCreate(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum)
+const void *WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int *errNum)
 {
     return NULL;
 }
 
-int WrapperAPI wrapperWrite(const void *handle, pDataList reqData){
+int WrapperAPI wrapperWrite(const void *handle, pDataList reqData)
+{
     return 0;
 }
 
-int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
+int WrapperAPI wrapperRead(const void *handle, pDataList *respData)
+{
     return 0;
 }
 
 int WrapperAPI wrapperDestroy(const void *handle)
 {
-   return 0;
-}
-
-int WrapperAPI wrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt)
-{
-    return callWrapperExec(usrTag,params,reqData,respData,psrIds,psrCnt);
-}
-int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
-{ 
-    if (NULL != *respData)
-	{
-		if ((*respData)->len > 0)
-		{
-			free((*respData)->data);
-		}
-		delete *respData;
-	}
     return 0;
 }
 
-int WrapperAPI wrapperExecAsync(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt)
+int WrapperAPI wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt)
+{
+    return callWrapperExec(usrTag, params, reqData, respData, psrIds, psrCnt);
+}
+int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
+{
+    if (NULL != *respData)
+    {
+        pDataList ptr = *respData; 
+        while(ptr != NULL)
+        {
+            if (ptr->len > 0)
+            {
+                free(ptr->data);
+                ptr->data = NULL;
+            }
+            if (strlen(ptr->key)>0){
+                free(ptr->key);
+                ptr->key=NULL;
+            }
+            pDataList tmp=ptr->next;
+            delete *ptr;
+            ptr=NULL;
+            ptr=tmp;
+        }
+    }
+    return 0;
+}
+
+int WrapperAPI wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt)
 {
     return 0;
 }
