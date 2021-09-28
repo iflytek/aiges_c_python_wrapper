@@ -231,7 +231,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         Py_XDECREF(pyDataList);
         Py_XDECREF(pyPsrIds);
         Py_XDECREF(psrCnt);
-        Py_XDECREF(pyRespData);
+        //Py_XDECREF(pyRespData);
         Py_XDECREF(execFunc);
 
         if (pRet == NULL)
