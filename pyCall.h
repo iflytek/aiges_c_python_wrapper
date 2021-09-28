@@ -13,6 +13,9 @@
 #include "pyParam.h"
 #include<string.h>
 #include "unistd.h"
+#include <sys/syscall.h>
+#define gettid() syscall(SYS_gettid)
+
 std::string DATA_KEY="key";
 std::string DATA_DATA="data";
 std::string DATA_LEN="len";
