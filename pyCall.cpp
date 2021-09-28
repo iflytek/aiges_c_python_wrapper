@@ -479,6 +479,9 @@ char *pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid, int &
         rlt_ch = strdup(PyBytes_AsString(utf8string));
     }
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}", itemKey, rlt_ch, sid);
+    
+    Py_XDECREF(pyValue);
+    Py_XDECREF(utf8string);
     return rlt_ch;
 }
 
@@ -500,6 +503,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
         {
             spdlog::error("wrapperExec pyDictToDesc error:{}, sid:{}", errRlt, sid);
             ret = WRAPPER::CError::innerError;
+            Py_XDECREF(pyDesc);
             return NULL;
         }
         else
@@ -508,6 +512,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
             if (descDictSize == 0)
             {
                 spdlog::info("pyDictToDesc desc dict is empty,sid:{}", sid);
+                Py_XDECREF(pyDesc);
                 return NULL;
             }
             else
@@ -548,7 +553,10 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                             prePtr->next = curPtr;
                             prePtr = curPtr;
                         }
+                        Py_XDECREF(utf8string);
                     }
+                    Py_XDECREF(descKeys);
+                    Py_XDECREF(pyDesc);
                     return headPtr;
                 }
             }
@@ -586,5 +594,6 @@ int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string
         }
     }
     PyArg_Parse(pyValue, "i", &itemVal);
+    Py_XDECREF(pyValue);
     return 0;
 }
