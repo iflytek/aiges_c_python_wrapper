@@ -140,7 +140,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
                 ptr->key=NULL;
             }
             pDataList tmp=ptr->next;
-            delete *ptr;
+            delete ptr;
             ptr=NULL;
             ptr=tmp;
         }
