@@ -165,7 +165,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                PyObject *pyData = PyUnicode_FromString(reinterpret_cast<char*>(p->data));
+                PyObject *pyData = PyUnicode_FromString(static_cast<const char*>(p->data));
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
