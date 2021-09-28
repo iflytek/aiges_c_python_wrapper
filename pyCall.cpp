@@ -61,7 +61,7 @@ int callWrapperInit(pConfig cfg)
     PyRun_SimpleString("import wrapper");
 
     wrapperModule = PyImport_ImportModule(_wrapperName);
-    PyObject *initFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperInit");
+    PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
     if (!initFunc || !PyCallable_Check(initFunc))
     {
         return WRAPPER::CError::NotImplementInit;
@@ -125,7 +125,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         }
     }
     spdlog::debug("now tid is:{},sid:{}", gettid(), sid);
-    PyObject *execFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperOnceExec");
+    PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
     if (!execFunc || !PyCallable_Check(execFunc))
     {
         return WRAPPER::CError::NotImplementExec;
@@ -368,7 +368,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 int callWrapperFini()
 {
     int ret = 0;
-    PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperFini");
+    PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
     {
         return WRAPPER::CError::NotImplementFini;
