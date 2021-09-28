@@ -12,6 +12,7 @@
 #include "include/aiges/type.h"
 #include "pyParam.h"
 #include<string.h>
+#include "unistd.h"
 std::string DATA_KEY="key";
 std::string DATA_DATA="data";
 std::string DATA_LEN="len";

@@ -123,7 +123,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             break;
         }
     }
-
+    spdlog::debug("now tid is:{},sid:{}",gettid(),sid);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperOnceExec");
     if (!execFunc || !PyCallable_Check(execFunc))
     {
@@ -371,7 +371,6 @@ int callWrapperFini()
         }
         return WRAPPER::CError::innerError;
     }
-
     return ret;
 }
 
