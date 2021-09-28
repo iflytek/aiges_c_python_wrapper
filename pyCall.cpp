@@ -25,6 +25,7 @@ const char *callWrapperError(int ret)
 
     //PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
+    Py_XDECREF(pArgsT);
     //PyGILState_Release(gstate);
     std::string errorStr = PyUnicode_AsUTF8(pRet);
     Py_DECREF(errFunc);
@@ -153,9 +154,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             dataNum++;
         }
         spdlog::debug("call wrapper exec,datanum:{}", dataNum);
+        PyObject *pyDataList = PyTuple_New(dataNum);
         if (dataNum > 0)
         {
-            PyObject *pyDataList = PyTuple_New(dataNum);
             pDataList p = reqData;
             for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++)
             {
@@ -186,16 +187,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
                 p = p->next;
             }
-            PyTuple_SetItem(pArgsT, 2, pyDataList);
         }
+        PyTuple_SetItem(pArgsT, 2, pyDataList);
         //构建响应数据体
         PyObject *pyRespData = PyList_New(0);
         PyTuple_SetItem(pArgsT, 3, pyRespData);
         //构建个性化请求id
         int num = psrCnt;
+        PyObject *pyPsrIds = PyTuple_New(num);
         if (num != 0)
         {
-            PyObject *pyPsrIds = PyTuple_New(num);
             for (int idx = 0; idx < num; idx++)
             {
                 PyTuple_SetItem(pyPsrIds, idx, Py_BuildValue("i", psrIds[idx]));
@@ -205,7 +206,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         }
         else
         {
-            PyObject *pyPsrIds = PyTuple_New(0);
             spdlog::debug("wrapper exec psrIds is empty.sid:{}", sid);
             PyTuple_SetItem(pArgsT, 4, pyPsrIds);
         }
@@ -215,6 +215,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
         //PyGILState_Release(gstate);
+
+        //去除引用计数
+        Py_XDECREF(pArgsT);
+        Py_XDECREF(pUsrTag);
+        Py_XDECREF(pyParam);
+        Py_XDECREF(pyDataList);
+        Py_XDECREF(pyPsrIds);
+        Py_XDECREF(psrCnt);
 
         if (pRet == NULL)
         {
@@ -227,6 +235,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
+        Py_XDECREF(pRet);
         if (ret == 0)
         {
             //读取响应
