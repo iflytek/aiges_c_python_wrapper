@@ -108,7 +108,7 @@ int callWrapperInit(pConfig cfg)
         }
     }
     spdlog::debug("wrapperinit ret:{}", ret);
-    std::cout << " init success"<< std::endl;
+    std::cout << " init success" << std::endl;
     return ret;
 }
 
@@ -124,7 +124,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             break;
         }
     }
-    spdlog::debug("now tid is:{},sid:{}",gettid(),sid);
+    spdlog::debug("now tid is:{},sid:{}", gettid(), sid);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperOnceExec");
     if (!execFunc || !PyCallable_Check(execFunc))
     {
@@ -186,14 +186,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
 
-                Py_XDECREF(pyKey);
-                Py_XDECREF(pyData);
-                Py_XDECREF(pyDataLen);
-                Py_XDECREF(pyStatus);
-                Py_XDECREF(pyType);
-                Py_XDECREF(tmpDesc);
-                Py_XDECREF(tmp);
-
+                if (RELEASE)
+                {
+                    Py_XDECREF(pyKey);
+                    Py_XDECREF(pyData);
+                    Py_XDECREF(pyDataLen);
+                    Py_XDECREF(pyStatus);
+                    Py_XDECREF(pyType);
+                    Py_XDECREF(tmpDesc);
+                    Py_XDECREF(tmp);
+                }
                 p = p->next;
             }
         }
@@ -226,13 +228,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         //PyGILState_Release(gstate);
 
         //去除引用计数
-        Py_XDECREF(pUsrTag);
-        Py_XDECREF(pyParam);
-        Py_XDECREF(pyDataList);
-        Py_XDECREF(pyPsrIds);
-        Py_XDECREF(psrCnt);
-        //Py_XDECREF(pyRespData);
-        Py_XDECREF(execFunc);
+        if (RELEASE)
+        {
+            Py_XDECREF(pUsrTag);
+            Py_XDECREF(pyParam);
+            Py_XDECREF(pyDataList);
+            Py_XDECREF(pyPsrIds);
+            Py_XDECREF(psrCnt);
+            //Py_XDECREF(pyRespData);
+            Py_XDECREF(execFunc);
+        }
 
         if (pRet == NULL)
         {
@@ -245,7 +250,10 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
-        Py_XDECREF(pRet);
+        if (RELEASE)
+        {
+            Py_XDECREF(pRet);
+        }
         if (ret == 0)
         {
             //读取响应
@@ -330,12 +338,16 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         prePtr = curPtr;
                     }
                     spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}", tmpData->key, tmpData->len, tmpData->type, tmpData->status, sid);
-                    Py_XDECREF(tmpDict);
+                    if(RELEASE){
+                        Py_XDECREF(tmpDict);
+                    }
                 }
                 *respData = headPtr;
             }
-            Py_XDECREF(pyRespData);
-            Py_XDECREF(pArgsT);
+            if(RELEASE){
+                Py_XDECREF(pyRespData);
+                Py_XDECREF(pArgsT);
+            }
         }
     }
     catch (const std::exception &e)
@@ -361,7 +373,7 @@ int callWrapperFini()
         return WRAPPER::CError::NotImplementFini;
     }
     try
-    {   
+    {
         //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
         //PyGILState_Release(gstate);
@@ -379,8 +391,10 @@ int callWrapperFini()
         }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
-        Py_DECREF(FiniFunc);
-        Py_DECREF(pRet);
+        if(RELEASE){
+            Py_DECREF(FiniFunc);
+            Py_DECREF(pRet);
+        }
         Py_Finalize();
     }
     catch (const std::exception &e)
@@ -492,9 +506,11 @@ char *pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid, int &
         rlt_ch = strdup(PyBytes_AsString(utf8string));
     }
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}", itemKey, rlt_ch, sid);
-    
-    Py_XDECREF(pyValue);
-    Py_XDECREF(utf8string);
+
+    if(RELEASE){
+        Py_XDECREF(pyValue);
+        Py_XDECREF(utf8string);
+    }
     return rlt_ch;
 }
 
@@ -516,7 +532,9 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
         {
             spdlog::error("wrapperExec pyDictToDesc error:{}, sid:{}", errRlt, sid);
             ret = WRAPPER::CError::innerError;
-            Py_XDECREF(pyDesc);
+            if(RELEASE){
+                Py_XDECREF(pyDesc);
+            }
             return NULL;
         }
         else
@@ -525,7 +543,9 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
             if (descDictSize == 0)
             {
                 spdlog::info("pyDictToDesc desc dict is empty,sid:{}", sid);
-                Py_XDECREF(pyDesc);
+                if(RELEASE){
+                    Py_XDECREF(pyDesc);
+                }
                 return NULL;
             }
             else
@@ -566,10 +586,14 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                             prePtr->next = curPtr;
                             prePtr = curPtr;
                         }
-                        Py_XDECREF(utf8string);
+                        if(RELEASE){
+                            Py_XDECREF(utf8string);
+                        }
                     }
-                    Py_XDECREF(descKeys);
-                    Py_XDECREF(pyDesc);
+                    if(RELEASE){
+                        Py_XDECREF(descKeys);
+                        Py_XDECREF(pyDesc);
+                    }
                     return headPtr;
                 }
             }
@@ -607,6 +631,8 @@ int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string
         }
     }
     PyArg_Parse(pyValue, "i", &itemVal);
-    Py_XDECREF(pyValue);
+    if(RELEASE){
+        Py_XDECREF(pyValue);
+    }
     return 0;
 }

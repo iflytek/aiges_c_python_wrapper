@@ -145,6 +145,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
             ptr=tmp;
         }
     }
+    spdlog::debug("wrapper exec free success");
     return 0;
 }
 

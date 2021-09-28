@@ -16,6 +16,7 @@
 #include <sys/syscall.h>
 #define gettid() syscall(SYS_gettid)
 
+bool RELEASE=false;
 std::string DATA_KEY="key";
 std::string DATA_DATA="data";
 std::string DATA_LEN="len";
