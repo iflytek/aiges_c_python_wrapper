@@ -185,6 +185,15 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyDict_SetItemString(tmp, "desc", tmpDesc);
 
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
+
+                Py_XDECREF(pyKey);
+                Py_XDECREF(pyData);
+                Py_XDECREF(pyDataLen);
+                Py_XDECREF(pyStatus);
+                Py_XDECREF(pyType);
+                Py_XDECREF(tmpDesc);
+                Py_XDECREF(tmp);
+
                 p = p->next;
             }
         }
