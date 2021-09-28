@@ -165,9 +165,11 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *pyKey = PyUnicode_FromString(p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
-                PyObject *pyData = PyUnicode_FromString(static_cast<const char*>(p->data));
+                std::string *sp = static_cast<std::string*>(vp);
+                std::string datas=*sp;
+                PyObject *pyData = PyUnicode_FromString(datas.c_str());
                 PyDict_SetItemString(tmp, "data", pyData);
-
+                delete sp;
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
                 PyDict_SetItemString(tmp, "len", pyDataLen);
 
