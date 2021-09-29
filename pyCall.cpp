@@ -188,11 +188,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
 
-
-                Py_XDECREF(pyKey);
-                Py_XDECREF(pyData);
-                Py_XDECREF(tmpDesc);
-                Py_XDECREF(tmp);
                 if (RELEASE)
                 {
                     Py_XDECREF(pyKey);
@@ -231,17 +226,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
         //PyGILState_Release(gstate);
 
-        //去除引用计数
-        if (RELEASE)
-        {
-            Py_XDECREF(pUsrTag);
-            Py_XDECREF(pyParam);
-            Py_XDECREF(pyDataList);
-            Py_XDECREF(pyPsrIds);
-            Py_XDECREF(psrCnt);
-            //Py_XDECREF(pyRespData);
-            Py_XDECREF(execFunc);
-        }
+        //引用计数减少
+        Py_XDECREF(pUsrTag);
+        Py_XDECREF(pyParam);
+        Py_XDECREF(pyDataList);
+        Py_XDECREF(pyPsrIds);
+        Py_XDECREF(psrCnt);
 
         if (pRet == NULL)
         {
@@ -343,17 +333,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                         prePtr = curPtr;
                     }
                     spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}", tmpData->key, tmpData->len, tmpData->type, tmpData->status, sid);
-                    if(RELEASE){
-                        Py_XDECREF(tmpDict);
-                    }
                 }
                 *respData = headPtr;
             }
-            if(RELEASE){
-                Py_XDECREF(pyRespData);
-                Py_XDECREF(pArgsT);
-            }
         }
+        Py_XDECREF(pyRespData);
+        Py_XDECREF(pArgsT);
     }
     catch (const std::exception &e)
     {
