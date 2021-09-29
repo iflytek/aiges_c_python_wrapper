@@ -162,7 +162,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             {
                 PyObject *tmp = PyDict_New();
 
-                PyObject *pyKey = PyUnicode_FromString(p->key);
+                PyObject *pyKey = Py_BuildValue("s",p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
                 //std::string datas(static_cast<char*>(p->data),p->len);
