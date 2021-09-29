@@ -143,7 +143,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     }
     PyObject *pArgsT = PyTuple_New(6);
 
-    PyObject *pyData ;
     try
     {
         //构建参数元组
@@ -180,7 +179,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
-                pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
+                PyObject *pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
