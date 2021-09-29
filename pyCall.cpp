@@ -143,7 +143,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         PyObject *pyParam = PyDict_New();
         for (pParamList p = params; p != NULL; p = p->next)
         {
-            PyDict_SetItemString(pyParam, p->key, Py_BuildValue("s", p->value));
+            PyObject* tmpV=Py_BuildValue("s", p->value);
+            PyDict_SetItemString(pyParam, p->key,tmpV);
             spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
         }
         PyTuple_SetItem(pArgsT, 1, pyParam);
@@ -182,19 +183,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *tmpDesc = PyDict_New();
                 for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
                 {
-                    PyDict_SetItemString(tmpDesc, descP->key, Py_BuildValue("s", descP->value));
+                    PyObject* tmpV=Py_BuildValue("s", descP->value);
+                    PyDict_SetItemString(tmpDesc, descP->key, tmpV);
                 }
                 PyDict_SetItemString(tmp, "desc", tmpDesc);
 
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
-
-                if (RELEASE)
-                {
-                    Py_XDECREF(pyKey);
-                    Py_XDECREF(pyData);
-                    Py_XDECREF(tmpDesc);
-                    Py_XDECREF(tmp);
-                }
                 p = p->next;
             }
         }
@@ -225,16 +219,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
         //PyGILState_Release(gstate);
-
-        //引用计数减少
-        if(RELEASE){
-            Py_XDECREF(pUsrTag);
-            Py_XDECREF(pyParam);
-            Py_XDECREF(pyDataList);
-            Py_XDECREF(pyPsrIds);
-            Py_XDECREF(psrCnt);
-        }
-
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -264,7 +248,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     pDataList tmpData = new (DataList);
 
                     PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
-                    Py_XINCREF(tmpDict);
                     char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
                     if (ret != 0)
                     {
@@ -498,10 +481,7 @@ char *pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid, int &
     }
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}", itemKey, rlt_ch, sid);
 
-    if(RELEASE){
-        Py_XDECREF(pyValue);
-        Py_XDECREF(utf8string);
-    }
+    Py_XDECREF(utf8string);
     return rlt_ch;
 }
 
@@ -509,7 +489,8 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
 {
     std::string rltStr = "";
     pDescList headPtr = NULL;
-    PyObject *pyDesc = PyDict_GetItem(obj, Py_BuildValue("s", descKey.c_str()));
+    PyObject* tmpKey=Py_BuildValue("s", descKey.c_str());
+    PyObject *pyDesc = PyDict_GetItem(obj, tmpKey);
     if (pyDesc == NULL)
     {
         spdlog::debug("pyDictToDesc ,desc is empty,sid:{}", sid);
@@ -523,9 +504,6 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
         {
             spdlog::error("wrapperExec pyDictToDesc error:{}, sid:{}", errRlt, sid);
             ret = WRAPPER::CError::innerError;
-            if(RELEASE){
-                Py_XDECREF(pyDesc);
-            }
             return NULL;
         }
         else
@@ -534,9 +512,6 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
             if (descDictSize == 0)
             {
                 spdlog::info("pyDictToDesc desc dict is empty,sid:{}", sid);
-                if(RELEASE){
-                    Py_XDECREF(pyDesc);
-                }
                 return NULL;
             }
             else
@@ -577,14 +552,9 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                             prePtr->next = curPtr;
                             prePtr = curPtr;
                         }
-                        if(RELEASE){
-                            Py_XDECREF(utf8string);
-                        }
+                        Py_XDECREF(utf8string);
                     }
-                    if(RELEASE){
-                        Py_XDECREF(descKeys);
-                        Py_XDECREF(pyDesc);
-                    }
+                    Py_XDECREF(descKeys);
                     return headPtr;
                 }
             }
@@ -622,8 +592,5 @@ int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string
         }
     }
     PyArg_Parse(pyValue, "i", &itemVal);
-    if(RELEASE){
-        Py_XDECREF(pyValue);
-    }
     return 0;
 }
