@@ -58,7 +58,7 @@ int callWrapperInit(pConfig cfg)
 
     Py_Initialize();
     if(!Py_IsInitialized()){
-        std::cout<<("failed to init python env")std::endl;
+        std::cout<<("failed to init python env")<<std::endl;
         return WRAPPER::CError::innerError;
     }else{
         PyEval_InitThreads();
