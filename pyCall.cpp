@@ -227,11 +227,13 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         //PyGILState_Release(gstate);
 
         //引用计数减少
-        Py_XDECREF(pUsrTag);
-        Py_XDECREF(pyParam);
-        Py_XDECREF(pyDataList);
-        Py_XDECREF(pyPsrIds);
-        Py_XDECREF(psrCnt);
+        if(RELEASE){
+            Py_XDECREF(pUsrTag);
+            Py_XDECREF(pyParam);
+            Py_XDECREF(pyDataList);
+            Py_XDECREF(pyPsrIds);
+            Py_XDECREF(psrCnt);
+        }
 
         if (pRet == NULL)
         {
