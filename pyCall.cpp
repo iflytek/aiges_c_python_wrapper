@@ -143,6 +143,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         for (pParamList p = params; p != NULL; p = p->next)
         {
             PyObject* tmpV=Py_BuildValue("s", p->value);
+            Py_INCREF(tmpV);
             PyDict_SetItemString(pyParam, p->key,tmpV);
             spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
         }
