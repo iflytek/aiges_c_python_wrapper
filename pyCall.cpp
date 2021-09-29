@@ -57,6 +57,16 @@ int callWrapperInit(pConfig cfg)
     initErrorStrMap();
 
     Py_Initialize();
+    if(!Py_IsInitialized()){
+        std::cout<<("failed to init python env")std::endl;
+        return WRAPPER::CError::innerError;
+    }else{
+        PyEval_InitThreads();
+        int nInit=PyEval_ThreadsInitialized();
+        if (nInit){
+            PyEval_SaveThread();
+        }
+    }
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("import wrapper");
 
@@ -215,11 +225,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
-        if (!gil_init) {
-            gil_init = 1;
-            PyEval_InitThreads();
-            PyEval_SaveThread();
-        }
         PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
         PyGILState_Release(gstate);
