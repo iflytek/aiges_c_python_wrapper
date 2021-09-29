@@ -142,6 +142,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         return WRAPPER::CError::NotImplementExec;
     }
     PyObject *pArgsT = PyTuple_New(6);
+
+    PyObject *pyData ;
     try
     {
         //构建参数元组
@@ -178,7 +180,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
-                PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data), p->len);
+                pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
@@ -226,9 +228,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
-        //PyGILState_STATE gstate = PyGILState_Ensure();
+        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
-        //PyGILState_Release(gstate);
+        PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -343,6 +345,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         ret=WRAPPER::CError::innerError;
     }
     spdlog::debug("wrapperExec ret.{}", ret);
+    Py_XDECREF(pyData);
     Py_XDECREF(pArgsT);
     Py_XDECREF(execFunc);
     return ret;
