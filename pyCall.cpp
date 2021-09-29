@@ -339,10 +339,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 *respData = headPtr;
             }
         }
-        if(RELEASE){
-            Py_XDECREF(pyRespData);
-            Py_XDECREF(pArgsT);
-        }
+        Py_XDECREF(pArgsT);
     }
     catch (const std::exception &e)
     {
