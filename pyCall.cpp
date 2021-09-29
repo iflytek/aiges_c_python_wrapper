@@ -143,7 +143,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         for (pParamList p = params; p != NULL; p = p->next)
         {
             PyObject* tmpV=Py_BuildValue("s", p->value);
-            Py_INCREF(tmpV);
             PyDict_SetItemString(pyParam, p->key,tmpV);
             spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
         }
@@ -164,35 +163,28 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyObject *tmp = PyDict_New();
 
                 PyObject *pyKey = Py_BuildValue("s",p->key);
-                Py_XINCREF(pyKey);
                 PyDict_SetItemString(tmp, "key", pyKey);
 
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
                 PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data), p->len);
-                Py_XINCREF(pyData);
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
-                Py_XINCREF(pyDataLen);
                 PyDict_SetItemString(tmp, "len", pyDataLen);
 
                 PyObject *pyStatus = Py_BuildValue("i", int(p->status));
-                Py_XINCREF(pyStatus);
                 PyDict_SetItemString(tmp, "status", pyStatus);
 
                 PyObject *pyType = Py_BuildValue("i", int(p->type));
-                Py_XINCREF(pyType);
                 PyDict_SetItemString(tmp, "type", pyType);
 
                 PyObject *tmpDesc = PyDict_New();
                 for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
                 {
                     PyObject* tmpV=Py_BuildValue("s", descP->value);
-                    Py_XINCREF(tmpV);
                     PyDict_SetItemString(tmpDesc, descP->key, tmpV);
                 }
-                Py_XINCREF(tmpDesc);
                 PyDict_SetItemString(tmp, "desc", tmpDesc);
 
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
@@ -223,9 +215,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
-        //PyGILState_STATE gstate = PyGILState_Ensure();
+        if (!gil_init) {
+            gil_init = 1;
+            PyEval_InitThreads();
+            PyEval_SaveThread();
+        }
+        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
-        //PyGILState_Release(gstate);
+        PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
