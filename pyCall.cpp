@@ -227,13 +227,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             {
                 spdlog::error("wrapperExec error:{},sid:{}", errRlt, sid);
             }
+            Py_XDECREF(pArgsT);
+            Py_XDECREF(execFunc);
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
-        if (RELEASE)
-        {
-            Py_XDECREF(pRet);
-        }
+        Py_XDECREF(pRet);
         if (ret == 0)
         {
             //读取响应
@@ -251,7 +250,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
                     if (ret != 0)
                     {
-                        return ret;
+                        break;
                     }
                     else
                     {
@@ -262,7 +261,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
                     if (ret != 0)
                     {
-                        return ret;
+                        break;
                     }
                     else
                     {
@@ -272,7 +271,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     char *tmpRltData = pyDictStrToChar(tmpDict, DATA_DATA, sid, ret);
                     if (ret != 0)
                     {
-                        return ret;
+                        break;
                     }
                     else
                     {
@@ -282,7 +281,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     ret = pyDictIntToInt(tmpDict, DATA_STATUS, interValSta, sid);
                     if (ret != 0)
                     {
-                        return ret;
+                        break;
                     }
                     else
                     {
@@ -292,7 +291,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     ret = pyDictIntToInt(tmpDict, DATA_TYPE, interValType, sid);
                     if (ret != 0)
                     {
-                        return ret;
+                        break;
                     }
                     else
                     {
@@ -303,7 +302,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     tmpData->desc = pyDictToDesc(tmpDict, DATA_DESC, sid, ret);
                     if (ret != 0)
                     {
-                        return ret;
+                        break;
                     }
                     if (idx == 0)
                     {
@@ -322,7 +321,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 *respData = headPtr;
             }
         }
-        Py_XDECREF(pArgsT);
     }
     catch (const std::exception &e)
     {
@@ -332,9 +330,11 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         {
             spdlog::error("wrapperExec error:{}, ret:{}", errRlt, ret);
         }
-        return WRAPPER::CError::innerError;
+        ret=WRAPPER::CError::innerError;
     }
     spdlog::debug("wrapperExec ret.{}", ret);
+    Py_XDECREF(pArgsT);
+    Py_XDECREF(execFunc);
     return ret;
 }
 
@@ -493,6 +493,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
     PyObject *pyDesc = PyDict_GetItem(obj, tmpKey);
     if (pyDesc == NULL)
     {
+        Py_XDECREF(tmpKey);
         spdlog::debug("pyDictToDesc ,desc is empty,sid:{}", sid);
         return NULL;
     }
@@ -519,6 +520,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                 PyObject *descKeys = PyDict_Keys(pyDesc);
                 if (descKeys == NULL)
                 {
+                    Py_XDECREF(tmpKey);
                     ret = WRAPPER::CError::innerError;
                     return NULL;
                 }
@@ -554,7 +556,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                         }
                         Py_XDECREF(utf8string);
                     }
-                    Py_XDECREF(descKeys);
+                    Py_DECREF(descKeys);
                     return headPtr;
                 }
             }
