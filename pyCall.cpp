@@ -226,9 +226,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
-        PyGILState_STATE gstate = PyGILState_Ensure();
+        //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
-        PyGILState_Release(gstate);
+        //PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
