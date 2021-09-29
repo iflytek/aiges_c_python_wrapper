@@ -130,11 +130,10 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     {
         return WRAPPER::CError::NotImplementExec;
     }
+    PyObject *pArgsT = PyTuple_New(6);
     try
     {
         //构建参数元组
-        PyObject *pArgsT = PyTuple_New(6);
-
         //构建请求句柄
         PyObject *pUsrTag = PyUnicode_FromString(usrTag);
         PyTuple_SetItem(pArgsT, 0, pUsrTag);
