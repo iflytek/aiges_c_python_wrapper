@@ -345,8 +345,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         ret=WRAPPER::CError::innerError;
     }
     spdlog::debug("wrapperExec ret.{}", ret);
-    Py_XDECREF(pyData);
-    //Py_XDECREF(pArgsT);
+    //Py_XDECREF(pyData);
+    Py_XDECREF(pArgsT);
     Py_XDECREF(execFunc);
     return ret;
 }
