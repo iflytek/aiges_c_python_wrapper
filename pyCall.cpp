@@ -60,15 +60,16 @@ int callWrapperInit(pConfig cfg)
     if(!Py_IsInitialized()){
         std::cout<<"failed to init python env"<<std::endl;
         return WRAPPER::CError::innerError;
-    }else{
-        PyEval_InitThreads();
-        int nInit=PyEval_ThreadsInitialized();
-        if (nInit){
-            PyEval_SaveThread();
-        }
     }
-    //PyRun_SimpleString("import sys");
-    //PyRun_SimpleString("import wrapper");
+    // }else{
+    //     PyEval_InitThreads();
+    //     int nInit=PyEval_ThreadsInitialized();
+    //     if (nInit){
+    //         PyEval_SaveThread();
+    //     }
+    // }
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("import wrapper");
 
     wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
