@@ -13,7 +13,7 @@ const char *callWrapperError(int ret)
         spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
         return errStrMap[ret].c_str();
     }
-    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
     Py_XDECREF(wrapperModule);
     if (!errFunc || !PyCallable_Check(errFunc))
@@ -58,28 +58,32 @@ int callWrapperInit(pConfig cfg)
     initErrorStrMap();
 
     Py_Initialize();
-    if(!Py_IsInitialized()){
-        std::cout<<"failed to init python env"<<std::endl;
+    if (!Py_IsInitialized())
+    {
+        std::cout << "failed to init python env" << std::endl;
         return WRAPPER::CError::innerError;
-    }else{
+    }
+    else
+    {
         PyEval_InitThreads();
-        int nInit=PyEval_ThreadsInitialized();
-        if (nInit){
+        int nInit = PyEval_ThreadsInitialized();
+        if (nInit)
+        {
             PyEval_SaveThread();
         }
     }
+    std::vector<PyObject *> tmpCfgPyObj;
     PyGILState_STATE gstate = PyGILState_Ensure();
     PyRun_SimpleString("import sys");
-    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
-    PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
+    PyObject *initFunc = PyObject_GetAttrString(wrapperModule, "wrapperInit");
     PyGILState_Release(gstate);
-    
-    
+
     Py_XDECREF(wrapperModule);
 
     if (!initFunc || !PyCallable_Check(initFunc))
     {
-        std::cout<<log_python_exception<<std::endl; 
+        std::cout << log_python_exception << std::endl;
         return WRAPPER::CError::NotImplementInit;
     }
 
@@ -87,7 +91,9 @@ int callWrapperInit(pConfig cfg)
     PyObject *pArgsD = PyDict_New();
     for (pConfig p = cfg; p != NULL; p = p->next)
     {
-        PyDict_SetItemString(pArgsD, p->key, Py_BuildValue("s", p->value));
+        PyObject *tmpCfg = Py_BuildValue("s", p->value);
+        PyDict_SetItemString(pArgsD, p->key, tmpCfg);
+        tmpCfgPyObj.push_back(tmpCfg);
         spdlog::debug("wrapperInit config. key:{},value:{}", p->key, p->value);
     }
     try
@@ -108,10 +114,6 @@ int callWrapperInit(pConfig cfg)
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
-
-        Py_DECREF(initFunc);
-        Py_DECREF(pArgsT);
-        Py_DECREF(pArgsD);
         Py_DECREF(pRet);
     }
     catch (const std::exception &e)
@@ -123,16 +125,23 @@ int callWrapperInit(pConfig cfg)
             spdlog::error("wrapperinit error:{}, ret:{}", errRlt, ret);
         }
     }
+    Py_DECREF(initFunc);
+    for (auto &i : tmpCfgPyObj)
+    {
+        Py_XDECREF(i);
+    }
+    Py_DECREF(pArgsD);
+    Py_DECREF(pArgsT);
     spdlog::debug("wrapperinit ret:{}", ret);
-    std::cout << " init success" << std::endl;
+    std::cout << " init ret" << ret << std::endl;
     return ret;
 }
 
-int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt,std::string sid)
+int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt, std::string sid)
 {
     int ret = 0;
     PyGILState_STATE gstate = PyGILState_Ensure();
-    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
     PyGILState_Release(gstate);
     Py_XDECREF(wrapperModule);
@@ -141,7 +150,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         return WRAPPER::CError::NotImplementExec;
     }
     PyObject *pArgsT = PyTuple_New(6);
-    std::vector<PyObject*> tmpPyObjectVec;
+    std::vector<PyObject *> tmpPyObjectVec;
     try
     {
         //构建参数元组
@@ -153,9 +162,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         PyObject *pyParam = PyDict_New();
         for (pParamList p = params; p != NULL; p = p->next)
         {
-            PyObject* tmpV=Py_BuildValue("s", p->value);
+            PyObject *tmpV = Py_BuildValue("s", p->value);
             tmpPyObjectVec.push_back(tmpV);
-            PyDict_SetItemString(pyParam, p->key,tmpV);
+            PyDict_SetItemString(pyParam, p->key, tmpV);
             spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
         }
         PyTuple_SetItem(pArgsT, 1, pyParam);
@@ -165,7 +174,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         {
             dataNum++;
         }
-        spdlog::debug("call wrapper exec,datanum:{}，sid:{}", dataNum,sid);
+        spdlog::debug("call wrapper exec,datanum:{}，sid:{}", dataNum, sid);
         PyObject *pyDataList = PyTuple_New(dataNum);
         if (dataNum > 0)
         {
@@ -174,12 +183,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             {
                 PyObject *tmp = PyDict_New();
 
-                PyObject *pyKey = Py_BuildValue("s",p->key);
+                PyObject *pyKey = Py_BuildValue("s", p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
                 tmpPyObjectVec.push_back(pyKey);
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
-                PyObject * pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
+                PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data), p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
                 tmpPyObjectVec.push_back(pyData);
 
@@ -191,7 +200,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 PyDict_SetItemString(tmp, "status", pyStatus);
                 tmpPyObjectVec.push_back(pyStatus);
 
-
                 PyObject *pyType = Py_BuildValue("i", int(p->type));
                 PyDict_SetItemString(tmp, "type", pyType);
 
@@ -201,12 +209,12 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                 tmpPyObjectVec.push_back(tmpDesc);
                 for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
                 {
-                    PyObject* tmpV=Py_BuildValue("s", descP->value);
+                    PyObject *tmpV = Py_BuildValue("s", descP->value);
                     tmpPyObjectVec.push_back(tmpV);
                     PyDict_SetItemString(tmpDesc, descP->key, tmpV);
                 }
                 PyDict_SetItemString(tmp, "desc", tmpDesc);
-            
+
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
                 p = p->next;
             }
@@ -234,7 +242,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         }
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
-        spdlog::debug("wrapper exec psrCnt .val :{},sid:{}", psrCnt,sid);
+        spdlog::debug("wrapper exec psrCnt .val :{},sid:{}", psrCnt, sid);
         PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
         PyGILState_Release(gstate);
@@ -296,7 +304,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         tmpData->data = (void *)tmpRltData;
                     }
-                    int interValSta=0;
+                    int interValSta = 0;
                     ret = pyDictIntToInt(tmpDict, DATA_STATUS, interValSta, sid);
                     if (ret != 0)
                     {
@@ -306,7 +314,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
                     {
                         tmpData->status = DataStatus(interValSta);
                     }
-                    int interValType=0;
+                    int interValType = 0;
                     ret = pyDictIntToInt(tmpDict, DATA_TYPE, interValType, sid);
                     if (ret != 0)
                     {
@@ -347,12 +355,13 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         errRlt = log_python_exception();
         if (errRlt != "")
         {
-            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret,sid);
+            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret, sid);
         }
-        ret=WRAPPER::CError::innerError;
+        ret = WRAPPER::CError::innerError;
     }
-    spdlog::debug("wrapperExec ret.{},tmpPyObjectVec size:{},sid:{}", ret,tmpPyObjectVec.size(),sid);
-    for(auto &i:tmpPyObjectVec){
+    spdlog::debug("wrapperExec ret.{},tmpPyObjectVec size:{},sid:{}", ret, tmpPyObjectVec.size(), sid);
+    for (auto &i : tmpPyObjectVec)
+    {
         Py_XDECREF(i);
     }
     //Py_XDECREF(pyData);
@@ -365,7 +374,7 @@ int callWrapperFini()
 {
     int ret = 0;
     PyGILState_STATE gstate = PyGILState_Ensure();
-    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
     Py_XDECREF(wrapperModule);
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
@@ -391,7 +400,8 @@ int callWrapperFini()
         }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
-        if(RELEASE){
+        if (RELEASE)
+        {
             Py_DECREF(FiniFunc);
             Py_DECREF(pRet);
         }
@@ -515,7 +525,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
 {
     std::string rltStr = "";
     pDescList headPtr = NULL;
-    PyObject* tmpKey=Py_BuildValue("s", descKey.c_str());
+    PyObject *tmpKey = Py_BuildValue("s", descKey.c_str());
     PyObject *pyDesc = PyDict_GetItem(obj, tmpKey);
     if (pyDesc == NULL)
     {
