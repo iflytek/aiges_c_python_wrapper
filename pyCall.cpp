@@ -379,7 +379,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 int callWrapperFini()
 {
     int ret = 0;
-    PyGILState_STATE gstate = PyGILState_Ensure();
+    //PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
     Py_XDECREF(wrapperModule);
@@ -403,7 +403,6 @@ int callWrapperFini()
         }
         else
         {
-
             PyArg_Parse(pRet, "i", &ret);
             Py_DECREF(pRet);
             spdlog::debug("wrapperFini ret.{}", ret);
@@ -420,7 +419,7 @@ int callWrapperFini()
         ret=WRAPPER::CError::innerError;
     }
     Py_XDECREF(FiniFunc);
-    PyGILState_Release(gstate);
+    //PyGILState_Release(gstate);
     Py_Finalize();
     return ret;
 }
