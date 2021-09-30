@@ -167,7 +167,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 PyObject *pyKey = Py_BuildValue("s",p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
-
+                tmpPyObjectVec(pyKey);
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
                 PyObject * pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
@@ -176,21 +176,28 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
                 PyDict_SetItemString(tmp, "len", pyDataLen);
+                tmpPyObjectVec.push_back(pyDataLen);
 
                 PyObject *pyStatus = Py_BuildValue("i", int(p->status));
                 PyDict_SetItemString(tmp, "status", pyStatus);
+                tmpPyObjectVec.push_back(pyStatus);
+
 
                 PyObject *pyType = Py_BuildValue("i", int(p->type));
                 PyDict_SetItemString(tmp, "type", pyType);
 
+                tmpPyObjectVec.push_back(pyType);
+
                 PyObject *tmpDesc = PyDict_New();
+                tmpPyObjectVec.push_back(tmpDesc);
                 for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
                 {
                     PyObject* tmpV=Py_BuildValue("s", descP->value);
+                    tmpPyObjectVec.push_back(tmpV);
                     PyDict_SetItemString(tmpDesc, descP->key, tmpV);
                 }
                 PyDict_SetItemString(tmp, "desc", tmpDesc);
-
+            
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
                 p = p->next;
             }
