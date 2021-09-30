@@ -15,6 +15,7 @@ const char *callWrapperError(int ret)
         return errStrMap[ret].c_str();
     }
     PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
+    Py_XDECREF(wrapperModule);
     if (!errFunc || !PyCallable_Check(errFunc))
     {
         return "wrapperError func need to implement";
@@ -71,6 +72,7 @@ int callWrapperInit(pConfig cfg)
     PyRun_SimpleString("import sys");
     wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
+    Py_XDECREF(wrapperModule);
     if (!initFunc || !PyCallable_Check(initFunc))
     {
         std::cout<<log_python_exception<<std::endl; 
@@ -126,6 +128,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 {
     int ret = 0;
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
+    Py_XDECREF(wrapperModule);
     if (!execFunc || !PyCallable_Check(execFunc))
     {
         return WRAPPER::CError::NotImplementExec;
@@ -355,6 +358,7 @@ int callWrapperFini()
 {
     int ret = 0;
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
+    Py_XDECREF(wrapperModule);
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
     {
         return WRAPPER::CError::NotImplementFini;
