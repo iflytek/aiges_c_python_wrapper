@@ -385,7 +385,8 @@ int callWrapperFini()
     Py_XDECREF(wrapperModule);
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
     {
-        PyGILState_Release(gstate);
+        //PyGILState_Release(gstate);
+        Py_Finalize();
         return WRAPPER::CError::NotImplementFini;
     }
     try
