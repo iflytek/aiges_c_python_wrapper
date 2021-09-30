@@ -32,5 +32,5 @@ int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string
 const char * callWrapperError(int errNum);
 int callWrapperInit(pConfig cfg);
 int callWrapperFini();
-int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
+int callWrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt,std::string sid);
 #endif

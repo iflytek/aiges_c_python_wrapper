@@ -121,7 +121,17 @@ int WrapperAPI wrapperDestroy(const void *handle)
 
 int WrapperAPI wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt)
 {
-    return callWrapperExec(usrTag, params, reqData, respData, psrIds, psrCnt);
+    std::string sid = "";
+    for (pParamList sidP = params; sidP != NULL; sidP = sidP->next)
+    {
+        if (std::string("sid") == sidP->key)
+        {
+            sid = sidP->value;
+            break;
+        }
+    }
+    spdlog::debug("now tid is:{},sid:{}", gettid(), sid);
+    return callWrapperExec(usrTag, params, reqData, respData, psrIds, psrCnt,sid);
 }
 int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData)
 {
