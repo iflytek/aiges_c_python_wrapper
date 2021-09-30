@@ -132,10 +132,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         return WRAPPER::CError::NotImplementExec;
     }
     PyObject *pArgsT = PyTuple_New(6);
-    PyObject *pyData;
+    std::vector<PyObject*> tmpPyObjectVec;
     try
     {
-        std::vector<PyObject*> tmpPyObjectVec;
         //构建参数元组
         //构建请求句柄
         PyObject *pUsrTag = PyUnicode_FromString(usrTag);
