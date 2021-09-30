@@ -61,14 +61,13 @@ int callWrapperInit(pConfig cfg)
     if(!Py_IsInitialized()){
         std::cout<<"failed to init python env"<<std::endl;
         return WRAPPER::CError::innerError;
+    }else{
+        PyEval_InitThreads();
+        int nInit=PyEval_ThreadsInitialized();
+        if (nInit){
+            PyEval_SaveThread();
+        }
     }
-    // }else{
-    //     PyEval_InitThreads();
-    //     int nInit=PyEval_ThreadsInitialized();
-    //     if (nInit){
-    //         PyEval_SaveThread();
-    //     }
-    // }
     PyRun_SimpleString("import sys");
     PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
@@ -127,8 +126,10 @@ int callWrapperInit(pConfig cfg)
 int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt,std::string sid)
 {
     int ret = 0;
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
+    PyGILState_Release(gstate);
     Py_XDECREF(wrapperModule);
     if (!execFunc || !PyCallable_Check(execFunc))
     {
@@ -229,9 +230,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
         spdlog::debug("wrapper exec psrCnt .val :{},sid:{}", psrCnt,sid);
-        //PyGILState_STATE gstate = PyGILState_Ensure();
+        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
-        //PyGILState_Release(gstate);
+        PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -358,6 +359,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 int callWrapperFini()
 {
     int ret = 0;
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
     Py_XDECREF(wrapperModule);
