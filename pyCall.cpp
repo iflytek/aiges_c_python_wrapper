@@ -142,7 +142,6 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
-    PyGILState_Release(gstate);
     Py_XDECREF(wrapperModule);
     if (!execFunc || !PyCallable_Check(execFunc))
     {
@@ -366,6 +365,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
     //Py_XDECREF(pyData);
     Py_XDECREF(pArgsT);
     Py_XDECREF(execFunc);
+    PyGILState_Release(gstate);
     return ret;
 }
 
