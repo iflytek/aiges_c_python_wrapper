@@ -405,12 +405,8 @@ int callWrapperFini()
         }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
-        std::cout<<"here1"<<std::endl;
         PyGILState_Release(gstate);
-        std::cout<<"here2"<<std::endl;
-        Py_Finalize();
-        std::cout<<"here3"<<std::endl;
-
+        //Py_Finalize(); 理论上需要的 但是不注释会崩溃 TODO fix
     }
     catch (const std::exception &e)
     {
