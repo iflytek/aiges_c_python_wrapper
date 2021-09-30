@@ -72,6 +72,7 @@ int callWrapperInit(pConfig cfg)
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
     if (!initFunc || !PyCallable_Check(initFunc))
     {
+        std::cout<<log_python_exception<<std::endl; 
         return WRAPPER::CError::NotImplementInit;
     }
 
