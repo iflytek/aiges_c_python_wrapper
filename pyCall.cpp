@@ -73,17 +73,16 @@ int callWrapperInit(pConfig cfg)
         }
     }
     std::vector<PyObject *> tmpCfgPyObj;
+    //申请GIL
     PyGILState_STATE gstate = PyGILState_Ensure();
+
     PyRun_SimpleString("import sys");
     PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule, "wrapperInit");
-    PyGILState_Release(gstate);
-
-    Py_XDECREF(wrapperModule);
-
     if (!initFunc || !PyCallable_Check(initFunc))
     {
         std::cout << log_python_exception << std::endl;
+        PyGILState_Release(gstate);
         return WRAPPER::CError::NotImplementInit;
     }
 
@@ -99,9 +98,7 @@ int callWrapperInit(pConfig cfg)
     try
     {
         PyTuple_SetItem(pArgsT, 0, pArgsD);
-        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(initFunc, pArgsT);
-        PyGILState_Release(gstate);
 
         if (pRet == NULL)
         {
@@ -132,6 +129,8 @@ int callWrapperInit(pConfig cfg)
     }
     Py_DECREF(pArgsD);
     Py_DECREF(pArgsT);
+    Py_XDECREF(wrapperModule);
+    PyGILState_Release(gstate);
     spdlog::debug("wrapperinit ret:{}", ret);
     std::cout << " init ret" << ret << std::endl;
     return ret;
