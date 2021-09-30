@@ -179,7 +179,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
-                pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
+                PyObject * pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
@@ -344,7 +344,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         ret=WRAPPER::CError::innerError;
     }
     spdlog::debug("wrapperExec ret.{}", ret);
-    Py_XDECREF(pyData);
+    //Py_XDECREF(pyData);
     Py_XDECREF(pArgsT);
     Py_XDECREF(execFunc);
     return ret;
