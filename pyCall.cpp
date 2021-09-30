@@ -68,9 +68,6 @@ int callWrapperInit(pConfig cfg)
     //         PyEval_SaveThread();
     //     }
     // }
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("import wrapper");
-
     wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
     if (!initFunc || !PyCallable_Check(initFunc))
