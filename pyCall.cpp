@@ -405,8 +405,12 @@ int callWrapperFini()
         }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
+        std::cout<<"here1"<<std::endl;
         PyGILState_Release(gstate);
+        std::cout<<"here2"<<std::endl;
         Py_Finalize();
+        std::cout<<"here3"<<std::endl;
+
     }
     catch (const std::exception &e)
     {
