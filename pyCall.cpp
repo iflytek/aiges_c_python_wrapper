@@ -379,19 +379,18 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 int callWrapperFini()
 {
     int ret = 0;
-    //PyGILState_STATE gstate = PyGILState_Ensure();
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
     Py_XDECREF(wrapperModule);
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
     {
+        PyGILState_Release(gstate);
         return WRAPPER::CError::NotImplementFini;
     }
     try
     {
-        //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
-        //PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -401,11 +400,12 @@ int callWrapperFini()
                 spdlog::error("wrapperFini error:{}", errRlt);
             }
             Py_DECREF(FiniFunc);
-            Py_DECREF(pRet);
+            PyGILState_Release(gstate);
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
+        PyGILState_Release(gstate);
         Py_Finalize();
     }
     catch (const std::exception &e)
@@ -416,8 +416,10 @@ int callWrapperFini()
         {
             spdlog::error("wrapperFini error:{}, ret:{}", errRlt, ret);
         }
-        return WRAPPER::CError::innerError;
+        
+        ret= WRAPPER::CError::innerError;
     }
+    std::cout<<"fini ret:"<<ret<<std::endl;
     return ret;
 
 }
