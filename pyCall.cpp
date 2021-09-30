@@ -1,7 +1,6 @@
 #include "pyCall.h"
 #include "wrapper_err.h"
 
-PyObject *wrapperModule;
 const char *_wrapperName = "wrapper";
 std::map<int, std::string> errStrMap;
 
@@ -14,6 +13,7 @@ const char *callWrapperError(int ret)
         spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
         return errStrMap[ret].c_str();
     }
+    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
     Py_XDECREF(wrapperModule);
     if (!errFunc || !PyCallable_Check(errFunc))
@@ -70,7 +70,7 @@ int callWrapperInit(pConfig cfg)
     //     }
     // }
     PyRun_SimpleString("import sys");
-    wrapperModule = PyImport_ImportModule(_wrapperName);
+    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
     Py_XDECREF(wrapperModule);
     if (!initFunc || !PyCallable_Check(initFunc))
@@ -127,6 +127,7 @@ int callWrapperInit(pConfig cfg)
 int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt,std::string sid)
 {
     int ret = 0;
+    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
     Py_XDECREF(wrapperModule);
     if (!execFunc || !PyCallable_Check(execFunc))
@@ -357,6 +358,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 int callWrapperFini()
 {
     int ret = 0;
+    PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
     Py_XDECREF(wrapperModule);
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
