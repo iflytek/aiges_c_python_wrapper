@@ -256,14 +256,14 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             {
                 spdlog::error("wrapperExec error:{},sid:{}", errRlt, sid);
             }
-            Py_XDECREF(pArgsT);
-            Py_XDECREF(execFunc);
+            Py_DECREF(pArgsT);
+            Py_DECREF(execFunc);
             ret = WRAPPER::CError::innerError;
         }
         else
         {
             PyArg_Parse(pRet, "i", &ret);
-            Py_XDECREF(pRet);
+            Py_DECREF(pRet);
             if (ret == 0)
             {
                 //读取响应
@@ -370,8 +370,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         Py_XDECREF(i);
     }
     //Py_XDECREF(pyData);
-    Py_XDECREF(pArgsT);
-    Py_XDECREF(execFunc);
+    Py_DECREF(pArgsT);
+    Py_DECREF(execFunc);
     PyGILState_Release(gstate);
     return ret;
 }
@@ -403,7 +403,9 @@ int callWrapperFini()
         }
         else
         {
+
             PyArg_Parse(pRet, "i", &ret);
+            Py_DECREF(pRet);
             spdlog::debug("wrapperFini ret.{}", ret);
         }
     }
@@ -418,7 +420,6 @@ int callWrapperFini()
         ret=WRAPPER::CError::innerError;
     }
     Py_XDECREF(FiniFunc);
-    Py_XDECREF(pRet);
     PyGILState_Release(gstate);
     Py_Finalize();
     return ret;
