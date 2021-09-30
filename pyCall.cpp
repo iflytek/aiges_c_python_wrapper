@@ -167,7 +167,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
 
                 PyObject *pyKey = Py_BuildValue("s",p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
-                tmpPyObjectVec(pyKey);
+                tmpPyObjectVec.push_back(pyKey);
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
                 PyObject * pyData= PyBytes_FromStringAndSize((char *)(p->data), p->len);
