@@ -68,10 +68,15 @@ int callWrapperInit(pConfig cfg)
             PyEval_SaveThread();
         }
     }
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyRun_SimpleString("import sys");
     PyObject *wrapperModule= PyImport_ImportModule(_wrapperName);
     PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
+    PyGILState_Release(gstate);
+    
+    
     Py_XDECREF(wrapperModule);
+
     if (!initFunc || !PyCallable_Check(initFunc))
     {
         std::cout<<log_python_exception<<std::endl; 
