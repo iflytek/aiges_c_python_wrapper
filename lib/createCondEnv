@@ -1,0 +1,14 @@
+conda create -n registration python=3.7
+conda activate registration
+codna install scikit-image
+conda install matplotlib
+conda install -c onda-forge opencv
+conda install cython
+conda install gcc_linux-64
+conda install numpy
+conda list
+
+export AIGES_WRAPPER_VERSION=1.0.0
+export PATH=$PATH:/root/anaconda3/envs/registration/bin/
+export LD_LIBRARY_PATH=./:$LD_LIBRARY_PATH:/root/anaconda3/envs/registration/lib/
+export PYTHONPATH=$PYTHONPATH:/home/runtime/wrapper:/root/anaconda3/envs/registration/lib/python3.7/site-packages/

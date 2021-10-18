@@ -137,7 +137,6 @@ int callWrapperInit(pConfig cfg)
     Py_XDECREF(wrapperModule);
     PyGILState_Release(gstate);
     spdlog::debug("wrapperinit ret:{}", ret);
-    std::cout << " init ret" << ret << std::endl;
     return ret;
 }
 
