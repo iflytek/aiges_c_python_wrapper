@@ -23,14 +23,7 @@ PyAPI_FUNC(char *) Py_UniversalNewlineFgets(char *, int, FILE*, PyObject *);
    If non-NULL, this is different than the default encoding for strings
 */
 PyAPI_DATA(const char *) Py_FileSystemDefaultEncoding;
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03060000
-PyAPI_DATA(const char *) Py_FileSystemDefaultEncodeErrors;
-#endif
 PyAPI_DATA(int) Py_HasFileSystemDefaultEncoding;
-
-#if !defined(Py_LIMITED_API) || Py_LIMITED_API+0 >= 0x03070000
-PyAPI_DATA(int) Py_UTF8Mode;
-#endif
 
 /* Internal API
 
@@ -42,12 +35,11 @@ PyAPI_DATA(PyTypeObject) PyStdPrinter_Type;
 #endif /* Py_LIMITED_API */
 
 /* A routine to check if a file descriptor can be select()-ed. */
-#ifdef _MSC_VER
-    /* On Windows, any socket fd can be select()-ed, no matter how high */
-    #define _PyIsSelectable_fd(FD) (1)
+#ifdef HAVE_SELECT
+ #define _PyIsSelectable_fd(FD) (((FD) >= 0) && ((FD) < FD_SETSIZE))
 #else
-    #define _PyIsSelectable_fd(FD) ((unsigned int)(FD) < (unsigned int)FD_SETSIZE)
-#endif
+ #define _PyIsSelectable_fd(FD) (1)
+#endif /* HAVE_SELECT */
 
 #ifdef __cplusplus
 }

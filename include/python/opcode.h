@@ -60,7 +60,6 @@ extern "C" {
 #define WITH_CLEANUP_FINISH      82
 #define RETURN_VALUE             83
 #define IMPORT_STAR              84
-#define SETUP_ANNOTATIONS        85
 #define YIELD_VALUE              86
 #define POP_BLOCK                87
 #define END_FINALLY              88
@@ -103,12 +102,14 @@ extern "C" {
 #define CALL_FUNCTION           131
 #define MAKE_FUNCTION           132
 #define BUILD_SLICE             133
+#define MAKE_CLOSURE            134
 #define LOAD_CLOSURE            135
 #define LOAD_DEREF              136
 #define STORE_DEREF             137
 #define DELETE_DEREF            138
+#define CALL_FUNCTION_VAR       140
 #define CALL_FUNCTION_KW        141
-#define CALL_FUNCTION_EX        142
+#define CALL_FUNCTION_VAR_KW    142
 #define SETUP_WITH              143
 #define EXTENDED_ARG            144
 #define LIST_APPEND             145
@@ -121,12 +122,6 @@ extern "C" {
 #define BUILD_TUPLE_UNPACK      152
 #define BUILD_SET_UNPACK        153
 #define SETUP_ASYNC_WITH        154
-#define FORMAT_VALUE            155
-#define BUILD_CONST_KEY_MAP     156
-#define BUILD_STRING            157
-#define BUILD_TUPLE_UNPACK_WITH_CALL 158
-#define LOAD_METHOD             160
-#define CALL_METHOD             161
 
 /* EXCEPT_HANDLER is a special, implicit block type which is created when
    entering an except handler. It is not an opcode but we define it here
