@@ -3,6 +3,8 @@
 #include <strstream>
 #include <sstream>
 #include "include/aiges/wrapper.h"
+#include <boost/filesystem.hpp>
+
 #include "pyCall.h"
 
 void initlog()
@@ -14,6 +16,10 @@ void initlog()
     // define SPDLOG_ACTIVE_LEVEL to desired level
     SPDLOG_TRACE("Some trace message with param {}", {});
     SPDLOG_DEBUG("Some debug message");
+
+    boost::filesystem::path dir("./log");
+    boost::filesystem::create_directory(dir);
+
 
     // Set the default logger to file logger
     // auto file_logger = spdlog::basic_logger_mt("quark", "./log/quark.txt");
