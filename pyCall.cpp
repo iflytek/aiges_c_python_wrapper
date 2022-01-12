@@ -10,31 +10,61 @@ const char *callWrapperError(int ret)
 {
     if (errStrMap.count(ret) != 0)
     {
-        spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
+        spdlog::error("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
         return errStrMap[ret].c_str();
     }
+    spdlog::error("wrapper Error,ret:{}", ret);
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
-    PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
-    Py_XDECREF(wrapperModule);
+    PyObject *errFunc = PyObject_GetAttrString(wrapperModule, "wrapperError");
     if (!errFunc || !PyCallable_Check(errFunc))
     {
+        std::cout << log_python_exception << std::endl;
+        PyGILState_Release(gstate);
         return "wrapperError func need to implement";
     }
-
     PyObject *pArgsT = PyTuple_New(1);
-    PyTuple_SetItem(pArgsT, 0, Py_BuildValue("i", ret));
+    try
+    {
+        PyTuple_SetItem(pArgsT, 0, Py_BuildValue("i", ret));
 
-    //PyGILState_STATE gstate = PyGILState_Ensure();
-    PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
+        //PyGILState_STATE gstate = PyGILState_Ensure();
+        PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
+        if (pRet == NULL)
+        {
+            std::string errRlt = "";
+            errRlt = log_python_exception();
+            if (errRlt != "")
+            {
+                spdlog::error("wrapperError error:{}", errRlt);
+            }
+            ret = WRAPPER::CError::innerError;
+        }
+        else
+        {
+            std::string errorStr = PyUnicode_AsUTF8(pRet);
+            errStrMap[ret] = errorStr;
+            spdlog::error("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
+            Py_DECREF(pRet);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::string errRlt = "";
+        errRlt = log_python_exception();
+        if (errRlt != "")
+        {
+            spdlog::error("wrapperError python error:{}, ret:{}", errRlt, ret);
+        }
+        ret = WRAPPER::CError::innerError;
+        spdlog::error("wrapperError c error,ret:{}.errStr:{} what:{}",ret, errStrMap[ret],e.what());
+    }
     Py_XDECREF(pArgsT);
-    //PyGILState_Release(gstate);
-    std::string errorStr = PyUnicode_AsUTF8(pRet);
     Py_DECREF(errFunc);
-    Py_DECREF(pRet);
-
-    errStrMap[ret] = errorStr;
-    spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
+    Py_XDECREF(wrapperModule);
+    PyGILState_Release(gstate);
     return errStrMap[ret].c_str();
+
 }
 
 void initErrorStrMap()
