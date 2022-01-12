@@ -14,13 +14,14 @@ const char *callWrapperError(int ret)
         return errStrMap[ret].c_str();
     }
     spdlog::error("wrapper Error,ret:{}", ret);
-    //PyGILState_STATE gstate = PyGILState_Ensure();
+    std::cout<<"wrapper error"<<ret<<std::endl;
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *errFunc = PyObject_GetAttrString(wrapperModule, "wrapperError");
     if (!errFunc || !PyCallable_Check(errFunc))
     {
         std::cout << log_python_exception << std::endl;
-        //PyGILState_Release(gstate);
+        PyGILState_Release(gstate);
         return "wrapperError func need to implement";
     }
     PyObject *pArgsT = PyTuple_New(1);
@@ -62,7 +63,7 @@ const char *callWrapperError(int ret)
     Py_XDECREF(pArgsT);
     Py_DECREF(errFunc);
     Py_XDECREF(wrapperModule);
-    //PyGILState_Release(gstate);
+    PyGILState_Release(gstate);
     return errStrMap[ret].c_str();
 }
 
