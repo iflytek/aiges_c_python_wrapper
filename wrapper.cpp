@@ -90,7 +90,7 @@ const char *WrapperAPI wrapperError(int errNum)
 
 const char *WrapperAPI wrapperVersion()
 {
-    return "1.0.0";
+    return "1.0.2";
 }
 
 int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId)
