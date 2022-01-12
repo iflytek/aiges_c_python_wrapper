@@ -1,7 +1,6 @@
 #include "pyCall.h"
 #include "wrapper_err.h"
 
-PyObject *wrapperModule;
 const char *_wrapperName = "wrapper";
 std::map<int, std::string> errStrMap;
 
@@ -11,36 +10,68 @@ const char *callWrapperError(int ret)
 {
     if (errStrMap.count(ret) != 0)
     {
-        spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
+        spdlog::error("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
         return errStrMap[ret].c_str();
     }
-    PyObject *errFunc = PyObject_GetAttrString(wrapperModule, (char *)"wrapperError");
+    spdlog::error("wrapper Error,ret:{}", ret);
+    std::cout<<"wrapper error"<<ret<<std::endl;
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
+    PyObject *errFunc = PyObject_GetAttrString(wrapperModule, "wrapperError");
     if (!errFunc || !PyCallable_Check(errFunc))
     {
+        std::cout << log_python_exception << std::endl;
+        PyGILState_Release(gstate);
         return "wrapperError func need to implement";
     }
-
     PyObject *pArgsT = PyTuple_New(1);
-    PyTuple_SetItem(pArgsT, 0, Py_BuildValue("i", ret));
+    try
+    {
+        PyTuple_SetItem(pArgsT, 0, Py_BuildValue("i", ret));
 
-    //PyGILState_STATE gstate = PyGILState_Ensure();
-    PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
+        //PyGILState_STATE gstate = PyGILState_Ensure();
+        PyObject *pRet = PyEval_CallObject(errFunc, pArgsT);
+        if (pRet == NULL)
+        {
+            std::string errRlt = "";
+            errRlt = log_python_exception();
+            if (errRlt != "")
+            {
+                spdlog::error("wrapperError error:{}", errRlt);
+            }
+            ret = WRAPPER::CError::innerError;
+        }
+        else
+        {
+            std::string errorStr = PyUnicode_AsUTF8(pRet);
+            errStrMap[ret] = errorStr;
+            spdlog::error("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
+            Py_DECREF(pRet);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::string errRlt = "";
+        errRlt = log_python_exception();
+        if (errRlt != "")
+        {
+            spdlog::error("wrapperError python error:{}, ret:{}", errRlt, ret);
+        }
+        ret = WRAPPER::CError::innerError;
+        spdlog::error("wrapperError c error,ret:{}.errStr:{} what:{}",ret, errStrMap[ret],e.what());
+    }
     Py_XDECREF(pArgsT);
-    //PyGILState_Release(gstate);
-    std::string errorStr = PyUnicode_AsUTF8(pRet);
     Py_DECREF(errFunc);
-    Py_DECREF(pRet);
-
-    errStrMap[ret] = errorStr;
-    spdlog::debug("wrapper Error,ret:{}.errStr:{}", ret, errStrMap[ret]);
+    Py_XDECREF(wrapperModule);
+    PyGILState_Release(gstate);
     return errStrMap[ret].c_str();
 }
 
 void initErrorStrMap()
 {
-    errStrMap[WRAPPER::CError::NotImplementInit] = "wrapper init need to implement";
-    errStrMap[WRAPPER::CError::NotImplementExec] = "wrapper exec need to implement";
-    errStrMap[WRAPPER::CError::NotImplementFini] = "wrapper fini need to implement";
+    errStrMap[WRAPPER::CError::NotImplementInit] = "wrapper init is empty";
+    errStrMap[WRAPPER::CError::NotImplementExec] = "wrapper exec is empty";
+    errStrMap[WRAPPER::CError::NotImplementFini] = "wrapper fini is empty";
 
     errStrMap[WRAPPER::CError::RltDataKeyInvalid] = "respdata need key item";
     errStrMap[WRAPPER::CError::RltDataDataInvalid] = "respdata need data item";
@@ -57,13 +88,32 @@ int callWrapperInit(pConfig cfg)
     initErrorStrMap();
 
     Py_Initialize();
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("import wrapper");
+    if (!Py_IsInitialized())
+    {
+        std::cout << "failed to init python env" << std::endl;
+        return WRAPPER::CError::innerError;
+    }
+    else
+    {
+        //声明使用多线程 获取GIL锁并释放
+        PyEval_InitThreads();
+        int nInit = PyEval_ThreadsInitialized();
+        if (nInit)
+        {
+            PyEval_SaveThread();
+        }
+    }
+    std::vector<PyObject *> tmpCfgPyObj;
+    //申请GIL
+    PyGILState_STATE gstate = PyGILState_Ensure();
 
-    wrapperModule = PyImport_ImportModule(_wrapperName);
-    PyObject *initFunc = PyObject_GetAttrString(wrapperModule,"wrapperInit");
+    PyRun_SimpleString("import sys");
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
+    PyObject *initFunc = PyObject_GetAttrString(wrapperModule, "wrapperInit");
     if (!initFunc || !PyCallable_Check(initFunc))
     {
+        std::cout << log_python_exception << std::endl;
+        PyGILState_Release(gstate);
         return WRAPPER::CError::NotImplementInit;
     }
 
@@ -71,15 +121,15 @@ int callWrapperInit(pConfig cfg)
     PyObject *pArgsD = PyDict_New();
     for (pConfig p = cfg; p != NULL; p = p->next)
     {
-        PyDict_SetItemString(pArgsD, p->key, Py_BuildValue("s", p->value));
+        PyObject *tmpCfg = Py_BuildValue("s", p->value);
+        PyDict_SetItemString(pArgsD, p->key, tmpCfg);
+        tmpCfgPyObj.push_back(tmpCfg);
         spdlog::debug("wrapperInit config. key:{},value:{}", p->key, p->value);
     }
     try
     {
         PyTuple_SetItem(pArgsT, 0, pArgsD);
-        PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(initFunc, pArgsT);
-        PyGILState_Release(gstate);
 
         if (pRet == NULL)
         {
@@ -89,14 +139,13 @@ int callWrapperInit(pConfig cfg)
             {
                 spdlog::error("wrapperInit error:{}", errRlt);
             }
-            return WRAPPER::CError::innerError;
+            ret = WRAPPER::CError::innerError;
         }
-        PyArg_Parse(pRet, "i", &ret);
-
-        Py_DECREF(initFunc);
-        Py_DECREF(pArgsT);
-        Py_DECREF(pArgsD);
-        Py_DECREF(pRet);
+        else
+        {
+            PyArg_Parse(pRet, "i", &ret);
+            Py_DECREF(pRet);
+        }
     }
     catch (const std::exception &e)
     {
@@ -106,35 +155,38 @@ int callWrapperInit(pConfig cfg)
         {
             spdlog::error("wrapperinit error:{}, ret:{}", errRlt, ret);
         }
+        ret = WRAPPER::CError::innerError;
     }
+    Py_DECREF(initFunc);
+    for (auto &i : tmpCfgPyObj)
+    {
+        Py_XDECREF(i);
+    }
+    Py_DECREF(pArgsD);
+    Py_DECREF(pArgsT);
+    Py_XDECREF(wrapperModule);
+    PyGILState_Release(gstate);
     spdlog::debug("wrapperinit ret:{}", ret);
-    std::cout << " init success" << std::endl;
     return ret;
 }
 
-int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt)
+int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[], int psrCnt, std::string sid)
 {
-    std::string sid = "";
     int ret = 0;
-    for (pParamList sidP = params; sidP != NULL; sidP = sidP->next)
-    {
-        if (std::string("sid") == sidP->key)
-        {
-            sid = sidP->value;
-            break;
-        }
-    }
-    spdlog::debug("now tid is:{},sid:{}", gettid(), sid);
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *execFunc = PyObject_GetAttrString(wrapperModule, "wrapperOnceExec");
+    Py_XDECREF(wrapperModule);
     if (!execFunc || !PyCallable_Check(execFunc))
     {
+        PyGILState_Release(gstate);
         return WRAPPER::CError::NotImplementExec;
     }
+    PyObject *pArgsT = PyTuple_New(6);
+    std::vector<PyObject *> tmpPyObjectVec;
     try
     {
         //构建参数元组
-        PyObject *pArgsT = PyTuple_New(6);
-
         //构建请求句柄
         PyObject *pUsrTag = PyUnicode_FromString(usrTag);
         PyTuple_SetItem(pArgsT, 0, pUsrTag);
@@ -143,7 +195,9 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         PyObject *pyParam = PyDict_New();
         for (pParamList p = params; p != NULL; p = p->next)
         {
-            PyDict_SetItemString(pyParam, p->key, Py_BuildValue("s", p->value));
+            PyObject *tmpV = Py_BuildValue("s", p->value);
+            tmpPyObjectVec.push_back(tmpV);
+            PyDict_SetItemString(pyParam, p->key, tmpV);
             spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
         }
         PyTuple_SetItem(pArgsT, 1, pyParam);
@@ -153,7 +207,7 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         {
             dataNum++;
         }
-        spdlog::debug("call wrapper exec,datanum:{}", dataNum);
+        spdlog::debug("call wrapper exec,datanum:{}，sid:{}", dataNum, sid);
         PyObject *pyDataList = PyTuple_New(dataNum);
         if (dataNum > 0)
         {
@@ -162,42 +216,39 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             {
                 PyObject *tmp = PyDict_New();
 
-                PyObject *pyKey = PyUnicode_FromString(p->key);
+                PyObject *pyKey = Py_BuildValue("s", p->key);
                 PyDict_SetItemString(tmp, "key", pyKey);
-
+                tmpPyObjectVec.push_back(pyKey);
                 //std::string datas(static_cast<char*>(p->data),p->len);
                 //PyObject *pyData = Py_BuildValue("O", p->data);
                 PyObject *pyData = PyBytes_FromStringAndSize((char *)(p->data), p->len);
                 PyDict_SetItemString(tmp, "data", pyData);
+                tmpPyObjectVec.push_back(pyData);
 
                 PyObject *pyDataLen = Py_BuildValue("i", int(p->len));
                 PyDict_SetItemString(tmp, "len", pyDataLen);
+                tmpPyObjectVec.push_back(pyDataLen);
 
                 PyObject *pyStatus = Py_BuildValue("i", int(p->status));
                 PyDict_SetItemString(tmp, "status", pyStatus);
+                tmpPyObjectVec.push_back(pyStatus);
 
                 PyObject *pyType = Py_BuildValue("i", int(p->type));
                 PyDict_SetItemString(tmp, "type", pyType);
 
+                tmpPyObjectVec.push_back(pyType);
+
                 PyObject *tmpDesc = PyDict_New();
+                tmpPyObjectVec.push_back(tmpDesc);
                 for (pParamList descP = p->desc; descP != NULL; descP = descP->next)
                 {
-                    PyDict_SetItemString(tmpDesc, descP->key, Py_BuildValue("s", descP->value));
+                    PyObject *tmpV = Py_BuildValue("s", descP->value);
+                    tmpPyObjectVec.push_back(tmpV);
+                    PyDict_SetItemString(tmpDesc, descP->key, tmpV);
                 }
                 PyDict_SetItemString(tmp, "desc", tmpDesc);
 
                 PyTuple_SetItem(pyDataList, tmpIdx, tmp);
-
-                if (RELEASE)
-                {
-                    Py_XDECREF(pyKey);
-                    Py_XDECREF(pyData);
-                    Py_XDECREF(pyDataLen);
-                    Py_XDECREF(pyStatus);
-                    Py_XDECREF(pyType);
-                    Py_XDECREF(tmpDesc);
-                    Py_XDECREF(tmp);
-                }
                 p = p->next;
             }
         }
@@ -224,23 +275,8 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         }
         // //构建个性化请求个数
         PyTuple_SetItem(pArgsT, 5, Py_BuildValue("i", psrCnt));
-        spdlog::debug("wrapper exec psrCnt .val :{}", psrCnt);
-        //PyGILState_STATE gstate = PyGILState_Ensure();
+        spdlog::debug("wrapper exec psrCnt .val :{},sid:{}", psrCnt, sid);
         PyObject *pRet = PyEval_CallObject(execFunc, pArgsT);
-        //PyGILState_Release(gstate);
-
-        //去除引用计数
-        if (RELEASE)
-        {
-            Py_XDECREF(pUsrTag);
-            Py_XDECREF(pyParam);
-            Py_XDECREF(pyDataList);
-            Py_XDECREF(pyPsrIds);
-            Py_XDECREF(psrCnt);
-            //Py_XDECREF(pyRespData);
-            Py_XDECREF(execFunc);
-        }
-
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -249,107 +285,101 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
             {
                 spdlog::error("wrapperExec error:{},sid:{}", errRlt, sid);
             }
-            return WRAPPER::CError::innerError;
+            Py_DECREF(pArgsT);
+            Py_DECREF(execFunc);
+            ret = WRAPPER::CError::innerError;
         }
-        PyArg_Parse(pRet, "i", &ret);
-        if (RELEASE)
+        else
         {
-            Py_XDECREF(pRet);
-        }
-        if (ret == 0)
-        {
-            //读取响应
-            int rltSize = PyList_Size(pyRespData);
-            if (rltSize != 0)
+            PyArg_Parse(pRet, "i", &ret);
+            Py_DECREF(pRet);
+            if (ret == 0)
             {
-                pDataList headPtr;
-                pDataList prePtr;
-                pDataList curPtr;
-                for (int idx = 0; idx < rltSize; idx++)
+                //读取响应
+                int rltSize = PyList_Size(pyRespData);
+                if (rltSize != 0)
                 {
-                    pDataList tmpData = new (DataList);
+                    pDataList headPtr;
+                    pDataList prePtr;
+                    pDataList curPtr;
+                    for (int idx = 0; idx < rltSize; idx++)
+                    {
+                        pDataList tmpData = new (DataList);
 
-                    PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
-                    Py_XINCREF(tmpDict);
-                    char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
-                    if (ret != 0)
-                    {
-                        return ret;
-                    }
-                    else
-                    {
-                        tmpData->key = tmpRltKey;
-                    }
+                        PyObject *tmpDict = PyList_GetItem(pyRespData, idx);
+                        char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            tmpData->key = tmpRltKey;
+                        }
 
-                    int integerVal = 0;
-                    ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
-                    if (ret != 0)
-                    {
-                        return ret;
-                    }
-                    else
-                    {
-                        tmpData->len = integerVal;
-                    }
+                        int integerVal = 0;
+                        ret = pyDictIntToInt(tmpDict, DATA_LEN, integerVal, sid);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            tmpData->len = integerVal;
+                        }
 
-                    char *tmpRltData = pyDictStrToChar(tmpDict, DATA_DATA, sid, ret);
-                    if (ret != 0)
-                    {
-                        return ret;
+                        char *tmpRltData = pyDictStrToChar(tmpDict, DATA_DATA, sid, ret);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            tmpData->data = (void *)tmpRltData;
+                        }
+                        int interValSta = 0;
+                        ret = pyDictIntToInt(tmpDict, DATA_STATUS, interValSta, sid);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            tmpData->status = DataStatus(interValSta);
+                        }
+                        int interValType = 0;
+                        ret = pyDictIntToInt(tmpDict, DATA_TYPE, interValType, sid);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            tmpData->type = DataType(interValType);
+                        }
+                        tmpData->next = NULL;
+                        //检查下是否需要desc吧
+                        tmpData->desc = pyDictToDesc(tmpDict, DATA_DESC, sid, ret);
+                        if (ret != 0)
+                        {
+                            break;
+                        }
+                        if (idx == 0)
+                        {
+                            headPtr = tmpData;
+                            prePtr = tmpData;
+                            curPtr = tmpData;
+                        }
+                        else
+                        {
+                            curPtr = tmpData;
+                            prePtr->next = curPtr;
+                            prePtr = curPtr;
+                        }
+                        spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}", tmpData->key, tmpData->len, tmpData->type, tmpData->status, sid);
                     }
-                    else
-                    {
-                        tmpData->data = (void *)tmpRltData;
-                    }
-                    int interValSta=0;
-                    ret = pyDictIntToInt(tmpDict, DATA_STATUS, interValSta, sid);
-                    if (ret != 0)
-                    {
-                        return ret;
-                    }
-                    else
-                    {
-                        tmpData->status = DataStatus(interValSta);
-                    }
-                    int interValType=0;
-                    ret = pyDictIntToInt(tmpDict, DATA_TYPE, interValType, sid);
-                    if (ret != 0)
-                    {
-                        return ret;
-                    }
-                    else
-                    {
-                        tmpData->type = DataType(interValType);
-                    }
-                    tmpData->next = NULL;
-                    //检查下是否需要desc吧
-                    tmpData->desc = pyDictToDesc(tmpDict, DATA_DESC, sid, ret);
-                    if (ret != 0)
-                    {
-                        return ret;
-                    }
-                    if (idx == 0)
-                    {
-                        headPtr = tmpData;
-                        prePtr = tmpData;
-                        curPtr = tmpData;
-                    }
-                    else
-                    {
-                        curPtr = tmpData;
-                        prePtr->next = curPtr;
-                        prePtr = curPtr;
-                    }
-                    spdlog::debug("get result,key:{},len:{},type:{},status:{},sid:{}", tmpData->key, tmpData->len, tmpData->type, tmpData->status, sid);
-                    if(RELEASE){
-                        Py_XDECREF(tmpDict);
-                    }
+                    *respData = headPtr;
                 }
-                *respData = headPtr;
-            }
-            if(RELEASE){
-                Py_XDECREF(pyRespData);
-                Py_XDECREF(pArgsT);
             }
         }
     }
@@ -359,27 +389,37 @@ int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pD
         errRlt = log_python_exception();
         if (errRlt != "")
         {
-            spdlog::error("wrapperExec error:{}, ret:{}", errRlt, ret);
+            spdlog::error("wrapperExec error:{}, ret:{},sid:{}", errRlt, ret, sid);
         }
-        return WRAPPER::CError::innerError;
+        ret = WRAPPER::CError::innerError;
     }
-    spdlog::debug("wrapperExec ret.{}", ret);
+    spdlog::debug("wrapperExec ret.{},tmpPyObjectVec size:{},sid:{}", ret, tmpPyObjectVec.size(), sid);
+    for (auto &i : tmpPyObjectVec)
+    {
+        Py_XDECREF(i);
+    }
+    //Py_XDECREF(pyData);
+    Py_DECREF(pArgsT);
+    Py_DECREF(execFunc);
+    PyGILState_Release(gstate);
     return ret;
 }
 
 int callWrapperFini()
 {
     int ret = 0;
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *wrapperModule = PyImport_ImportModule(_wrapperName);
     PyObject *FiniFunc = PyObject_GetAttrString(wrapperModule, "wrapperFini");
+    Py_XDECREF(wrapperModule);
     if (!FiniFunc || !PyCallable_Check(FiniFunc))
     {
+        PyGILState_Release(gstate);
         return WRAPPER::CError::NotImplementFini;
     }
     try
     {
-        //PyGILState_STATE gstate = PyGILState_Ensure();
         PyObject *pRet = PyEval_CallObject(FiniFunc, NULL);
-        //PyGILState_Release(gstate);
         if (pRet == NULL)
         {
             std::string errRlt = "";
@@ -389,16 +429,13 @@ int callWrapperFini()
                 spdlog::error("wrapperFini error:{}", errRlt);
             }
             Py_DECREF(FiniFunc);
-            Py_DECREF(pRet);
+            PyGILState_Release(gstate);
             return WRAPPER::CError::innerError;
         }
         PyArg_Parse(pRet, "i", &ret);
         spdlog::debug("wrapperFini ret.{}", ret);
-        if(RELEASE){
-            Py_DECREF(FiniFunc);
-            Py_DECREF(pRet);
-        }
-        Py_Finalize();
+        PyGILState_Release(gstate);
+        //Py_Finalize(); 理论上需要的 但是不注释会崩溃 TODO fix
     }
     catch (const std::exception &e)
     {
@@ -408,9 +445,12 @@ int callWrapperFini()
         {
             spdlog::error("wrapperFini error:{}, ret:{}", errRlt, ret);
         }
-        return WRAPPER::CError::innerError;
+        
+        ret= WRAPPER::CError::innerError;
     }
+    std::cout<<"fini ret:"<<ret<<std::endl;
     return ret;
+
 }
 
 std::string log_python_exception()
@@ -510,10 +550,7 @@ char *pyDictStrToChar(PyObject *obj, std::string itemKey, std::string sid, int &
     }
     spdlog::debug("pyDictStrToChar , key: {},value:{},sid:{}", itemKey, rlt_ch, sid);
 
-    if(RELEASE){
-        Py_XDECREF(pyValue);
-        Py_XDECREF(utf8string);
-    }
+    Py_XDECREF(utf8string);
     return rlt_ch;
 }
 
@@ -521,9 +558,11 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
 {
     std::string rltStr = "";
     pDescList headPtr = NULL;
-    PyObject *pyDesc = PyDict_GetItem(obj, Py_BuildValue("s", descKey.c_str()));
+    PyObject *tmpKey = Py_BuildValue("s", descKey.c_str());
+    PyObject *pyDesc = PyDict_GetItem(obj, tmpKey);
     if (pyDesc == NULL)
     {
+        Py_XDECREF(tmpKey);
         spdlog::debug("pyDictToDesc ,desc is empty,sid:{}", sid);
         return NULL;
     }
@@ -535,9 +574,6 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
         {
             spdlog::error("wrapperExec pyDictToDesc error:{}, sid:{}", errRlt, sid);
             ret = WRAPPER::CError::innerError;
-            if(RELEASE){
-                Py_XDECREF(pyDesc);
-            }
             return NULL;
         }
         else
@@ -546,9 +582,6 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
             if (descDictSize == 0)
             {
                 spdlog::info("pyDictToDesc desc dict is empty,sid:{}", sid);
-                if(RELEASE){
-                    Py_XDECREF(pyDesc);
-                }
                 return NULL;
             }
             else
@@ -556,6 +589,7 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                 PyObject *descKeys = PyDict_Keys(pyDesc);
                 if (descKeys == NULL)
                 {
+                    Py_XDECREF(tmpKey);
                     ret = WRAPPER::CError::innerError;
                     return NULL;
                 }
@@ -589,14 +623,9 @@ pDescList pyDictToDesc(PyObject *obj, std::string descKey, std::string sid, int 
                             prePtr->next = curPtr;
                             prePtr = curPtr;
                         }
-                        if(RELEASE){
-                            Py_XDECREF(utf8string);
-                        }
+                        Py_XDECREF(utf8string);
                     }
-                    if(RELEASE){
-                        Py_XDECREF(descKeys);
-                        Py_XDECREF(pyDesc);
-                    }
+                    Py_DECREF(descKeys);
                     return headPtr;
                 }
             }
@@ -634,8 +663,5 @@ int pyDictIntToInt(PyObject *obj, std::string itemKey, int &itemVal, std::string
         }
     }
     PyArg_Parse(pyValue, "i", &itemVal);
-    if(RELEASE){
-        Py_XDECREF(pyValue);
-    }
     return 0;
 }
