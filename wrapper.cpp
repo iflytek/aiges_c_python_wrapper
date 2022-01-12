@@ -2,6 +2,7 @@
 #include <iostream>
 #include <strstream>
 #include <sstream>
+#include <boost/filesystem.hpp>
 #include "include/aiges/wrapper.h"
 #include "pyCall.h"
 
@@ -14,11 +15,14 @@ void initlog()
     // define SPDLOG_ACTIVE_LEVEL to desired level
     SPDLOG_TRACE("Some trace message with param {}", {});
     SPDLOG_DEBUG("Some debug message");
+    boost::filesystem::path dir("./log");
+    boost::filesystem::create_directory(dir);
 
     // Set the default logger to file logger
     // auto file_logger = spdlog::basic_logger_mt("quark", "./log/quark.txt");
     auto file_logger = spdlog::rotating_logger_mt("mspper", "./log/wrapper.log", 1048576 * 10, 50);
     spdlog::set_default_logger(file_logger);
+    spdlog::flush_on(spdlog::level::err);
     spdlog::flush_every(std::chrono::seconds(5));
 }
 
