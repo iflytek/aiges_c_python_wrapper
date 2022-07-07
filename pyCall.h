@@ -51,8 +51,7 @@ int callWrapperInit(pConfig cfg);
 
 int callWrapperFini();
 
-int
-callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
+int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
                 int psrCnt, std::string sid);
 
 char *callWrapperCreate(const char *usrTag, pParamList params, unsigned int psrIds[], int psrCnt, int *errNum,
