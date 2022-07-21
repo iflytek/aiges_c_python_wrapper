@@ -8,3 +8,5 @@ wrapper:
 	g++  -Wall -pedantic -Wextra -fPIC -shared -std=c++11 -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include -I./include/ -o libwrapper.so wrapper.cpp -L. -L /opt/conda/envs/loader/lib -lboost_filesystem -lboost_system  -lpyCallCommon -lpyCallOnce -lpyCallStream $(PYLIB)
 	mkdir -p wrapper_lib
 	cp libwrapper.so libpyCallCommon.so libpyCallOnce.so libpyCallStream.so ./wrapper_lib
+
+test:

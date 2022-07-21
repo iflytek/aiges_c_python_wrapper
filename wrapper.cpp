@@ -2,9 +2,13 @@
 #include <iostream>
 #include <strstream>
 #include <sstream>
+#include <pybind11/embed.h>
+#include <thread>
+#include <chrono>
 #include <boost/filesystem.hpp>
 #include "include/aiges/wrapper.h"
 #include "pyCall.h"
+
 void initlog()
 {
     // change log pattern
