@@ -45,6 +45,20 @@ private:
 
 };
 
+class ResponseData{
+	public:
+		std::string key;
+		std::string value;
+		int len;
+		int status;
+};
+
+class Response
+{
+	public:
+		std::vector<ResponseData> list;
+
+};
 
 std::vector<std::map<std::string, std::string>> convertReqData(pTestDataList reqData, int dataNum);
 

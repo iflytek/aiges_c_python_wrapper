@@ -6,6 +6,11 @@ from sdk import WrapperBase, \
                 ImageBodyField, \
                     StringBodyField
 
+# 
+try:
+    from aiges_embed import ResponseData,Response
+except:
+    from sdk  import Response,ResponseData
 
 '''
 定义请求类:
@@ -87,7 +92,7 @@ class Wrapper(WrapperBase):
         ret:错误码。无错误码时返回0
     '''
 
-    def wrapperOnceExec(cls, usrTag: str, params: {}, reqData: [], respData: [], psrIds: [], psrCnt: int) -> int:
+    def wrapperOnceExec(cls, params: {}, reqData: []) -> ResponseData:
         print("I am infer logic...")
         return 100
 
@@ -96,7 +101,16 @@ class Wrapper(WrapperBase):
         if ret == 100:
             return "Infer error defined here"
         return ""
-    def wrapperTestFunc(cls, data: [], respData: []) -> int:
-        print("org", respData)
-        respData.append({"ccc":'dd'})
-        return 0 
+
+    def wrapperTestFunc(cls, data: [], respData: []):
+        r = Response()
+        l = ResponseData()
+        l.key = "ccc"
+        l.status = 1
+        l.len = 3
+        l.value = "cccc"
+        r.list = [l,l,l] 
+
+        print(r.list)
+        print(444)
+        return r

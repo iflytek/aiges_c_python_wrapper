@@ -7,6 +7,22 @@
 const char* WrapperFile = "main";
 const char* WrapperClass = "Wrapper";
 
+
+PYBIND11_EMBEDDED_MODULE(aiges_embed, module){
+
+  py::class_<ResponseData> responseData(module, "ResponseData");
+  responseData.def(py::init<>())
+	  .def_readwrite("key",&ResponseData::key)
+	  .def_readwrite("value", &ResponseData::value)
+	  .def_readwrite("status", &ResponseData::status)
+	  .def_readwrite("len", &ResponseData::len);
+  py::class_<Response> response(module, "Response");
+  response.def(py::init<>())
+	  .def_readwrite("list",&Response::list);
+}
+
+
+
 PyWrapper::PyWrapper()
   {
     py::gil_scoped_acquire acquire;
@@ -46,7 +62,15 @@ int PyWrapper::wrapperFini()
 int PyWrapper::wrapperOnceExec(std::map<std::string,std::string> params, std::vector<py::object> reqData, std::vector<py::object> respData, std::string sid) {
 
     py::gil_scoped_acquire acquire;
-    return _wrapperOnceExec(params, reqData, respData).cast<int>();
+    try {
+        py::object r =  _wrapperOnceExec(params, reqData);
+    } catch (py::error_already_set &e) {
+	std::cout <<"errC"<<std::endl;
+	return -1;
+    }
+    
+    return 0;
+
 }
 
 
@@ -66,9 +90,29 @@ int PyWrapper::wrapperTest() {
 	item["type"] =22;
 	req.push_back(item);
    std::vector<py::object>  resp;
-   int ret =  _wrapperTest(req, &resp).cast<int>();
-   printf("resp len%d\n",resp.size());
-   printf("%d", ret);
+   resp.push_back(py::str("cfc"));
+   py::object  ret =  _wrapperTest(req, resp);
+   Response *l;
+    try {
+         l = ret.cast<Response *>(); 
+       // py::object r =  _wrapperOnceExec(params, reqData);
+    } catch (py::cast_error &e) {
+	std::cout <<"errC"<<std::endl;
+	return -1;
+    }
+    return 0;
+  for (int i = 0; i<l->list.size(); ++i)
+	{
+		ResponseData d = l->list[i];
+  std::cout <<"Response key: " <<d.key << std::endl;
+  std::cout <<"Response len" <<d.len <<std::endl;
+ 
+	}
+//  auto message = ret.cast<std::vector<std::string>>();
+ // printf("%s,:", message[0].c_str());
+ // printf("%s,:", message[1].c_str());
+ //  printf("resp len%d\n",resp.size());
+//   printf("%d", ret);
 
 
 }
