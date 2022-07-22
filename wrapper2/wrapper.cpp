@@ -8,11 +8,10 @@
 // 全局pywrapper类实例
 PyWrapper pyWrapper;
 // 
-const char*  wrapperLogFile  = "./log/wrapper.log";
+const char *wrapperLogFile = "./log/wrapper.log";
 
 
-void initlog()
-{
+void initlog() {
     // change log pattern
     spdlog::set_pattern("[%l] [%Y-%m-%d %H:%M:%S.%f] [%t] %v");
 
@@ -31,208 +30,189 @@ void initlog()
     spdlog::flush_every(std::chrono::seconds(5));
 }
 
-void setlog(std::string loglvl)
-{
+void setlog(std::string loglvl) {
     spdlog::level::level_enum lvl = spdlog::level::info;
-    if (std::string("debug") == loglvl)
-    {
+    if (std::string("debug") == loglvl) {
         lvl = spdlog::level::debug;
-    }
-    else if (std::string("error") == loglvl)
-    {
+    } else if (std::string("error") == loglvl) {
         lvl = spdlog::level::err;
-    }
-    else if (std::string("off") == loglvl)
-    {
+    } else if (std::string("off") == loglvl) {
         lvl = spdlog::level::off;
     }
 
     spdlog::set_level(lvl); // Set global log level to debug
 }
 
-int WrapperAPI wrapperSetCtrl(CtrlType type, void* func)
-{
+int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
     return 0;
 }
 
-int WrapperAPI wrapperInit(pConfig cfg)
-{
+int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
 
     initlog();
 
     std::string loglvl = "error";
-    std::map<std::string,std::string> config ;
+    std::map <std::string, std::string> config;
 
-    for (pConfig p = cfg; p != NULL; p = p->next)
-    {
+    for (pConfig p = cfg; p != NULL; p = p->next) {
         if (p->key != NULL && p->value != NULL) {
-	    config.insert({p->key, p->value});
-            if (std::string("log.level") ==std::string(p->key))
-            {
+            config.insert({p->key, p->value});
+            if (std::string("log.level") == std::string(p->key)) {
                 loglvl = p->value;
                 continue;
-            }   
+            }
         }
     }
 
     setlog(loglvl);
     printf("Now tid is %d \n", gettid());
-    ret=pyWrapper.wrapperInit(config);
+    ret = pyWrapper.wrapperInit(config);
     return ret;
 }
 
-int WrapperAPI wrapperFini()
-{
+int WrapperAPI wrapperFini() {
     printf("now tid is %d \n", gettid());
     pyWrapper.wrapperFini();
     return 0;
 }
 
-const char *WrapperAPI wrapperError(int errNum)
-{
+const char *WrapperAPI wrapperError(int errNum) {
     return pyWrapper.wrapperError(errNum);
 }
 
-const char *WrapperAPI wrapperVersion()
-{
+const char *WrapperAPI wrapperVersion() {
     return "1.0.0";
 }
 
-int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId)
-{
+int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
     return 0;
 }
 
-int WrapperAPI wrapperUnloadRes(unsigned int resId)
-{
+int WrapperAPI wrapperUnloadRes(unsigned int resId) {
     return 0;
 }
 
-const void* WrapperAPI wrapperCreate(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum)
-{
+const void *
+WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt,
+                         int *errNum) {
     return NULL;
 }
 
-int WrapperAPI wrapperWrite(const void* handle, pDataList reqData)
-{
-	return 0;
+int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
+    return 0;
 }
 
-int WrapperAPI wrapperRead(const void *handle, pDataList *respData)
-{
-	return 0;
+int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
+    return 0;
 }
 
-int WrapperAPI wrapperDestroy(const void *handle)
-{
-	return 0;
+int WrapperAPI wrapperDestroy(const void *handle) {
+    return 0;
 }
 
-int WrapperAPI wrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt)
-{
+int WrapperAPI
+wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
+            int psrCnt) {
     int ret = 0;
     std::string sid = "";
-    for (pParamList sidP = params; sidP != NULL; sidP = sidP->next)
-    {
-        if(NULL==sidP->key){
+    for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
+        if (NULL == sidP->key) {
             continue;
         }
-        if (std::string("sid") == sidP->key)
-        {
+        if (std::string("sid") == sidP->key) {
             sid = sidP->value;
             break;
         }
     }
     spdlog::debug("now tid is:{},sid:{}", gettid(), sid);
     //构建请求参数
-    std::map<std::string, std::string> pyParams;
+    std::map <std::string, std::string> pyParams;
 
-   for (pParamList p = params; p != NULL; p = p->next) {
-      if (NULL == p->key) {
-	continue;
-       }
-      pyParams.insert({p->key, p->value});
-      spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
-   }
-     //构建请求数据
-     int dataNum = 0;
-     for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
-            dataNum++;
-     }
-     spdlog::debug("call wrapper exec,datanum:{}，sid:{}", dataNum, sid);
-
-     std::vector<py::dict> req;
-        pDataList p = reqData;
-        if (dataNum > 0) {
-            for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
-
-                py::dict item;
-                item["key"] = p->key;
-                item["data"] = p->data;
-                item["len"] = p->len;
-                item["type"] = p->type;
-                req.push_back(item);
-                p = p->next;
-            }
+    for (pParamList p = params; p != NULL; p = p->next) {
+        if (NULL == p->key) {
+            continue;
         }
-     
+        pyParams.insert({p->key, p->value});
+        spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
+    }
+    //构建请求数据
+    int dataNum = 0;
+    for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
+        dataNum++;
+    }
+    spdlog::debug("call wrapper exec,datanum:{}，sid:{}", dataNum, sid);
+
+    std::vector <py::dict> req;
+    pDataList p = reqData;
+    if (dataNum > 0) {
+        for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
+
+            py::dict item;
+            item["key"] = p->key;
+            item["data"] = p->data;
+            item["len"] = p->len;
+            item["type"] = p->type;
+            req.push_back(item);
+            p = p->next;
+        }
+    }
+
     // 构造响应数据
-    std::vector<py::object> resp;
-    ret = pyWrapper.wrapperOnceExec( pyParams, req, resp, sid);
+    std::vector <py::object> resp;
+    ret = pyWrapper.wrapperOnceExec(pyParams, req, resp, sid);
     if (ret != 0) {
-	spdlog::error("wrapper exec error!");
-    	return ret;
+        spdlog::error("wrapper exec error!");
+        return ret;
     }
     int rltSize = resp.size();
     if (rltSize != 0) {
-                    pDataList headPtr;
-                    pDataList prePtr;
-                    pDataList curPtr;
-                    for (int idx = 0; idx < rltSize; idx++) {
-                        pDataList tmpData = new (DataList);
-			py::object obj = resp[idx];
+        pDataList headPtr;
+        pDataList prePtr;
+        pDataList curPtr;
+        for (int idx = 0; idx < rltSize; idx++) {
+            pDataList tmpData = new (DataList);
+            py::object obj = resp[idx];
 
-                        char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
-                        if (ret != 0) {
-                            break;
-                        } else {
-                            tmpData->key = tmpRltKey;
-                        }
-		    }
+            char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
+            if (ret != 0) {
+                break;
+            } else {
+                tmpData->key = tmpRltKey;
+            }
+        }
     }
 
 }
-int WrapperAPI wrapperExecFree(const char* usrTag, pDataList* respData)
-{
-    if (NULL != *respData)
-    {
-        pDataList ptr = *respData; 
-        while(ptr != NULL)
-        {
-            if (ptr->len > 0)
-            {
+
+int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
+    if (NULL != *respData) {
+        pDataList ptr = *respData;
+        while (ptr != NULL) {
+            if (ptr->len > 0) {
                 free(ptr->data);
                 ptr->data = NULL;
             }
-            if (strlen(ptr->key)>0){
+            if (strlen(ptr->key) > 0) {
                 free(ptr->key);
-                ptr->key=NULL;
+                ptr->key = NULL;
             }
-            pDataList tmp=ptr->next;
+            pDataList tmp = ptr->next;
             delete ptr;
-            ptr=NULL;
-            ptr=tmp;
+            ptr = NULL;
+            ptr = tmp;
         }
     }
     spdlog::debug("wrapper exec free success");
     return 0;
 }
 
-int WrapperAPI wrapperExecAsync(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt)
-{
+int WrapperAPI
+wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout,
+                 unsigned int psrIds[], int psrCnt) {
     return 0;
 }
+
 const char *WrapperAPI wrapperDebugInfo(const void *handle) { return NULL; }
 
 

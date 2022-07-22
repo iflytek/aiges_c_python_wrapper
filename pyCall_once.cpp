@@ -1,7 +1,8 @@
 #include "pyCall.h"
 
 
-int callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
+int
+callWrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
                 int psrCnt, std::string sid) {
     int ret = 0;
     PyGILState_STATE gstate = PyGILState_Ensure();
