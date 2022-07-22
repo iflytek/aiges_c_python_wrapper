@@ -15,15 +15,12 @@ endif
 
 wrapper:
 	echo $(PYLIB)
-	g++ -fPIC -shared -std=c++11 -Wno-attributes  $(PYINC)  -g -O0 -I. -I./include/spdlog/include -I./include/ -o libpyCallCommon.so pyCall_common.cpp -L. $(PYLIB)
-	g++ -fPIC -shared -std=c++11 -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include -I./include/ -o libpyCallOnce.so pyCall_once.cpp -L. -L /opt/conda/envs/loader/lib  $(PYLIB)
-	g++ -fPIC -shared -std=c++11 -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include -I./include/ -o libpyCallStream.so pyCall_stream.cpp -L. -L /opt/conda/envs/loader/lib   $(PYLIB)
-	g++  -Wall -pedantic -Wextra -fPIC -shared -std=c++11 -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include -I./include/ -o libwrapper.so wrapper.cpp -L. -L /opt/conda/envs/loader/lib -lboost_filesystem -lboost_system  -lpyCallCommon -lpyCallOnce -lpyCallStream $(PYLIB)
+	g++  -Wall -pedantic -Wextra -fPIC -shared  -std=c++1y -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o libwrapper.so pyWrapper.cpp wrapper.cpp  -L. -L /opt/conda/envs/loader/lib -lboost_filesystem -lboost_system $(PYLIB)
 	mkdir -p wrapper_lib
-	cp libwrapper.so libpyCallCommon.so libpyCallOnce.so libpyCallStream.so ./wrapper_lib
+	cp libwrapper.so  ./wrapper_lib
 
 t:
 	echo $(python_version_minor)
 	echo $(PY_GT_3_6)
 	rm -f test
-	g++ -Wall  -fPIC  -I./include/spdlog/include/ $(PYINC) pyWrapper.cpp   pyWrapperTest.cpp -o test $(PYLIB) 
+	g++ -Wall  -g -O0 -fPIC  -I./include/spdlog/include/ $(PYINC) pyWrapper.cpp   pyWrapperTest.cpp -o test $(PYLIB) 

@@ -107,8 +107,9 @@ class Wrapper(WrapperBase):
         l = ResponseData()
         l.key = "ccc"
         l.status = 1
-        l.len = 3
-        l.value = "cccc"
+        d =  open("pybind11/docs/pybind11-logo.png","rb").read() 
+        l.len = len(d)
+        l.data =d
         r.list = [l,l,l] 
 
         print(r.list)

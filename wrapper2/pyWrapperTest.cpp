@@ -18,10 +18,16 @@ void thread_func(int iteration) {
     }
 }
 
-int main() {
-    py::scoped_interpreter python;
-    py::gil_scoped_release release; // add this to release the GIL
 
+void ini() {
+    std::cout << "ccccccccdddddddd" << std::endl;
+//    py::scoped_interpreter python;
+
+}
+int main() {
+  //  Manager *manager = new Manager();
+    py::initialize_interpreter();
+    py::gil_scoped_release release; // add this to release the GIL
     std::vector <std::thread> threads;
 
     threads.push_back(std::thread(thread_func, 1));

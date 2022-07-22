@@ -10,6 +10,11 @@
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
+#include "aiges/type.h"
+
+
+#define gettid() syscall(SYS_gettid)
+
 
 typedef struct TestDataList {
     char *key;            // 数据标识
@@ -21,7 +26,10 @@ typedef struct TestDataList {
 namespace py = pybind11;
 using namespace std::chrono_literals;
 
-
+class Manager {
+  public:
+	  Manager();
+};
 class PyWrapper {
 public:
     PyWrapper();
@@ -32,8 +40,7 @@ public:
 
     std::string wrapperError(int x);
 
-    int wrapperOnceExec(std::map <std::string, std::string> params, std::vector <py::object> reqData,
-                        std::vector <py::object> respData, std::string sid);
+    int wrapperOnceExec(std::map <std::string, std::string> params, std::vector <py::dict> reqData, pDataList *respData, std::string sid);
 
     int wrapperFini();
 
@@ -52,7 +59,7 @@ private:
 class ResponseData {
 public:
     std::string key;
-    void* data;
+    std::string data;
     unsigned int len;
     int status;
     int type;

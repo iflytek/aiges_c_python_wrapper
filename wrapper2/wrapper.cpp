@@ -1,10 +1,13 @@
 #include <strstream>
 #include <chrono>
 #include <boost/filesystem.hpp>
-#include "include/aiges/wrapper.h"
+#include "aiges/wrapper.h"
 #include "pyWrapper.h"
 
 
+
+py::scoped_interpreter python;
+py::gil_scoped_release release; // add this to release the GIL
 // 全局pywrapper类实例
 PyWrapper pyWrapper;
 // 
@@ -49,6 +52,8 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
 
 int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
+    py::scoped_interpreter python;
+    py::gil_scoped_release release; // add this to release the GIL
 
     initlog();
 
@@ -78,7 +83,7 @@ int WrapperAPI wrapperFini() {
 }
 
 const char *WrapperAPI wrapperError(int errNum) {
-    return pyWrapper.wrapperError(errNum);
+    return pyWrapper.wrapperError(errNum).c_str();
 }
 
 const char *WrapperAPI wrapperVersion() {
@@ -159,29 +164,11 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
     }
 
     // 构造响应数据
-    std::vector <py::object> resp;
-    ret = pyWrapper.wrapperOnceExec(pyParams, req, resp, sid);
+    ret = pyWrapper.wrapperOnceExec(pyParams, req, respData, sid);
     if (ret != 0) {
         spdlog::error("wrapper exec error!");
-        return ret;
     }
-    int rltSize = resp.size();
-    if (rltSize != 0) {
-        pDataList headPtr;
-        pDataList prePtr;
-        pDataList curPtr;
-        for (int idx = 0; idx < rltSize; idx++) {
-            pDataList tmpData = new (DataList);
-            py::object obj = resp[idx];
-
-            char *tmpRltKey = pyDictStrToChar(tmpDict, DATA_KEY, sid, ret);
-            if (ret != 0) {
-                break;
-            } else {
-                tmpData->key = tmpRltKey;
-            }
-        }
-    }
+    return ret;
 
 }
 

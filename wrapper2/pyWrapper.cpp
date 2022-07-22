@@ -1,5 +1,4 @@
 #include "pyWrapper.h"
-#include "aiges/type.h"
 
 //namespace py = pybind11;
 //using namespace std::chrono_literals;
@@ -20,7 +19,7 @@ def (py::init<>())
 .def_readwrite("key",&ResponseData::key)
 .def_readwrite("data", &ResponseData::data)
 .def_readwrite("status", &ResponseData::status)
-.def_readwrite("len", &ResponseData::len);
+.def_readwrite("len", &ResponseData::len)
 .def_readwrite("type", &ResponseData::type);
 
 py::class_<Response> response(module, "Response");
@@ -44,6 +43,12 @@ PyWrapper::PyWrapper() {
 
 }
 
+Manager::Manager() {
+	
+    py::scoped_interpreter python;
+    py::gil_scoped_release release; // add this to release the GIL
+}
+
 PyWrapper::~PyWrapper() {
     _wrapperError.release();
     _wrapperInit.release();
@@ -64,8 +69,8 @@ int PyWrapper::wrapperFini() {
     return _wrapperFini().cast<int>();
 }
 
-int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, std::vector <py::object> reqData,
-                               std::vector <py::object> respData, std::string sid) {
+int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, std::vector <py::dict> reqData,
+                              pDataList *respData, std::string sid) {
     try {
         py::gil_scoped_acquire acquire;
         py::object r = _wrapperOnceExec(params, reqData);
@@ -77,10 +82,21 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, std::
         for (int idx = 0; idx < resp->list.size(); idx++) {
             pDataList tmpData = new(DataList);
             ResponseData itemData = resp->list[idx];
-            tmpData->key = itemData.key;
-            tmpData->len = itemData.len;
+	    char* key = strdup(itemData.key.c_str());
+            tmpData->key = key; 
+            tmpData->len =  itemData.len;
             tmpData->type = DataType(itemData.type);
-            tmpData->data = itemData.data;
+	    void *r;
+            r = malloc(itemData.data.length());
+	    if (r == NULL) {
+                int ret = -1;
+                spdlog::error("Can't malloc memory,  sid:{}", sid);
+                return ret;
+            }
+	    memcpy(r, itemData.data.data(), itemData.data.length());
+	    //char *data_ = new char[itemData.data.length()+1];
+	    // strdup(.c_str());
+            tmpData->data = r ;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
@@ -132,13 +148,15 @@ int PyWrapper::wrapperTest() {
         std::cout << "errC" << std::endl;
         return -1;
     }
-    return 0;
     for (int i = 0; i < l->list.size(); ++i) {
         ResponseData d = l->list[i];
         std::cout << "Response key: " << d.key << std::endl;
         std::cout << "Response len" << d.len << std::endl;
+	std::cout << "response actual data Size " << d.data.length()<<std::endl;
+	
 
     }
+    return 0;
 //  auto message = ret.cast<std::vector<std::string>>();
     // printf("%s,:", message[0].c_str());
     // printf("%s,:", message[1].c_str());
