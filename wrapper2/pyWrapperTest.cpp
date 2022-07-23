@@ -23,14 +23,15 @@ void ini() {
 //    py::scoped_interpreter python;
 
 }
+
 int main() {
-  //  Manager *manager = new Manager();
+    //  Manager *manager = new Manager();
     py::initialize_interpreter();
     py::gil_scoped_release release; // add this to release the GIL
     std::vector <std::thread> threads;
     PyWrapper *w = new PyWrapper();
-    for (int i=0;i<5;i++)
-    threads.push_back(std::thread(thread_func, 1,w));
+    for (int i = 0; i < 5; i++)
+        threads.push_back(std::thread(thread_func, 1, w));
 
     for (auto &t: threads) {
         t.join();

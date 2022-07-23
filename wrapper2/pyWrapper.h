@@ -43,19 +43,22 @@ public:
 
 class DataListNode {
 public:
-	std::string key;
-	std::string data;
-	unsigned int len;
-	int type;
+    std::string key;
+    std::string data;
+    unsigned int len;
+    int type;
 };
+
 class DataListCls {
-	public:
-		std::vector <DataListNode> list;
+public:
+    std::vector <DataListNode> list;
 };
+
 class Manager {
-  public:
-	  Manager();
+public:
+    Manager();
 };
+
 class PyWrapper {
 public:
     PyWrapper();
@@ -66,7 +69,8 @@ public:
 
     std::string wrapperError(int x);
 
-    int wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData, pDataList *respData, std::string sid);
+    int wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData, pDataList *respData,
+                        std::string sid);
 
     int wrapperFini();
 

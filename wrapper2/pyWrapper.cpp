@@ -30,7 +30,7 @@ def (py::init<>())
 
 .def_readwrite("list",&Response::list);
 
-py::class_ <DataListNode> dataListNode(module, "DataListNode");
+py::class_<DataListNode> dataListNode(module, "DataListNode");
 dataListNode.
 
 def (py::init<>())
@@ -62,8 +62,8 @@ PyWrapper::PyWrapper() {
 }
 
 Manager::Manager() {
-	
-	dlopen("libpython3.so", RTLD_GLOBAL | RTLD_NOW);
+
+    dlopen("libpython3.so", RTLD_GLOBAL | RTLD_NOW);
 }
 
 PyWrapper::~PyWrapper() {
@@ -87,7 +87,7 @@ int PyWrapper::wrapperFini() {
 }
 
 int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData,
-                              pDataList *respData, std::string sid) {
+                               pDataList *respData, std::string sid) {
     try {
         py::gil_scoped_acquire acquire;
         py::object r = _wrapperOnceExec(params, reqData);
@@ -99,21 +99,21 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         for (int idx = 0; idx < resp->list.size(); idx++) {
             pDataList tmpData = new(DataList);
             ResponseData itemData = resp->list[idx];
-	    char* key = strdup(itemData.key.c_str());
-            tmpData->key = key; 
-            tmpData->len =  itemData.len;
+            char *key = strdup(itemData.key.c_str());
+            tmpData->key = key;
+            tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
-	    void *r;
+            void *r;
             r = malloc(itemData.data.length());
-	    if (r == NULL) {
+            if (r == NULL) {
                 int ret = -1;
                 spdlog::error("Can't malloc memory,  sid:{}", sid);
                 return ret;
             }
-	    memcpy(r, itemData.data.data(), itemData.data.length());
-	    //char *data_ = new char[itemData.data.length()+1];
-	    // strdup(.c_str());
-            tmpData->data = r ;
+            memcpy(r, itemData.data.data(), itemData.data.length());
+            //char *data_ = new char[itemData.data.length()+1];
+            // strdup(.c_str());
+            tmpData->data = r;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
@@ -169,8 +169,8 @@ int PyWrapper::wrapperTest() {
         ResponseData d = l->list[i];
         std::cout << "Response key: " << d.key << std::endl;
         std::cout << "Response len" << d.len << std::endl;
-	std::cout << "response actual data Size " << d.data.length()<<std::endl;
-	
+        std::cout << "response actual data Size " << d.data.length() << std::endl;
+
 
     }
     return 0;
