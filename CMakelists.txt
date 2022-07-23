@@ -1,0 +1,4 @@
+cmake_minimum_required(VERSION 3.22)
+project(aiges_c_python-wrapper VERSION 1.0.0)
+include_directories(./include)
+aux_source_directory(./core SRC_LIST)

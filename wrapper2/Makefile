@@ -15,7 +15,7 @@ endif
 
 wrapper:
 	echo $(PYLIB)
-	g++  -Wall -pedantic -Wextra -fPIC -shared  -std=c++1y  -fvisibility=default  -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o libwrapper.so pyWrapper.cpp wrapper.cpp  -L. -L /opt/conda/envs/loader/lib -lboost_filesystem -lboost_system $(PYLIB) -rdynamic
+	g++  -Wall -pedantic -Wextra -fPIC -shared  -std=c++1y  -fvisibility=default  -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o libwrapper.so pyWrapper.cpp wrapper.cpp  -L. -L /opt/conda/envs/loader/lib $(PYLIB) -rdynamic
 	mkdir -p wrapper_lib
 	cp libwrapper.so  ./wrapper_lib
 
@@ -24,3 +24,7 @@ t:
 	echo $(PY_GT_3_6)
 	rm -f test
 	g++ -Wall  -g -O0 -fPIC  -I./include/spdlog/include/ $(PYINC) pyWrapper.cpp   pyWrapperTest.cpp -o test $(PYLIB) 
+
+main:
+	echo $(PYLIB)
+	g++  -Wall -pedantic -Wextra -fPIC  -std=c++1y  -fvisibility=default  -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o output pyWrapper.cpp wrapper.cpp  main.cpp -L. -L /opt/conda/envs/loader/lib $(PYLIB) -rdynamic

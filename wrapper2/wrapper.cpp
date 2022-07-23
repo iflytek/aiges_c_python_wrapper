@@ -1,18 +1,17 @@
 #include <strstream>
 #include <chrono>
-#include <boost/filesystem.hpp>
+//#include <boost/filesystem.hpp>
 #include "aiges/wrapper.h"
 #include "pyWrapper.h"
 
 Manager manager;
 
-py::scoped_interpreter python;
-py::gil_scoped_release release; // add this to release the GIL
+py::scoped_interpreter python;// add this to release the GIL
 // 全局pywrapper类实例
 PyWrapper *pyWrapper;
 // 
 
-const char *wrapperLogFile = "./log/wrapper.log";
+const char *wrapperLogFile = "./wrapper.log";
 
 
 void initlog() {
@@ -25,8 +24,8 @@ void initlog() {
     SPDLOG_DEBUG("Some debug message");
 
     // Set the default logger to file logger
-    boost::filesystem::path dir("./log");
-    boost::filesystem::create_directory(dir);
+//    boost::filesystem::path dir("./log");
+//    boost::filesystem::create_directory(dir);
 
     auto file_logger = spdlog::rotating_logger_mt("mspper", wrapperLogFile, 1048576 * 10, 50);
     spdlog::set_default_logger(file_logger);
@@ -57,7 +56,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
 
     initlog();
 
-    std::string loglvl = "error";
+    std::string loglvl = "debug";
     std::map <std::string, std::string> config;
 
     for (pConfig p = cfg; p != NULL; p = p->next) {

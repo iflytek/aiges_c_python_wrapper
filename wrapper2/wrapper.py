@@ -92,9 +92,18 @@ class Wrapper(WrapperBase):
         ret:错误码。无错误码时返回0
     '''
 
-    def wrapperOnceExec(cls, params: {}, reqData: []) -> ResponseData:
+    def wrapperOnceExec(cls, params: {}, reqData: []) -> Response:
         print("I am infer logic...")
-        return 100
+        r = Response()
+        l = ResponseData()
+        l.key = "ccc"
+        l.status = 1
+        d = open("./test.png","rb").read()
+        l.len = len(d)
+        l.data =d
+        l.type=0
+        r.list = [l,l,l]
+        return r
 
     def wrapperError(cls, ret: int) -> str:
         print("###re",ret)

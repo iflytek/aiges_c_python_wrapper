@@ -7,6 +7,8 @@
 #include <thread>
 #include <chrono>
 #include <sstream>
+#include<map>
+#include <vector>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 

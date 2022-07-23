@@ -72,27 +72,27 @@ PyWrapper::~PyWrapper() {
     _wrapperFini.release();
     _wrapperOnceExec.release();
     _wrapperTest.release();
+    pybind11::gil_scoped_release release;
 }
 
 
 int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
-    py::gil_scoped_acquire acquire;
     return _wrapperInit(config).cast<int>();
 }
 
 
 int PyWrapper::wrapperFini() {
-    py::gil_scoped_acquire acquire;
     return _wrapperFini().cast<int>();
 }
 
 int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData,
                                pDataList *respData, std::string sid) {
     try {
-        py::gil_scoped_acquire acquire;
         py::object r = _wrapperOnceExec(params, reqData);
         Response *resp;
+        std::cout<<"start cast python resp to cpp object"<<std::endl;
         resp = r.cast<Response *>();
+        std::cout<<"cast python resp to cpp object success"<<std::endl;
         pDataList headPtr;
         pDataList prePtr;
         pDataList curPtr;
@@ -140,8 +140,7 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
 
 
 std::string PyWrapper::wrapperError(int err) {
-    py::gil_scoped_acquire acquire;
-    return _wrapperError(err).cast<std::string>();
+     return _wrapperError(err).cast<std::string>();
 }
 
 
