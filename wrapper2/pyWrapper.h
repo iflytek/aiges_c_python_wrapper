@@ -26,6 +26,32 @@ typedef struct TestDataList {
 namespace py = pybind11;
 using namespace std::chrono_literals;
 
+class ResponseData {
+public:
+    std::string key;
+    std::string data;
+    unsigned int len;
+    int status;
+    int type;
+};
+
+class Response {
+public:
+    std::vector <ResponseData> list;
+
+};
+
+class DataListNode {
+public:
+	std::string key;
+	std::string data;
+	unsigned int len;
+	int type;
+};
+class DataListCls {
+	public:
+		std::vector <DataListNode> list;
+};
 class Manager {
   public:
 	  Manager();
@@ -40,7 +66,7 @@ public:
 
     std::string wrapperError(int x);
 
-    int wrapperOnceExec(std::map <std::string, std::string> params, std::vector <py::dict> reqData, pDataList *respData, std::string sid);
+    int wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData, pDataList *respData, std::string sid);
 
     int wrapperFini();
 
@@ -56,20 +82,6 @@ private:
 
 };
 
-class ResponseData {
-public:
-    std::string key;
-    std::string data;
-    unsigned int len;
-    int status;
-    int type;
-};
-
-class Response {
-public:
-    std::vector <ResponseData> list;
-
-};
 
 std::vector <std::map<std::string, std::string>> convertReqData(pTestDataList reqData, int dataNum);
 

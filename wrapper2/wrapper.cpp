@@ -4,13 +4,14 @@
 #include "aiges/wrapper.h"
 #include "pyWrapper.h"
 
-
+Manager manager;
 
 py::scoped_interpreter python;
 py::gil_scoped_release release; // add this to release the GIL
 // 全局pywrapper类实例
-PyWrapper pyWrapper;
+PyWrapper* pyWrapper;
 // 
+
 const char *wrapperLogFile = "./log/wrapper.log";
 
 
@@ -52,8 +53,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
 
 int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
-    py::scoped_interpreter python;
-    py::gil_scoped_release release; // add this to release the GIL
+    pyWrapper = new PyWrapper();
 
     initlog();
 
@@ -72,18 +72,18 @@ int WrapperAPI wrapperInit(pConfig cfg) {
 
     setlog(loglvl);
     printf("Now tid is %d \n", gettid());
-    ret = pyWrapper.wrapperInit(config);
+    ret = pyWrapper->wrapperInit(config);
     return ret;
 }
 
 int WrapperAPI wrapperFini() {
     printf("now tid is %d \n", gettid());
-    pyWrapper.wrapperFini();
+    pyWrapper->wrapperFini();
     return 0;
 }
 
 const char *WrapperAPI wrapperError(int errNum) {
-    return pyWrapper.wrapperError(errNum).c_str();
+    return pyWrapper->wrapperError(errNum).c_str();
 }
 
 const char *WrapperAPI wrapperVersion() {
@@ -119,6 +119,7 @@ int WrapperAPI wrapperDestroy(const void *handle) {
 int WrapperAPI
 wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
             int psrCnt) {
+    std::cout << 1000111 << std::endl;
     int ret = 0;
     std::string sid = "";
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
@@ -130,6 +131,7 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
             break;
         }
     }
+    std::cout << 111111 << std::endl;
     spdlog::debug("now tid is:{},sid:{}", gettid(), sid);
     //构建请求参数
     std::map <std::string, std::string> pyParams;
@@ -141,30 +143,38 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
         pyParams.insert({p->key, p->value});
         spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
     }
+    std::cout << 2111111 << std::endl;
     //构建请求数据
     int dataNum = 0;
     for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
         dataNum++;
+    	std::cout << 3111111 << std::endl;
     }
     spdlog::debug("call wrapper exec,datanum:{}，sid:{}", dataNum, sid);
 
-    std::vector <py::dict> req;
+    DataListCls req;
     pDataList p = reqData;
     if (dataNum > 0) {
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
 
-            py::dict item;
-            item["key"] = p->key;
-            item["data"] = p->data;
-            item["len"] = p->len;
-            item["type"] = p->type;
-            req.push_back(item);
+             std::cout << 333333111 << std::endl;
+            DataListNode item;
+            item.key = p->key;
+            item.data = (char*) p->data;
+            item.len = p->len;
+	    char t = static_cast<int>(p->type);
+	    item.type= p->type;
+	    std::cout << t << std::endl;
+            req.list.push_back(item);
             p = p->next;
         }
     }
 
     // 构造响应数据
-    ret = pyWrapper.wrapperOnceExec(pyParams, req, respData, sid);
+    std::cout << 411111 << std::endl;
+    ret  = pyWrapper->wrapperOnceExec(pyParams, req, respData, sid);
+
+    std::cout << "exec ret" <<ret << std::endl;
     if (ret != 0) {
         spdlog::error("wrapper exec error!");
     }

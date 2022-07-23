@@ -1,16 +1,15 @@
 
 #include "pyWrapper.h"
 
-void thread_func(int iteration) {
-    PyWrapper w;
+void thread_func(int iteration, PyWrapper *w) {
 
     for (int i = 0; i < 1; i++) {
-        w.wrapperError(i);
+        w->wrapperError(i);
         // w.wrapperTest()
         std::map <std::string, std::string> c;
         c.insert({"key", "cc"});
-        w.wrapperInit(c);
-        w.wrapperTest();
+        w->wrapperInit(c);
+        w->wrapperTest();
         std::stringstream msg;
         msg << "iteration: " << iteration << " thread: " << std::this_thread::get_id() << " w.get_x(): " << std::endl;
         std::cout << msg.str();
@@ -29,8 +28,9 @@ int main() {
     py::initialize_interpreter();
     py::gil_scoped_release release; // add this to release the GIL
     std::vector <std::thread> threads;
-
-    threads.push_back(std::thread(thread_func, 1));
+    PyWrapper *w = new PyWrapper();
+    for (int i=0;i<5;i++)
+    threads.push_back(std::thread(thread_func, 1,w));
 
     for (auto &t: threads) {
         t.join();

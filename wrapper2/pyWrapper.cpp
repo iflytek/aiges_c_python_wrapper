@@ -1,4 +1,5 @@
 #include "pyWrapper.h"
+#include <dlfcn.h>
 
 //namespace py = pybind11;
 //using namespace std::chrono_literals;
@@ -28,6 +29,23 @@ response.
 def (py::init<>())
 
 .def_readwrite("list",&Response::list);
+
+py::class_ <DataListNode> dataListNode(module, "DataListNode");
+dataListNode.
+
+def (py::init<>())
+
+.def_readwrite("key",&DataListNode::key)
+.def_readwrite("data", &DataListNode::data)
+.def_readwrite("len", &DataListNode::len)
+.def_readwrite("type", &DataListNode::type);
+
+py::class_<DataListCls> dataListCls(module, "DataListCls");
+dataListCls.
+
+def (py::init<>())
+
+.def_readwrite("list",&DataListCls::list);
 }
 
 
@@ -45,8 +63,7 @@ PyWrapper::PyWrapper() {
 
 Manager::Manager() {
 	
-    py::scoped_interpreter python;
-    py::gil_scoped_release release; // add this to release the GIL
+	dlopen("libpython3.so", RTLD_GLOBAL | RTLD_NOW);
 }
 
 PyWrapper::~PyWrapper() {
@@ -69,13 +86,13 @@ int PyWrapper::wrapperFini() {
     return _wrapperFini().cast<int>();
 }
 
-int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, std::vector <py::dict> reqData,
+int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData,
                               pDataList *respData, std::string sid) {
     try {
         py::gil_scoped_acquire acquire;
         py::object r = _wrapperOnceExec(params, reqData);
         Response *resp;
-
+        resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList prePtr;
         pDataList curPtr;
