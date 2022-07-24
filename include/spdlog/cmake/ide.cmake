@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------------------
 # IDE support for headers
 #---------------------------------------------------------------------------------------
-set(SPDLOG_HEADERS_DIR "${CMAKE_CURRENT_LIST_DIR}/../include")
+set(SPDLOG_HEADERS_DIR "../include")
 
 file(GLOB SPDLOG_TOP_HEADERS "${SPDLOG_HEADERS_DIR}/spdlog/*.h")
 file(GLOB SPDLOG_DETAILS_HEADERS "${SPDLOG_HEADERS_DIR}/spdlog/details/*.h")

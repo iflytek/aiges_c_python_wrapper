@@ -15,7 +15,7 @@
 
 #include <errno.h>
 #include <fcntl.h>   // for O_RDONLY
-#include <locale.h>  // for locale_t
+#include "locale.h"  // for locale_t
 #include <stdio.h>
 #include <stdlib.h>  // for strtod_l
 

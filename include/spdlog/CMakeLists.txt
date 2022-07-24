@@ -181,7 +181,7 @@ endif()
 #---------------------------------------------------------------------------------------
 if (SPDLOG_INSTALL)
     message(STATUS "Generating install")
-    set(project_config_in "${CMAKE_CURRENT_LIST_DIR}/cmake/spdlogConfig.cmake.in")
+    set(project_config_in "cmake/spdlogConfig.cmake.in")
     set(project_config_out "${CMAKE_CURRENT_BINARY_DIR}/spdlogConfig.cmake")
     set(config_targets_file "spdlogConfigTargets.cmake")
     set(version_config_file "${CMAKE_CURRENT_BINARY_DIR}/spdlogConfigVersion.cmake")
@@ -192,7 +192,7 @@ if (SPDLOG_INSTALL)
     #---------------------------------------------------------------------------------------
     # Include files
     #---------------------------------------------------------------------------------------
-    install(DIRECTORY include/ DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" PATTERN "fmt/bundled" EXCLUDE)
+    install(DIRECTORY include DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" PATTERN "fmt/bundled" EXCLUDE)
     install(TARGETS spdlog spdlog_header_only EXPORT spdlog DESTINATION "${CMAKE_INSTALL_LIBDIR}")
 
     if(NOT SPDLOG_FMT_EXTERNAL)

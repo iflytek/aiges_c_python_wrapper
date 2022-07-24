@@ -8,7 +8,7 @@ set(CPACK_INSTALL_CMAKE_PROJECTS
     "${CMAKE_BINARY_DIR}"
     "${PROJECT_NAME}"
     ALL
-    .
+        .
     )
 
 set(CPACK_PROJECT_URL "https://github.com/gabime/spdlog")
