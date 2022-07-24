@@ -1,10 +1,12 @@
 #include <strstream>
 #include <chrono>
+#include <bits/stdc++.h>
 //#include <boost/filesystem.hpp>
 #include "aiges/wrapper.h"
 #include "pyWrapper.h"
 
 __attribute__ ((constructor)) static void so_init(void);
+
 __attribute__ ((destructor)) static void so_deinit(void);
 
 
@@ -16,16 +18,15 @@ py::gil_scoped_release release; // 主线程中先释放release锁
 PyWrapper *pyWrapper;
 // 
 
-const char *wrapperLogFile = "./wrapper.log";
+const char *logDir = "./log";
+const char *wrapperLogFile = "./log/wrapper.log";
 
 
-void so_init(void)
-{
+void so_init(void) {
     printf("libwrapper so init.\n");
 }
 
-void so_deinit(void)
-{
+void so_deinit(void) {
     printf("libwrapper so deinit.\n");
 }
 
@@ -38,10 +39,12 @@ void initlog() {
     SPDLOG_TRACE("Some trace message with param {}", {});
     SPDLOG_DEBUG("Some debug message");
 
-    // Set the default logger to file logger
-//    boost::filesystem::path dir("./log");
-//    boost::filesystem::create_directory(dir);
-
+    // Creating a directory
+    if (mkdir(logDir, 0777) == -1) {
+        printf("log目录创建失败或者已存在\n");
+    } else {
+        printf("log目录已创建\n");
+    }
     auto file_logger = spdlog::rotating_logger_mt("mspper", wrapperLogFile, 1048576 * 10, 50);
     spdlog::set_default_logger(file_logger);
     spdlog::flush_on(spdlog::level::err);

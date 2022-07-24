@@ -1,16 +1,16 @@
-#coding:utf-8
+# coding:utf-8
 import sys
 
 from sdk import WrapperBase, \
-            StringParamField, \
-                ImageBodyField, \
-                    StringBodyField
+    StringParamField, \
+    ImageBodyField, \
+    StringBodyField
 
 # 
 try:
-    from aiges_embed import ResponseData,Response
+    from aiges_embed import ResponseData, Response
 except:
-    from sdk  import Response,ResponseData
+    from sdk import Response, ResponseData
 
 '''
 定义请求类:
@@ -98,15 +98,15 @@ class Wrapper(WrapperBase):
         l = ResponseData()
         l.key = "ccc"
         l.status = 1
-        d = open("./test.png","rb").read()
+        d = open("./test.png", "rb").read()
         l.len = len(d)
-        l.data =d
-        l.type=0
-        r.list = [l,l,l]
+        l.data = d
+        l.type = 0
+        r.list = [l, l, l]
         return r
 
     def wrapperError(cls, ret: int) -> str:
-        print("###re",ret)
+        print("###re", ret)
         if ret == 100:
             return "Infer error defined here"
         return ""
@@ -116,10 +116,10 @@ class Wrapper(WrapperBase):
         l = ResponseData()
         l.key = "ccc"
         l.status = 1
-        d =  open("pybind11/docs/pybind11-logo.png","rb").read() 
+        d = open("pybind11/docs/pybind11-logo.png", "rb").read()
         l.len = len(d)
-        l.data =d
-        r.list = [l,l,l] 
+        l.data = d
+        r.list = [l, l, l]
 
         print(r.list)
         print(444)

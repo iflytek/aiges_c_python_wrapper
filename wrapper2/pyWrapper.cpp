@@ -5,9 +5,12 @@
 //using namespace std::chrono_literals;
 
 
+const char *wrapperFileKey = "wrapper.file"
+const char *wrapperFileClass = "wrapper.class"
+
 const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
-
+const char PythonSo = "libpython3.so";
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 ){
@@ -48,8 +51,22 @@ def (py::init<>())
 .def_readwrite("list",&DataListCls::list);
 }
 
-
 PyWrapper::PyWrapper() {
+    // if (config.count(wrapperFileKey) == 0)
+    py::gil_scoped_acquire acquire;
+    _obj = py::module::import(WrapperFile).attr(WrapperClass)();
+
+    _wrapperInit = _obj.attr("wrapperInit");
+    _wrapperFini = _obj.attr("wrapperFini");
+    _wrapperOnceExec = _obj.attr("wrapperOnceExec");
+    _wrapperError = _obj.attr("wrapperError");
+    _wrapperTest = _obj.attr("wrapperTestFunc");
+
+}
+
+PyWrapper::PyWrapper(std::map <std::string, std::string> config) {
+    // if (config.count(wrapperFileKey) == 0)
+    // 带config初始化，暂未实现 todo
     py::gil_scoped_acquire acquire;
     _obj = py::module::import(WrapperFile).attr(WrapperClass)();
 
@@ -62,8 +79,9 @@ PyWrapper::PyWrapper() {
 }
 
 Manager::Manager() {
-
-    dlopen("libpython3.so", RTLD_GLOBAL | RTLD_NOW);
+    // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
+    // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
+    dlopen(PythonSo, RTLD_GLOBAL | RTLD_NOW);
 }
 
 PyWrapper::~PyWrapper() {
@@ -77,7 +95,7 @@ PyWrapper::~PyWrapper() {
 
 
 int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
-	    py::gil_scoped_acquire acquire;
+    py::gil_scoped_acquire acquire;
 
     return _wrapperInit(config).cast<int>();
 }
@@ -93,10 +111,11 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
                                pDataList *respData, std::string sid) {
     try {
         py::gil_scoped_acquire acquire;
+        // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData);
-	py::gil_scoped_release release;
+        py::gil_scoped_release release;
         Response *resp;
-	spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
+        spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList prePtr;
@@ -108,11 +127,12 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             tmpData->key = key;
             tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
+            // 这里判断数据类型
             void *r;
             r = malloc(itemData.data.length());
             if (r == NULL) {
                 int ret = -1;
-                spdlog::error("Can't malloc memory,  sid:{}", sid);
+                spdlog::error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
             memcpy(r, itemData.data.data(), itemData.data.length());
@@ -135,7 +155,7 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         }
         *respData = headPtr;
     } catch (py::cast_error &e) {
-	    spdlog::error("cast error: {}", e.what());
+        spdlog::error("cast error: {}", e.what());
         return -1;
     }
 
@@ -145,7 +165,7 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
 
 
 std::string PyWrapper::wrapperError(int err) {
-     return _wrapperError(err).cast<std::string>();
+    return _wrapperError(err).cast<std::string>();
 }
 
 
