@@ -65,7 +65,7 @@ class PyWrapper {
 public:
     PyWrapper();
 
-    PyWrapper(std::map <std::string, std::string> config);
+//    PyWrapper(std::map <std::string, std::string> config);
 
     ~PyWrapper();
 

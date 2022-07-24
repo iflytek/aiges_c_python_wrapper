@@ -10,7 +10,7 @@ const char *wrapperFileClass = "wrapper.class"
 
 const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
-const char PythonSo = "libpython3.so";
+const char *PythonSo = "libpython3.so";
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 ){
@@ -64,19 +64,19 @@ PyWrapper::PyWrapper() {
 
 }
 
-PyWrapper::PyWrapper(std::map <std::string, std::string> config) {
-    // if (config.count(wrapperFileKey) == 0)
-    // 带config初始化，暂未实现 todo
-    py::gil_scoped_acquire acquire;
-    _obj = py::module::import(WrapperFile).attr(WrapperClass)();
-
-    _wrapperInit = _obj.attr("wrapperInit");
-    _wrapperFini = _obj.attr("wrapperFini");
-    _wrapperOnceExec = _obj.attr("wrapperOnceExec");
-    _wrapperError = _obj.attr("wrapperError");
-    _wrapperTest = _obj.attr("wrapperTestFunc");
-
-}
+//PyWrapper::PyWrapper(std::map <std::string, std::string> config) {
+//    // if (config.count(wrapperFileKey) == 0)
+//    // 带config初始化，暂未实现 todo
+//    py::gil_scoped_acquire acquire;
+//    _obj = py::module::import(WrapperFile).attr(WrapperClass)();
+//
+//    _wrapperInit = _obj.attr("wrapperInit");
+//    _wrapperFini = _obj.attr("wrapperFini");
+//    _wrapperOnceExec = _obj.attr("wrapperOnceExec");
+//    _wrapperError = _obj.attr("wrapperError");
+//    _wrapperTest = _obj.attr("wrapperTestFunc");
+//
+//}
 
 Manager::Manager() {
     // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
