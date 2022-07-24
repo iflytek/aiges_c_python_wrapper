@@ -5,8 +5,8 @@
 //using namespace std::chrono_literals;
 
 
-const char *wrapperFileKey = "wrapper.file"
-const char *wrapperFileClass = "wrapper.class"
+const char *wrapperFileKey = "wrapper.file";
+const char *wrapperFileClass = "wrapper.class";
 
 const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
