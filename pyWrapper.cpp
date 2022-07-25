@@ -20,35 +20,35 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 
                     def(py::init<>())
 
-            .def_readwrite("key", &ResponseData::key)
-            .def_readwrite("data", &ResponseData::data)
-            .def_readwrite("status", &ResponseData::status)
-            .def_readwrite("len", &ResponseData::len)
-            .def_readwrite("type", &ResponseData::type);
+            .def_readwrite("key", &ResponseData::key, py::return_value_policy::copy)
+            .def_readwrite("data", &ResponseData::data, py::return_value_policy::copy)
+            .def_readwrite("status", &ResponseData::status, py::return_value_policy::copy)
+            .def_readwrite("len", &ResponseData::len, py::return_value_policy::copy)
+            .def_readwrite("type", &ResponseData::type, py::return_value_policy::copy);
 
     py::class_<Response> response(module, "Response");
     response.
 
                     def(py::init<>())
 
-            .def_readwrite("list", &Response::list);
+            .def_readwrite("list", &Response::list, py::return_value_policy::copy);
 
     py::class_<DataListNode> dataListNode(module, "DataListNode");
     dataListNode.
 
                     def(py::init<>())
 
-            .def_readwrite("key", &DataListNode::key)
-            .def_readwrite("data", &DataListNode::data)
-            .def_readwrite("len", &DataListNode::len)
-            .def_readwrite("type", &DataListNode::type);
+            .def_readwrite("key", &DataListNode::key, py::return_value_policy::copy)
+            .def_readwrite("data", &DataListNode::data, py::return_value_policy::copy)
+            .def_readwrite("len", &DataListNode::len, py::return_value_policy::copy)
+            .def_readwrite("type", &DataListNode::type, py::return_value_policy::copy);
 
     py::class_<DataListCls> dataListCls(module, "DataListCls");
     dataListCls.
 
                     def(py::init<>())
 
-            .def_readwrite("list", &DataListCls::list);
+            .def_readwrite("list", &DataListCls::list, py::return_value_policy::copy);
 }
 
 Manager::Manager() {
@@ -159,21 +159,21 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData);
-        py::gil_scoped_release release;
         // 此段根据python的返回 ，回写 respData
         Response *resp;
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         resp = r.cast<Response *>();
         pDataList headPtr;
-        pDataList prePtr;
         pDataList curPtr;
         for (int idx = 0; idx < resp->list.size(); idx++) {
             pDataList tmpData = new(DataList);
+            tmpData->next = nullptr;
             ResponseData itemData = resp->list[idx];
             char *key = strdup(itemData.key.c_str());
             tmpData->key = key;
             tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
+            tmpData->desc = nullptr;
             // 这里判断数据类型
             void *r;
             r = malloc(itemData.data.length());
@@ -189,12 +189,10 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
-                prePtr = tmpData;
                 curPtr = tmpData;
             } else {
+                curPtr->next = tmpData;
                 curPtr = tmpData;
-                prePtr->next = curPtr;
-                prePtr = curPtr;
             }
             spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
                           tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
