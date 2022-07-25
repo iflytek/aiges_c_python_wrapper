@@ -69,7 +69,7 @@ public:
 
     ~PyWrapper();
 
-    void StartMonitorWrapperClass();
+    void StartMonitorWrapperClass(std::string wrapperFileAbs);
 
     void ReloadWrapper(); // for dynamic reload wrapper
 
@@ -86,6 +86,7 @@ public:
 
 private:
     py::module_ _wrapper;
+    std::string _wrapper_abs;
     py::object _obj;
     py::object _wrapperInit;
     py::object _wrapperFini;

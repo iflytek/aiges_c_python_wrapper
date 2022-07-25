@@ -62,6 +62,7 @@ PyWrapper::PyWrapper() {
     py::gil_scoped_acquire acquire;
     _wrapper = py::module::import(WrapperFile);
     _obj = _wrapper.attr(WrapperClass)();
+    _wrapper_abs = _wrapper.attr("__file__").cast<std::string>(); // 获取加载的wrapper.py的绝对地址
 
     _wrapperInit = _obj.attr("wrapperInit");
     _wrapperFini = _obj.attr("wrapperFini");
@@ -69,7 +70,7 @@ PyWrapper::PyWrapper() {
     _wrapperError = _obj.attr("wrapperError");
     _wrapperTest = _obj.attr("wrapperTestFunc");
     py::gil_scoped_release release;
-    StartMonitorWrapperClass();
+    StartMonitorWrapperClass(_wrapper_abs);
 
 }
 
@@ -115,27 +116,27 @@ void PyWrapper::ReloadWrapper() {
 }
 
 void reloadWrapper(const std::string event_file, void *flags) {
-    printf("111\n");
-    if (flags == NULL) return; //什么都不做
+    if (flags == nullptr) return; //什么都不做
+    printf("reloading...wrapper\n");
     PyWrapper *w = (PyWrapper *) flags;
-    printf("2222\n");
     w->ReloadWrapper();
+    printf("reloaded...wrapper Done!\n");
     return;
 }
 
-void PyWrapper::StartMonitorWrapperClass() {
+void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     FSInotify *ino = new FSInotify();
     pthread_t _pid;
     std::vector <std::string> s;
-    printf("starting monitoring wrapper.py, pid is: %d\n", _pid);
-    s.push_back("./wrapper.py");
+    printf("starting monitoring %s, pid is: %d\n", wrapperFileAbs.c_str(), _pid);
+    s.push_back(wrapperFileAbs);
     std::map <std::string, EventHandle> funs;
 
+    // 变化后，重载wrapper
     funs.insert({"IN_MOVE_SELF", reloadWrapper});
     ino->InitWatchFile(s, this);
     printf("starting monitoring wrapper.py, pid is: %d\n", _pid);
     ino->StartWatchThread(funs, _pid);
-    printf("aftpid,%d\n", _pid);
 //    ret = pthread_join(_pid, NULL);
 }
 
@@ -174,10 +175,10 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
-            // 这里判断数据类型
+            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
             void *pr;
             pr = malloc(itemData.data.length());
-            if (pr == NULL) {
+            if (pr == nullptr) {
                 int ret = -1;
                 spdlog::error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
