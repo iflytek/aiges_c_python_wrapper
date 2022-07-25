@@ -175,17 +175,17 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
             // 这里判断数据类型
-            void *r;
-            r = malloc(itemData.data.length());
-            if (r == NULL) {
+            void *pr;
+            pr = malloc(itemData.data.length());
+            if (pr == NULL) {
                 int ret = -1;
                 spdlog::error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
-            memcpy(r, itemData.data.data(), itemData.data.length());
+            memcpy(pr, itemData.data.data(), itemData.data.length());
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
-            tmpData->data = r;
+            tmpData->data = pr;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
