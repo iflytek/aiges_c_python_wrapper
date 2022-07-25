@@ -211,6 +211,11 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
             ptr = tmp;
         }
     }
+    // 构造响应数据
+    ret = pyWrapper->wrapperFini();
+    if (ret != 0) {
+        spdlog::error("wrapper python exec fin error {}", ret);
+    }
     spdlog::debug("wrapper exec free success");
     return 0;
 }

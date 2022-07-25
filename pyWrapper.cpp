@@ -135,8 +135,10 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     // 变化后，重载wrapper
     funs.insert({"IN_MOVE_SELF", reloadWrapper});
     ino->InitWatchFile(s, this);
-    printf("starting monitoring wrapper.py, pid is: %d\n", _pid);
-    ino->StartWatchThread(funs, _pid);
+    int ret = ino->StartWatchThread(funs, _pid);
+    if (ret != 0 ) {
+        printf("Error starting monitoring %s, pid is: %d\n", wrapperFileAbs.c_str(), _pid);
+    }
 //    ret = pthread_join(_pid, NULL);
 }
 
