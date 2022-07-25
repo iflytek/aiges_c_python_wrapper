@@ -212,7 +212,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
         }
     }
     // 构造响应数据
-    ret = pyWrapper->wrapperFini();
+    int ret = pyWrapper->wrapperFini();
     if (ret != 0) {
         spdlog::error("wrapper python exec fin error {}", ret);
     }
