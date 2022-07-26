@@ -28,8 +28,8 @@ class UserRequest(object):
     params2 = StringParamField(key="p2", maxLength=44, required=True)
     params3 = StringParamField(key="p3", maxLength=44, required=False)
 
-    input1 = ImageBodyField(key="data", path="test.png")
-    input3 = ImageBodyField(key="data2", path="test.png")
+    input1 = ImageBodyField(key="data", path="test_data/test.png")
+    input3 = ImageBodyField(key="data2", path="test_data/test.png")
     input2 = StringBodyField(key="switch", value="cc")
 
 
@@ -98,7 +98,7 @@ class Wrapper(WrapperBase):
         l = ResponseData()
         l.key = "ccc"
         l.status = 1
-        d = open("test.png", "rb").read()
+        d = open("test_data/test.png", "rb").read()
         l.len = len(d)
         l.data = d
         l.type = 0

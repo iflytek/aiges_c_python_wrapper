@@ -3,7 +3,7 @@
 #include <strstream>
 #include <sstream>
 #include <boost/filesystem.hpp>
-#include "include/aiges/wrapper.h"
+#include "../include/aiges/wrapper.h"
 #include "pyCall.h"
 void initlog()
 {

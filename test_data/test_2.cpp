@@ -1,5 +1,5 @@
 // main.cc
-#include "pybind11/embed.h"
+#include "../pybind11/embed.h"
 #include <dlfcn.h>
 namespace py = pybind11;
 

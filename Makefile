@@ -27,7 +27,7 @@ t:
 
 main:
 	echo $(PYLIB)
-	g++  -Wall -pedantic -Wextra -fPIC  -std=c++1y  -fvisibility=default  -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o output pyWrapper.cpp wrapper.cpp  main.cpp -L. -L /opt/conda/envs/loader/lib $(PYLIB) -rdynamic
+	g++  -Wall -pedantic -Wextra -fPIC  -std=c++1y  -fvisibility=default  -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o output pyWrapper.cpp wrapper.cpp  test_data/main.cpp -L. -L /opt/conda/envs/loader/lib $(PYLIB) -rdynamic
 
 fswatch:
 	g++ fswatch.cpp  -l pthread -o fs_test

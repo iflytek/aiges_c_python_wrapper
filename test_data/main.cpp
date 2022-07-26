@@ -1,5 +1,5 @@
-#include "aiges/wrapper.h"
-#include "aiges/type.h"
+#include "../aiges/wrapper.h"
+#include "../aiges/type.h"
 #include <iostream>
 struct ParamList* paramListCreate(){
     struct ParamList* pParamPtr= (struct ParamList*)malloc(sizeof(struct ParamList));
