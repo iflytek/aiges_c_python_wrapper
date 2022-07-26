@@ -41,13 +41,19 @@ Loader插件的架构:
 
 而对性能有极高要求，熟练C/C++的用户，可直接实现libwrapper.so 即可被aiges加载。是不是有点俄罗斯套娃的感觉！！
 
-这里我们开源版本aiges将主推 `Python Lanuage Wrapper` 。
+这里我们开源版本aiges将主推 `Python Language Wrapper` 。
 
-事实上 `Python Lanuage Wrapper`  已经演进到[v2版本](https://github.com/xfyun/aiges_c_python_wrapper/tree/master)，
+事实上 `Python Language Wrapper`  已经演进到[v2版本](https://github.com/xfyun/aiges_c_python_wrapper/tree/master)，
 
 [v1版本](https://github.com/xfyun/aiges_c_python_wrapper/tree/release-v1.0.0) 基于比较裸的Cpython调用，在代码编写以及后期维护上均存在较大问题
 
 而V2的 Pybind11方式在目前市面上大部分 AI 计算框架，如 TensorFlow、Pytorch、阿里 X-Deep Learning、百度 PaddlePaddle 等，均使用 pybind11 来提供 C++到 Python 端接口封装，其稳定性以及性能均已得到广泛验证。
+
+
+## Python Language Wrapper
+
+实现1个 [wrapper.py](wrapper.py) 请参考[Python插件](https://xfyun.github.io/athena_website/docs/%E5%8A%A0%E8%BD%BD%E5%99%A8/Python%E6%8F%92%E4%BB%B6)
+
 
 
 ## Project Resources
