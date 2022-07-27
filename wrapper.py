@@ -8,9 +8,9 @@ from sdk import WrapperBase, \
 
 # 
 try:
-    from aiges_embed import ResponseData, Response
+    from aiges_embed import ResponseData, Response, DataListNode, DataListCls
 except:
-    from sdk import Response, ResponseData
+    from aiges import Response, ResponseData
 
 '''
 定义请求类:
@@ -92,8 +92,10 @@ class Wrapper(WrapperBase):
         ret:错误码。无错误码时返回0
     '''
 
-    def wrapperOnceExec(cls, params: {}, reqData: []) -> Response:
+    def wrapperOnceExec(cls, params: {}, reqData: DataListCls) -> Response:
+        print("got reqdata , ", reqData.list)
         print("I am infer logic...")
+
         r = Response()
         l = ResponseData()
         l.key = "ccc"
