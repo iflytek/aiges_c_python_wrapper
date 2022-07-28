@@ -179,13 +179,13 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             tmpData->desc = nullptr;
             // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
             void *pr;
-            pr = malloc(itemData.data.length());
+            pr = malloc(itemData.len);
             if (pr == nullptr) {
                 int ret = -1;
                 spdlog::error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
-            memcpy(pr, itemData.data.data(), itemData.data.length());
+            memcpy(pr, itemData.data.data(), itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
             tmpData->data = pr;

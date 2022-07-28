@@ -16,7 +16,7 @@
 #include "fswatch.h"
 
 #define gettid() syscall(SYS_gettid)
-
+#define PYBIND11_DETAILED_ERROR_MESSAGES
 
 typedef struct TestDataList {
     char *key;            // 数据标识
