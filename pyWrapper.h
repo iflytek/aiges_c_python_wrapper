@@ -46,7 +46,7 @@ public:
 class DataListNode {
 public:
     std::string key;
-    std::string data;
+    pY::bytes data;
     unsigned int len;
     int type;
 };

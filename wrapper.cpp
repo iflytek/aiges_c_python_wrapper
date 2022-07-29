@@ -173,11 +173,11 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
 
             DataListNode item;
             item.key = p->key;
-            item.data = (char *) p->data;
+            item.data = (py::bytes) p->data;
             item.len = p->len;
             char t = static_cast<int>(p->type);
             item.type = p->type;
-            std::cout << t << std::endl;
+            spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
             req.list.push_back(item);
             p = p->next;
         }
