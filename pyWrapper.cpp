@@ -136,7 +136,7 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     funs.insert({"IN_MOVE_SELF", reloadWrapper});
     ino->InitWatchFile(s, this);
     int ret = ino->StartWatchThread(funs, _pid);
-    if (ret != 0 ) {
+    if (ret != 0) {
         printf("Error starting monitoring %s, pid is: %d\n", wrapperFileAbs.c_str(), _pid);
     }
 //    ret = pthread_join(_pid, NULL);
@@ -168,7 +168,12 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList curPtr;
-        for (int idx = 0; idx < resp->list.size(); idx++) {
+        int dataSize = resp->list.size();
+        if (dataSize == 0) {
+            spdlog::error("error, not find any data from resp");
+            return -1;
+        }
+        for (int idx = 0; idx < dataSize; idx++) {
             pDataList tmpData = new(DataList);
             tmpData->next = nullptr;
             ResponseData itemData = resp->list[idx];

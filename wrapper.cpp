@@ -189,7 +189,8 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
         spdlog::error("wrapper exec error!");
     }
     spdlog::debug("onceExec ret: {}", ret);
-    return ret;
+    // python层的错误 once可能没有处理好异常数据，加载器并不能崩溃
+    return 0;
 
 }
 
