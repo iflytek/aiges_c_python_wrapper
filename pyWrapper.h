@@ -58,7 +58,7 @@ class DataListCls {
 public:
     std::vector <DataListNode> list;
 
-    DataListNode *get(std::string key);
+    DataListNode get(std::string key);
 };
 
 class Manager {
