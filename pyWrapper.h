@@ -51,14 +51,14 @@ public:
     unsigned int len;
     int type;
 
-    py::bytes *get_data();
+    py::bytes get_data();
 };
 
 class DataListCls {
 public:
     std::vector <DataListNode> list;
 
-    DataListNode get(std::string key);
+    DataListNode *get(std::string key);
 };
 
 class Manager {
