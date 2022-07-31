@@ -98,8 +98,8 @@ class Wrapper(WrapperBase):
         #        print(type(reqData.list[0].data))
         #        print(reqData.list[0].len)
 
-        print(len(reqData.list[0].get_data()))
-        print(hashlib.md5(reqData.list[0].get_data()).hexdigest())
+        print(len(reqData.list[0].data))
+        print(hashlib.md5(reqData.list[0].data).hexdigest())
         print("I am infer logic...")
 
         r = Response()
