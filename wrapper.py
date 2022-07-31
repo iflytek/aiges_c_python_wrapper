@@ -111,10 +111,22 @@ class Wrapper(WrapperBase):
         #        print(type(reqData.list[0].data))
         #        print(reqData.list[0].len)
         for req in reqData.list:
-            log.info("reqData key: %s , size is %d" % (req.key,len(req.data)))
+            log.info("reqData key: %s , size is %d" % (req.key, len(req.data)))
         log.warning("reqData bytes md5sum is %s" % hashlib.md5(reqData.list[0].data).hexdigest())
         log.info("I am infer logic...please inplement")
+        log.info("Testing reqData get: ")
+        rg = reqData.get("data")
+        log.info("get key: %s" % rg.key)
+        log.info("get key: %d" % len(rg.data))
 
+        # test not reqdata
+        k = "dd"
+        n = reqData.get(k)
+        if not n:
+            log.error("reqData not has this key %s" % k)
+
+        log.warning("reqData bytes md5sum is %s" % hashlib.md5(reqData.list[0].data).hexdigest())
+        log.info("I am infer logic...please inplement")
         r = Response()
         l = ResponseData()
         l.key = "ccc"
@@ -140,6 +152,20 @@ class Wrapper(WrapperBase):
         if ret == 100:
             return "user error defined here"
         return ""
+
+    def wrapperTestFunc(cls, data: [], respData: []):
+        r = Response()
+        l = ResponseData()
+        l.key = "ccc"
+        l.status = 1
+        d = open("pybind11/docs/pybind11-logo.png", "rb").read()
+        l.len = len(d)
+        l.data = d
+        r.list = [l, l, l]
+
+        print(r.list)
+        print(444)
+        return r
 
 
 if __name__ == '__main__':
