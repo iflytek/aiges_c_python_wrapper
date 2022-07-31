@@ -173,12 +173,21 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
 
             DataListNode item;
             item.key = p->key;
-//            std::string &strData = *(std::string * )(p->data);
-//            item.data = py::bytes(strData);
 
+            // 直接拷贝
             size_t len = static_cast<size_t>(p->len);
-            std::string data ((const char*)p->data, len);
-            item.data = py::bytes(data);
+            item.data = py::bytes((char*)(p->data), len);
+            //
+            // 写法2：
+            //            Py_ssize_t len = static_cast<Py_ssize_t>(p->len);
+            //            PyObject *b = PyBytes_FromStringAndSize((char*)(p->data),len);
+            //            item.data = py::reinterpret_steal<py::bytes>(b);
+
+            // 写法3：
+            //            size_t len = static_cast<size_t>(p->len);
+            //            std::string data ((const char*)p->data, len);
+            //            item.data = py::bytes(data);
+            // todo 有无0拷贝方法？
 
             item.len = p->len;
             char t = static_cast<int>(p->type);
