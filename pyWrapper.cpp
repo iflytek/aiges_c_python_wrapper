@@ -20,35 +20,40 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 
                     def(py::init<>())
 
-            .def_readwrite("key", &ResponseData::key, py::return_value_policy::copy)
-            .def_readwrite("data", &ResponseData::data, py::return_value_policy::copy)
-            .def_readwrite("status", &ResponseData::status, py::return_value_policy::copy)
-            .def_readwrite("len", &ResponseData::len, py::return_value_policy::copy)
-            .def_readwrite("type", &ResponseData::type, py::return_value_policy::copy);
+            .def_readwrite("key", &ResponseData::key, py::return_value_policy::automatic_reference)
+            .def_readwrite("data", &ResponseData::data, py::return_value_policy::automatic_reference)
+            .def_readwrite("status", &ResponseData::status, py::return_value_policy::automatic_reference)
+            .def_readwrite("len", &ResponseData::len, py::return_value_policy::automatic_reference)
+            .def_readwrite("type", &ResponseData::type, py::return_value_policy::automatic_reference);
 
     py::class_<Response> response(module, "Response");
     response.
 
                     def(py::init<>())
 
-            .def_readwrite("list", &Response::list, py::return_value_policy::copy);
+            .def_readwrite("list", &Response::list, py::return_value_policy::automatic_reference);
 
     py::class_<DataListNode> dataListNode(module, "DataListNode");
     dataListNode.
 
                     def(py::init<>())
 
-            .def_readwrite("key", &DataListNode::key, py::return_value_policy::copy)
-            .def_readwrite("data", &DataListNode::data, py::return_value_policy::copy)
-            .def_readwrite("len", &DataListNode::len, py::return_value_policy::copy)
-            .def_readwrite("type", &DataListNode::type, py::return_value_policy::copy);
+            .def_readwrite("key", &DataListNode::key, py::return_value_policy::automatic_reference)
+            .def_readwrite("data", &DataListNode::data, py::return_value_policy::automatic_reference)
+            .def_readwrite("len", &DataListNode::len, py::return_value_policy::automatic_reference)
+            .def_readwrite("type", &DataListNode::type, py::return_value_policy::automatic_reference)
+            .def("get_data", &DataListNode::get_data, py::return_value_policy::reference);
 
     py::class_<DataListCls> dataListCls(module, "DataListCls");
     dataListCls.
 
                     def(py::init<>())
 
-            .def_readwrite("list", &DataListCls::list, py::return_value_policy::copy);
+            .def_readwrite("list", &DataListCls::list, py::return_value_policy::automatic_reference);
+}
+
+py::bytes *DataListNode::get_data() {
+    return data;
 }
 
 Manager::Manager() {

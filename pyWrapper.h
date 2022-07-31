@@ -46,9 +46,12 @@ public:
 class DataListNode {
 public:
     std::string key;
+//    std::string data;
     py::bytes data;
     unsigned int len;
     int type;
+
+    py::bytes *get_data();
 };
 
 class DataListCls {

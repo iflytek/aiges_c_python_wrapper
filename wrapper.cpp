@@ -173,7 +173,13 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
 
             DataListNode item;
             item.key = p->key;
-            item.data = py::bytes(p->data);
+//            std::string &strData = *(std::string * )(p->data);
+//            item.data = py::bytes(strData);
+
+            size_t len = static_cast<size_t>(p->len);
+            std::string data ((const char*)p->data, len);
+            item.data = py::bytes(data);
+
             item.len = p->len;
             char t = static_cast<int>(p->type);
             item.type = p->type;
