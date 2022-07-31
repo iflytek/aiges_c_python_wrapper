@@ -56,6 +56,18 @@ py::bytes *DataListNode::get_data() {
     return data;
 }
 
+DataListNode *DataListCls::get(std::string key) {
+    for (int idx = 0; idx < list.size(); idx++) {
+        DataListNode *node = &list[idx];
+        if strcmp(node->key, key) == 0
+        {
+            return node;
+        }
+    }
+    return nullptr;
+}
+
+
 Manager::Manager() {
     // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
     // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd

@@ -1,16 +1,34 @@
+#!/usr/bin/env python
 # coding:utf-8
+"""
+@author: nivic ybyang7
+@license: Apache Licence
+@file: wrapper.py
+@time: 2022/06/16
+@contact: ybyang7@iflytek.com
+@site:
+@software: PyCharm
+
+"""
+
+#  Copyright (c) 2022. Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+#  Morbi non lorem porttitor neque feugiat blandit. Ut vitae ipsum eget quam lacinia accumsan.
+#  Etiam sed turpis ac ipsum condimentum fringilla. Maecenas magna.
+#  Proin dapibus sapien vel ante. Aliquam erat volutpat. Pellentesque sagittis ligula eget metus.
+#  Vestibulum commodo. Ut rhoncus gravida arcu.
 import sys
+
+try:
+    from aiges_embed import ResponseData, Response, DataListNode, DataListCls  # c++
+except:
+    from aiges.dto import Response, ResponseData, DataListNode, DataListCls
+
 import hashlib
-from sdk import WrapperBase, \
+from aiges.sdk import WrapperBase, \
     StringParamField, \
     ImageBodyField, \
     StringBodyField
-
-# 
-try:
-    from aiges_embed import ResponseData, Response, DataListNode, DataListCls
-except:
-    from aiges import Response, ResponseData
+from aiges.utils.log import log
 
 '''
 定义请求类:
@@ -46,6 +64,11 @@ class UserResponse(object):
     accept2 = StringBodyField(key="boxes2")
 
 
+'''
+用户实现， 名称必须为Wrapper, 必须继承SDK中的 WrapperBase类
+'''
+
+
 class Wrapper(WrapperBase):
     serviceId = "mmocr"
     version = "backup.0"
@@ -68,21 +91,11 @@ class Wrapper(WrapperBase):
         return 0
 
     '''
-    服务逆初始化
-
-    @return
-        ret:错误码。无错误码时返回0
-    '''
-
-    def wrapperFini(cls) -> int:
-        return 0
-
-    '''
     非会话模式计算接口,对应oneShot请求,可能存在并发调用
 
     @param usrTag 句柄
-    #param params 功能参数
-    @param  reqData     写入数据实体
+    @param params 功能参数
+    @param  reqData     请求数据实体字段
     @param  respData    返回结果实体,内存由底层服务层申请维护,通过execFree()接口释放
     @param psrIds 需要使用的个性化资源标识列表
     @param psrCnt 需要使用的个性化资源个数
@@ -93,14 +106,14 @@ class Wrapper(WrapperBase):
     '''
 
     def wrapperOnceExec(cls, params: {}, reqData: DataListCls) -> Response:
-        print("got reqdata , ", reqData.list)
+        log.info("got reqdata , %s" % reqData.list)
         #        print(type(reqData.list[0].data))
         #        print(type(reqData.list[0].data))
         #        print(reqData.list[0].len)
-
-        print(len(reqData.list[0].data))
-        print(hashlib.md5(reqData.list[0].data).hexdigest())
-        print("I am infer logic...")
+        for req in reqData.list:
+            log.info("reqData key: %s , size is %d" % (req.key,len(req.data)))
+        log.warning("reqData bytes md5sum is %s" % hashlib.md5(reqData.list[0].data).hexdigest())
+        log.info("I am infer logic...please inplement")
 
         r = Response()
         l = ResponseData()
@@ -113,22 +126,23 @@ class Wrapper(WrapperBase):
         r.list = [l, l, l]
         return r
 
+    '''
+    服务逆初始化
+
+    @return
+        ret:错误码。无错误码时返回0
+    '''
+
+    def wrapperFini(cls) -> int:
+        return 0
+
     def wrapperError(cls, ret: int) -> str:
-        print("###re", ret)
         if ret == 100:
-            return "Infer error defined here"
+            return "user error defined here"
         return ""
 
-    def wrapperTestFunc(cls, data: [], respData: []):
-        r = Response()
-        l = ResponseData()
-        l.key = "ccc"
-        l.status = 1
-        d = open("pybind11/docs/pybind11-logo.png", "rb").read()
-        l.len = len(d)
-        l.data = d
-        r.list = [l, l, l]
 
-        print(r.list)
-        print(444)
-        return r
+if __name__ == '__main__':
+    m = Wrapper()
+    # m.schema()
+    m.run()
