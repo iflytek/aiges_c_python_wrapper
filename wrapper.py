@@ -1,6 +1,6 @@
 # coding:utf-8
 import sys
-
+import hashlib
 from sdk import WrapperBase, \
     StringParamField, \
     ImageBodyField, \
@@ -94,6 +94,12 @@ class Wrapper(WrapperBase):
 
     def wrapperOnceExec(cls, params: {}, reqData: DataListCls) -> Response:
         print("got reqdata , ", reqData.list)
+        #        print(type(reqData.list[0].data))
+        #        print(type(reqData.list[0].data))
+        #        print(reqData.list[0].len)
+
+        print(len(reqData.list[0].get_data()))
+        print(hashlib.md5(reqData.list[0].get_data()).hexdigest())
         print("I am infer logic...")
 
         r = Response()
