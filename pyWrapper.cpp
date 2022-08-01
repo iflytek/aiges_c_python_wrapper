@@ -70,8 +70,8 @@ Response::Response(int err) {
 }
 
 std::unique_ptr <Response> Response::responseErr(int errCode) {
-    Response resp = new Response();
-    resp.errCode = errCode;
+    Response *resp = new Response(errCode);
+    resp->errCode = errCode;
     return std::unique_ptr<Response>(resp);
 }
 
