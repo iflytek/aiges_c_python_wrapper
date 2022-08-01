@@ -128,6 +128,8 @@ class Wrapper(WrapperBase):
         log.warning("reqData bytes md5sum is %s" % hashlib.md5(reqData.list[0].data).hexdigest())
         log.info("I am infer logic...please inplement")
         r = Response()
+        # 错误处理
+        # return r.response_err(100)
         l = ResponseData()
         l.key = "ccc"
         l.status = 1
