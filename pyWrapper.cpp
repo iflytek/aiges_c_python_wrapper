@@ -31,7 +31,9 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 
                     def(py::init<>())
 
-            .def_readwrite("list", &Response::list, py::return_value_policy::automatic_reference);
+            .def_readwrite("list", &Response::list, py::return_value_policy::automatic_reference)
+            .def_readwrite("error_code", &Response::errCode, py::return_value_policy::automatic_reference)
+            .def_readwrite("response_err", &Response::responseErr, py::return_value_policy::automatic_reference);
 
     py::class_<DataListNode> dataListNode(module, "DataListNode");
     dataListNode.
@@ -51,6 +53,26 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 
             .def_readwrite("list", &DataListCls::list, py::return_value_policy::automatic_reference)
             .def("get", &DataListCls::get, py::return_value_policy::reference);
+}
+
+/**
+ * 默认Response构造函数
+ */
+Response::Response() {
+    this->errCode = 0;
+}
+
+/**
+ * 默认Response构造函数， 带错误码
+ */
+Response::Response(int err) {
+    this->errCode = err;
+}
+
+std::unique_ptr <Response> Response::responseErr(int errCode) {
+    Response resp = new Response();
+    resp.errCode = errCode;
+    return std::unique_ptr<Response>(resp);
 }
 
 py::bytes DataListNode::get_data() {
@@ -185,6 +207,12 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList curPtr;
+        // 先判断python有没有抛出错误. response中的 errorCode
+        if (resp->errCode != 0) {
+            spdlog::error("find error from python: {}", resp->errCode);
+            return resp->errCode;
+        }
+
         int dataSize = resp->list.size();
         if (dataSize == 0) {
             spdlog::error("error, not find any data from resp");

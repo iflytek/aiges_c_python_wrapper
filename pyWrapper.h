@@ -39,7 +39,15 @@ public:
 
 class Response {
 public:
+    Response();
+
+    Response(int errCode);
+
+    std::unique_ptr <Response> responseErr(int err);
+
     std::vector <ResponseData> list;
+    int errCode;
+
 
 };
 

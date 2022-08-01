@@ -13,11 +13,11 @@ __attribute__ ((destructor)) static void so_deinit(void);
 
 Manager manager;
 
-py::scoped_interpreter python;  // 全局解释器 
-py::gil_scoped_release release; // 主线程中先释放release锁 
+py::scoped_interpreter python;  // 全局解释器
+py::gil_scoped_release release; // 主线程中先释放release锁
 // 全局pywrapper类实例
 PyWrapper *pyWrapper;
-// 
+//
 
 const char *logDir = "./log";
 const char *wrapperLogFile = "./log/wrapper.log";
@@ -164,7 +164,7 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
     for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
         dataNum++;
     }
-    spdlog::debug("call wrapper exec: building reqdata, datanum:{}，sid:{}", dataNum, sid);
+    spdlog::debug("call wrapper exec: building req data, data num:{}，sid:{}", dataNum, sid);
 
     DataListCls req;
     pDataList p = reqData;
@@ -176,7 +176,7 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
 
             // 直接拷贝
             size_t len = static_cast<size_t>(p->len);
-            item.data = py::bytes((char*)(p->data), len);
+            item.data = py::bytes((char *) (p->data), len);
             //
             // 写法2：
             //            Py_ssize_t len = static_cast<Py_ssize_t>(p->len);
@@ -202,8 +202,9 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
     ret = pyWrapper->wrapperOnceExec(pyParams, req, respData, sid);
     if (ret != 0) {
         spdlog::error("wrapper exec error!");
+        return ret;
     }
-    spdlog::debug("onceExec ret: {}", ret);
+    spdlog::debug("onceExec ret Success: {}", ret);
     // python层的错误 once可能没有处理好异常数据，加载器并不能崩溃
     return 0;
 
