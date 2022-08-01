@@ -69,10 +69,6 @@ public:
     DataListNode *get(std::string key);
 };
 
-class Manager {
-public:
-    Manager();
-};
 
 class PyWrapper {
 public:
@@ -108,9 +104,6 @@ private:
     py::object _wrapperTest;
 
 };
-
-
-std::vector <std::map<std::string, std::string>> convertReqData(pTestDataList reqData, int dataNum);
 
 
 #endif

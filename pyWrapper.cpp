@@ -89,14 +89,11 @@ DataListNode *DataListCls::get(std::string key) {
     return nullptr;
 }
 
-
-Manager::Manager() {
+PyWrapper::PyWrapper() {
     // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
     // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
     dlopen(PythonSo, RTLD_GLOBAL | RTLD_NOW);
-}
 
-PyWrapper::PyWrapper() {
     // if (config.count(wrapperFileKey) == 0)
     py::gil_scoped_acquire acquire;
     _wrapper = py::module::import(WrapperFile);
