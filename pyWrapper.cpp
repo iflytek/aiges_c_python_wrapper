@@ -190,9 +190,18 @@ int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
 
 
 int PyWrapper::wrapperFini() {
-    py::gil_scoped_acquire acquire;
+    try {
+        py::gil_scoped_acquire acquire;
+        return _wrapperFini().cast<int>();
+    } catch (py::cast_error &e) {
+        spdlog::error("Fini cast error: {}", e.what());
+        return -1;
+    } catch (py::error_already_set &e) {
+        spdlog::error("Fini  error_already_set error: {}", e.what());
+        return -1;
+    }
 
-    return _wrapperFini().cast<int>();
+
 }
 
 int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData,
@@ -266,7 +275,18 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
 
 
 std::string PyWrapper::wrapperError(int err) {
-    return _wrapperError(err).cast<std::string>();
+    try {
+        py::gil_scoped_acquire acquire;
+        return _wrapperError(err).cast<std::string>();
+
+    } catch (py::cast_error &e) {
+        spdlog::error("cast error: {}", e.what());
+        return e.what();
+    } catch (py::error_already_set &e) {
+        spdlog::error("error_already_set error: {}", e.what());
+        return e.what();
+    }
+
 }
 
 
