@@ -33,7 +33,7 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 
             .def_readwrite("list", &Response::list, py::return_value_policy::automatic_reference)
             .def_readwrite("error_code", &Response::errCode, py::return_value_policy::automatic_reference)
-            .def_readwrite("response_err", &Response::responseErr, py::return_value_policy::automatic_reference);
+            .def("response_err", &Response::responseErr, py::return_value_policy::automatic_reference);
 
     py::class_<DataListNode> dataListNode(module, "DataListNode");
     dataListNode.
