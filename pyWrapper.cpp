@@ -313,7 +313,6 @@ int PyWrapper::wrapperTest() {
         std::cout << "Response len" << d.len << std::endl;
         std::cout << "response actual data Size " << d.data.length() << std::endl;
 
-
     }
     return 0;
 //  auto message = ret.cast<std::vector<std::string>>();

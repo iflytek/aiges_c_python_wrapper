@@ -11,8 +11,6 @@ __attribute__ ((constructor)) static void so_init(void);
 __attribute__ ((destructor)) static void so_deinit(void);
 
 
-Manager manager;
-
 py::scoped_interpreter python;  // 全局解释器
 py::gil_scoped_release release; // 主线程中先释放release锁
 // 全局pywrapper类实例
