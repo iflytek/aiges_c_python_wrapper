@@ -1,5 +1,3 @@
-import sys
-from sdk import WrapperBase
 class PythonClass:
     def __init__(self):
         self._x = 0
