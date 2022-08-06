@@ -16,10 +16,7 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
 ) {
 
     py::class_<ResponseData> responseData(module, "ResponseData");
-    responseData.
-
-                    def(py::init<>())
-
+    responseData.def(py::init<>())
             .def_readwrite("key", &ResponseData::key, py::return_value_policy::automatic_reference)
             .def_readwrite("data", &ResponseData::data, py::return_value_policy::automatic_reference)
             .def_readwrite("status", &ResponseData::status, py::return_value_policy::automatic_reference)
@@ -27,19 +24,13 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
             .def_readwrite("type", &ResponseData::type, py::return_value_policy::automatic_reference);
 
     py::class_<Response> response(module, "Response");
-    response.
-
-                    def(py::init<>())
-
+    response.def(py::init<>())
             .def_readwrite("list", &Response::list, py::return_value_policy::automatic_reference)
             .def_readwrite("error_code", &Response::errCode, py::return_value_policy::automatic_reference)
             .def("response_err", &Response::responseErr, py::return_value_policy::automatic_reference);
 
     py::class_<DataListNode> dataListNode(module, "DataListNode");
-    dataListNode.
-
-                    def(py::init<>())
-
+    dataListNode.def(py::init<>())
             .def_readwrite("key", &DataListNode::key, py::return_value_policy::automatic_reference)
             .def_readwrite("data", &DataListNode::data, py::return_value_policy::automatic_reference)
             .def_readwrite("len", &DataListNode::len, py::return_value_policy::automatic_reference)
@@ -47,10 +38,7 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module
             .def("get_data", &DataListNode::get_data, py::return_value_policy::reference);
 
     py::class_<DataListCls> dataListCls(module, "DataListCls");
-    dataListCls.
-
-                    def(py::init<>())
-
+    dataListCls.def(py::init<>())
             .def_readwrite("list", &DataListCls::list, py::return_value_policy::automatic_reference)
             .def("get", &DataListCls::get, py::return_value_policy::reference);
 }
@@ -124,8 +112,6 @@ PyWrapper::PyWrapper() {
 //
 //}
 
-
-
 PyWrapper::~PyWrapper() {
     _wrapperError.release();
     _wrapperInit.release();
@@ -152,7 +138,9 @@ void PyWrapper::ReloadWrapper() {
 }
 
 void reloadWrapper(const std::string event_file, void *flags) {
-    if (flags == nullptr) return; //什么都不做
+    if (flags == nullptr) {
+        return;    //什么都不做
+    }
     printf("reloading...wrapper\n");
     PyWrapper *w = (PyWrapper *) flags;
     w->ReloadWrapper();
@@ -175,7 +163,6 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     if (ret != 0) {
         printf("Error starting monitoring %s, pid is: %d\n", wrapperFileAbs.c_str(), _pid);
     }
-//    ret = pthread_join(_pid, NULL);
 }
 
 
@@ -185,20 +172,19 @@ int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
     return _wrapperInit(config).cast<int>();
 }
 
-
 int PyWrapper::wrapperFini() {
     try {
         py::gil_scoped_acquire acquire;
         return _wrapperFini().cast<int>();
-    } catch (py::cast_error &e) {
+    }
+    catch (py::cast_error &e) {
         spdlog::error("Fini cast error: {}", e.what());
         return -1;
-    } catch (py::error_already_set &e) {
+    }
+    catch (py::error_already_set &e) {
         spdlog::error("Fini  error_already_set error: {}", e.what());
         return -1;
     }
-
-
 }
 
 int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData,
@@ -225,7 +211,7 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             return -1;
         }
         for (int idx = 0; idx < dataSize; idx++) {
-            pDataList tmpData = new(DataList);
+            pDataList tmpData = new (DataList);
             tmpData->next = nullptr;
             ResponseData itemData = resp->list[idx];
             char *key = strdup(itemData.key.c_str());
@@ -258,10 +244,12 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
                           tmpData->status, sid);
         }
         *respData = headPtr;
-    } catch (py::cast_error &e) {
+    }
+    catch (py::cast_error &e) {
         spdlog::error("cast error: {}", e.what());
         return -1;
-    } catch (py::error_already_set &e) {
+    }
+    catch (py::error_already_set &e) {
         spdlog::error("error_already_set error: {}", e.what());
         return -1;
     }
@@ -276,10 +264,12 @@ std::string PyWrapper::wrapperError(int err) {
         py::gil_scoped_acquire acquire;
         return _wrapperError(err).cast<std::string>();
 
-    } catch (py::cast_error &e) {
+    }
+    catch (py::cast_error &e) {
         spdlog::error("cast error: {}", e.what());
         return e.what();
-    } catch (py::error_already_set &e) {
+    }
+    catch (py::error_already_set &e) {
         spdlog::error("error_already_set error: {}", e.what());
         return e.what();
     }
@@ -303,8 +293,9 @@ int PyWrapper::wrapperTest() {
     try {
         l = ret.cast<Response *>();
         // py::object r =  _wrapperOnceExec(params, reqData);
-    } catch (py::cast_error &e) {
-        std::cout << "errC" << std::endl;
+    }
+    catch (py::cast_error &e) {
+        std::cout << e.what() << std::endl;
         return -1;
     }
     for (int i = 0; i < l->list.size(); ++i) {
@@ -315,11 +306,11 @@ int PyWrapper::wrapperTest() {
 
     }
     return 0;
-//  auto message = ret.cast<std::vector<std::string>>();
+    //  auto message = ret.cast<std::vector<std::string>>();
     // printf("%s,:", message[0].c_str());
     // printf("%s,:", message[1].c_str());
     //  printf("resp len%d\n",resp.size());
-//   printf("%d", ret);
+    //   printf("%d", ret);
 
 
 }
