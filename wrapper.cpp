@@ -29,6 +29,17 @@ void so_deinit(void) {
     printf("libwrapper so deinit.\n");
 }
 
+static void init_threads()
+{
+    if (!PyEval_ThreadsInitialized())
+    {
+        {
+            py::gil_scoped_acquire acquire;
+        }
+        PyEval_SaveThread();
+    }
+}
+
 void initlog() {
     // change log pattern
     spdlog::set_pattern("[%l] [%Y-%m-%d %H:%M:%S.%f] [%t] %v");
@@ -69,6 +80,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
 
 int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
+    init_threads();
     pyWrapper = new PyWrapper();
 
     initlog();

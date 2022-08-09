@@ -165,11 +165,23 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     }
 }
 
-
 int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
-    py::gil_scoped_acquire acquire;
 
-    return _wrapperInit(config).cast<int>();
+    try {
+        py::gil_scoped_acquire acquire;
+        int ret = _wrapperInit(config).cast<int>();
+        py::gil_scoped_release release;
+
+        return ret;
+    }
+    catch (py::cast_error &e) {
+        spdlog::error("_wrapperInit cast error: {}", e.what());
+        return -1;
+    }
+    catch (py::error_already_set &e) {
+        spdlog::error("_wrapperInit  error_already_set error: {}", e.what());
+        return -1;
+    }
 }
 
 int PyWrapper::wrapperFini() {
