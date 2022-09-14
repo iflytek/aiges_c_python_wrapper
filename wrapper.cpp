@@ -153,7 +153,7 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
     }
 
     std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams,  errNum, sid);
-    void *handlePtr = handle.c_str();
+    char *handlePtr = strdup(handle.c_str());
     if (*errNum != 0) {
         spdlog::debug("wrapper exec Error, errNum:{}, sid:{}", *errNum, sid);
 

@@ -310,7 +310,7 @@ PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string>
 
         std::string handle = _wrapperCreate(params, errNum, sid).cast<std::string>();
         if (*errNum != 0) {
-            spdlog::get("stderr_console")->error("errNum: {}", errNum);
+            spdlog::get("stderr_console")->error("errNum: {}", *errNum);
         }
 
     }
