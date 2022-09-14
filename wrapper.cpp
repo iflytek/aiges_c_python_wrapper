@@ -29,10 +29,8 @@ void so_deinit(void) {
     printf("libwrapper so deinit.\n");
 }
 
-static void init_threads()
-{
-    if (!PyEval_ThreadsInitialized())
-    {
+static void init_threads() {
+    if (!PyEval_ThreadsInitialized()) {
         {
             py::gil_scoped_acquire acquire;
         }
@@ -56,6 +54,9 @@ void initlog() {
         printf("log目录已创建\n");
     }
     auto file_logger = spdlog::rotating_logger_mt("mspper", wrapperLogFile, 1048576 * 10, 50);
+    // Console logger
+    auto console_logger = spdlog::stdout_color_mt("stdout_console");
+    auto err_logger = spdlog::stderr_color_mt("stderr_console");
     spdlog::set_default_logger(file_logger);
     spdlog::flush_on(spdlog::level::err);
     spdlog::flush_every(std::chrono::seconds(5));
@@ -129,7 +130,38 @@ int WrapperAPI wrapperUnloadRes(unsigned int resId) {
 const void *
 WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt,
                          int *errNum) {
-    return NULL;
+    std::string sid = "";
+    for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
+        if (NULL == sidP->key) {
+            continue;
+        }
+        if (std::string("sid") == sidP->key) {
+            sid = sidP->value;
+            break;
+        }
+    }
+    spdlog::debug("Crate Session tid is:{},sid:{}", gettid(), sid);
+    //构建请求参数
+    std::map <std::string, std::string> pyParams;
+
+    for (pParamList p = params; p != NULL; p = p->next) {
+        if (NULL == p->key) {
+            continue;
+        }
+        pyParams.insert({p->key, p->value});
+        spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
+    }
+
+    std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams,  errNum, sid);
+    void *handlePtr = handle.c_str();
+    if (*errNum != 0) {
+        spdlog::debug("wrapper exec Error, errNum:{}, sid:{}", *errNum, sid);
+
+        return NULL;
+    }
+    SetHandleSid(handle, sid);
+    return static_cast<const void *>(handlePtr);
+
 }
 
 int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {

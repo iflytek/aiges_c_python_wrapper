@@ -90,6 +90,8 @@ public:
 
     int wrapperFini();
 
+    std::string wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, int *errNum, std::string sid);
+
     int wrapperTest();
 
 private:
@@ -100,9 +102,17 @@ private:
     py::object _wrapperFini;
     py::object _wrapperOnceExec;
     py::object _wrapperError;
+    py::object _wrapperCreate;
+    py::object _wrapperWrite;
+    py::object _wrapperRead;
     py::object _wrapperTest;
 
 };
 
+void SetHandleSid(char *handle, std::string sid);
+
+std::string GetHandleSid(char *handle);
+
+void DelHandleSid(char *handle);
 
 #endif

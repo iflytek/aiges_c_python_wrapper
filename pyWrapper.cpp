@@ -12,8 +12,10 @@ const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
 const char *PythonSo = "libpython3.so";
 
-PYBIND11_EMBEDDED_MODULE(aiges_embed, module
-) {
+std::mutex RECORD_MUTEX;
+std::map <std::string, std::string> SID_RECORD;
+
+PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
 
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
@@ -92,7 +94,12 @@ PyWrapper::PyWrapper() {
     _wrapperFini = _obj.attr("wrapperFini");
     _wrapperOnceExec = _obj.attr("wrapperOnceExec");
     _wrapperError = _obj.attr("wrapperError");
+    // stream support
+    _wrapperCreate = _obj.attr("wrapperCreate");
+    _wrapperWrite = _obj.attr("wrapperWrite");
+    _wrapperRead = _obj.attr("wrapperRead");
     _wrapperTest = _obj.attr("wrapperTestFunc");
+
     py::gil_scoped_release release;
     StartMonitorWrapperClass(_wrapper_abs);
 
@@ -118,6 +125,9 @@ PyWrapper::~PyWrapper() {
     _wrapperFini.release();
     _wrapperOnceExec.release();
     _wrapperTest.release();
+    _wrapperCreate.release();
+    _wrapperWrite.release();
+    _wrapperRead.release();
     pybind11::gil_scoped_release release;
 }
 
@@ -134,6 +144,11 @@ void PyWrapper::ReloadWrapper() {
     _wrapperOnceExec = _obj.attr("wrapperOnceExec");
     _wrapperError = _obj.attr("wrapperError");
     _wrapperTest = _obj.attr("wrapperTestFunc");
+    // stream support
+
+    _wrapperCreate = _obj.attr("wrapperCreate");
+    _wrapperWrite = _obj.attr("wrapperWrite");
+    _wrapperRead = _obj.attr("wrapperRead");
     pybind11::gil_scoped_release release;
 }
 
@@ -175,11 +190,11 @@ int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
         return ret;
     }
     catch (py::cast_error &e) {
-        spdlog::error("_wrapperInit cast error: {}", e.what());
+        spdlog::get("stderr_console")->error("_wrapperInit cast error: {}", e.what());
         return -1;
     }
     catch (py::error_already_set &e) {
-        spdlog::error("_wrapperInit  error_already_set error: {}", e.what());
+        spdlog::get("stderr_console")->error("_wrapperInit  error_already_set error: {}", e.what());
         return -1;
     }
 }
@@ -190,11 +205,11 @@ int PyWrapper::wrapperFini() {
         return _wrapperFini().cast<int>();
     }
     catch (py::cast_error &e) {
-        spdlog::error("Fini cast error: {}", e.what());
+        spdlog::get("stderr_console")->error("Fini cast error: {}", e.what());
         return -1;
     }
     catch (py::error_already_set &e) {
-        spdlog::error("Fini  error_already_set error: {}", e.what());
+        spdlog::get("stderr_console")->error("Fini  error_already_set error: {}", e.what());
         return -1;
     }
 }
@@ -213,13 +228,13 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         pDataList curPtr;
         // 先判断python有没有抛出错误. response中的 errorCode
         if (resp->errCode != 0) {
-            spdlog::error("find error from python: {}", resp->errCode);
+            spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
             return resp->errCode;
         }
 
         int dataSize = resp->list.size();
         if (dataSize == 0) {
-            spdlog::error("error, not find any data from resp");
+            spdlog::get("stderr_console")->error("error, not find any data from resp");
             return -1;
         }
         for (int idx = 0; idx < dataSize; idx++) {
@@ -236,7 +251,7 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
             pr = malloc(itemData.len);
             if (pr == nullptr) {
                 int ret = -1;
-                spdlog::error("can't malloc memory for data,  sid:{}", sid);
+                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
             memcpy(pr, itemData.data.data(), itemData.len);
@@ -258,11 +273,11 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
         *respData = headPtr;
     }
     catch (py::cast_error &e) {
-        spdlog::error("cast error: {}", e.what());
+        spdlog::get("stderr_console")->error("cast error: {}", e.what());
         return -1;
     }
     catch (py::error_already_set &e) {
-        spdlog::error("error_already_set error: {}", e.what());
+        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
         return -1;
     }
 
@@ -288,6 +303,27 @@ std::string PyWrapper::wrapperError(int err) {
 
 }
 
+std::string
+PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, int *errNum, std::string sid) {
+    try {
+        py::gil_scoped_acquire acquire;
+
+        std::string handle = _wrapperCreate(params, errNum, sid).cast<std::string>();
+        if (*errNum != 0) {
+            spdlog::get("stderr_console")->error("errNum: {}", errNum);
+        }
+
+    }
+    catch (py::cast_error &e) {
+        spdlog::error("cast error: {}", e.what());
+        return e.what();
+    }
+    catch (py::error_already_set &e) {
+        spdlog::error("error_already_set error: {}", e.what());
+        return e.what();
+    }
+
+}
 
 int PyWrapper::wrapperTest() {
     py::gil_scoped_acquire acquire;
@@ -327,3 +363,24 @@ int PyWrapper::wrapperTest() {
 
 }
 
+
+void SetHandleSid(char *handle, std::string sid) {
+    RECORD_MUTEX.lock();
+    SID_RECORD[std::string(handle)] = sid;
+    RECORD_MUTEX.unlock();
+}
+
+std::string GetHandleSid(char *handle) {
+    std::string rlt;
+    RECORD_MUTEX.lock();
+    rlt = SID_RECORD[std::string(handle)];
+    RECORD_MUTEX.unlock();
+    return rlt;
+}
+
+//暂时没用上
+void DelHandleSid(char *handle) {
+    RECORD_MUTEX.lock();
+
+    RECORD_MUTEX.unlock();
+}
