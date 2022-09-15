@@ -189,6 +189,7 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
             item.len = p->len;
             char t = static_cast<int>(p->type);
             item.type = p->type;
+            item.status = p->status;
             spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
             req.list.push_back(item);
             p = p->next;

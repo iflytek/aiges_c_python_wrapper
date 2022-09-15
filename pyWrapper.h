@@ -64,6 +64,7 @@ public:
     std::string key;
     py::bytes data;
     unsigned int len;
+    int status;
     int type;
 
     py::bytes get_data();
