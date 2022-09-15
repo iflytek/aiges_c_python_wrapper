@@ -11,7 +11,7 @@
 #include <vector>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"
-
+#include "spdlog/sinks/stdout_color_sinks.h"
 #include "aiges/type.h"
 #include "fswatch.h"
 
@@ -27,6 +27,13 @@ typedef struct TestDataList {
 
 namespace py = pybind11;
 using namespace std::chrono_literals;
+
+// Session会话结create返回
+class SessionCreateResponse {
+public:
+    std::string handle;
+    int errCode;
+};
 
 class ResponseData {
 public:
@@ -51,6 +58,7 @@ public:
 
 };
 
+// 请求数据节点结构
 class DataListNode {
 public:
     std::string key;
@@ -61,6 +69,7 @@ public:
     py::bytes get_data();
 };
 
+// 请求的数据结构 用以和pybind11 交互
 class DataListCls {
 public:
     std::vector <DataListNode> list;
@@ -91,6 +100,9 @@ public:
     int wrapperFini();
 
     std::string wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, int *errNum, std::string sid);
+
+    int wrapperWrite(char *handle, DataListCls reqData,std::string sid);
+    int wrapperRead(char *handle, pDataList *respData,std::string sid);
 
     int wrapperTest();
 

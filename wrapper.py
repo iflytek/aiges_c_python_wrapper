@@ -155,6 +155,12 @@ class Wrapper(WrapperBase):
             return "user error defined here"
         return ""
 
+    def wrapperCreate(cls, params: {}, errNum: int, sid: str) -> str:
+        errNum = 5
+        print(params)
+        handle = "ccch"
+        return handle
+
     def wrapperTestFunc(cls, data: [], respData: []):
         r = Response()
         l = ResponseData()

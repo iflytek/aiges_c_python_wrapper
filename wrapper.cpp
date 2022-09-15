@@ -140,7 +140,7 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
             break;
         }
     }
-    spdlog::debug("Crate Session tid is:{},sid:{}", gettid(), sid);
+    spdlog::debug("create session mode, thread id is:{}, sid:{}", gettid(), sid);
     //构建请求参数
     std::map <std::string, std::string> pyParams;
 
@@ -152,24 +152,66 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
         spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
     }
 
-    std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams,  errNum, sid);
+    std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams, errNum, sid);
     char *handlePtr = strdup(handle.c_str());
+    printf("err: %d", *errNum);
     if (*errNum != 0) {
         spdlog::debug("wrapper exec Error, errNum:{}, sid:{}", *errNum, sid);
 
         return NULL;
     }
-    SetHandleSid(handle, sid);
+    SetHandleSid(handlePtr, sid);
     return static_cast<const void *>(handlePtr);
 
 }
 
 int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
-    return 0;
+    int ret = 0;
+    //构建请求数据
+    int dataNum = 0;
+    for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
+        dataNum++;
+    }
+    spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，sid:{}", dataNum, sid);
+
+    DataListCls req;
+    pDataList p = reqData;
+    if (dataNum > 0) {
+        for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
+            DataListNode item;
+            item.key = p->key;
+
+            // 直接拷贝
+            size_t len = static_cast<size_t>(p->len);
+            item.data = py::bytes((char *) (p->data), len);
+
+            item.len = p->len;
+            char t = static_cast<int>(p->type);
+            item.type = p->type;
+            spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
+            req.list.push_back(item);
+            p = p->next;
+        }
+    }
+    // 构造响应数据
+    ret = pyWrapper->wrapperWrite(handle, req, sid);
+    if (ret != 0) {
+        spdlog::get("stderr_console")->error("wrapper write error!");
+    }
+
+    return ret;
 }
 
 int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
-    return 0;
+    int ret = 0;
+    // 构造响应数据
+    ret = pyWrapper->wrapperRead(handle, respData, sid);
+    if (ret != 0) {
+        spdlog::get("stderr_console")->error("wrapper read error!");
+    }
+    spdlog::debug("wrapperRead ret Success: {}", ret);
+    return ret;
+    // python层的错误 once可能没有处理好异常数据，加载器并不能崩溃
 }
 
 int WrapperAPI wrapperDestroy(const void *handle) {
@@ -243,12 +285,12 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
     // 构造响应数据
     ret = pyWrapper->wrapperOnceExec(pyParams, req, respData, sid);
     if (ret != 0) {
-        spdlog::error("wrapper exec error!");
+        spdlog::get("stderr_console")->error("wrapper exec error!");
         return ret;
     }
     spdlog::debug("onceExec ret Success: {}", ret);
     // python层的错误 once可能没有处理好异常数据，加载器并不能崩溃
-    return 0;
+    return ret;
 
 }
 
@@ -273,7 +315,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
     // 构造响应数据
     int ret = pyWrapper->wrapperFini();
     if (ret != 0) {
-        spdlog::error("wrapper python exec fin error {}", ret);
+        spdlog::get("stderr_console")->error("wrapper python exec fin error {}", ret);
     }
     spdlog::debug("wrapper exec free success");
     return 0;

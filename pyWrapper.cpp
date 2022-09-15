@@ -43,6 +43,11 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     dataListCls.def(py::init<>())
             .def_readwrite("list", &DataListCls::list, py::return_value_policy::automatic_reference)
             .def("get", &DataListCls::get, py::return_value_policy::reference);
+
+    py::class_<SessionCreateResponse> sessionCreateResponse(module, "SessionCreateResponse");
+    sessionCreateResponse.def(py::init<>())
+            .def_readwrite("handle", &SessionCreateResponse::handle, py::return_value_policy::automatic_reference)
+            .def_readwrite("error_code", &SessionCreateResponse::errCode, py::return_value_policy::reference);
 }
 
 /**
@@ -305,24 +310,112 @@ std::string PyWrapper::wrapperError(int err) {
 
 std::string
 PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, int *errNum, std::string sid) {
+    SessionCreateResponse *resp;
+
     try {
         py::gil_scoped_acquire acquire;
-
-        std::string handle = _wrapperCreate(params, errNum, sid).cast<std::string>();
+        // 此段根据python的返回 ，回写 respData
+        py::object r = _wrapperCreate(params, sid);
+        resp = r.cast<SessionCreateResponse *>();
+        *errNum = resp->errCode;
         if (*errNum != 0) {
             spdlog::get("stderr_console")->error("errNum: {}", *errNum);
         }
+        return resp->handle;
 
     }
     catch (py::cast_error &e) {
-        spdlog::error("cast error: {}", e.what());
+        spdlog::get("stderr_console")->error("cast error: {}", e.what());
         return e.what();
     }
     catch (py::error_already_set &e) {
-        spdlog::error("error_already_set error: {}", e.what());
+        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
         return e.what();
     }
 
+}
+
+// 上行数据
+int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) {
+    try {
+        py::gil_scoped_acquire acquire;
+        // 执行python exec 推理
+        py::object r = _wrapperWrite(handle, sid, reqData);
+    }
+    catch (py::cast_error &e) {
+        spdlog::get("stderr_console")->error("cast error: {}", e.what());
+        return e.what();
+    }
+    catch (py::error_already_set &e) {
+        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
+        return e.what();
+    }
+}
+
+// 下行数据
+int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
+    try {
+        py::gil_scoped_acquire acquire;
+        // 执行python exec 推理
+        py::object r = _wrapperWrite(handle, sid, respData);
+        spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
+        resp = r.cast<Response *>();
+        pDataList headPtr;
+        pDataList curPtr;
+        // 先判断python有没有抛出错误. response中的 errorCode
+        if (resp->errCode != 0) {
+            spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
+            return resp->errCode;
+        }
+
+        int dataSize = resp->list.size();
+        if (dataSize == 0) {
+            spdlog::get("stderr_console")->error("error, not find any data from resp");
+            return -1;
+        }
+        for (int idx = 0; idx < dataSize; idx++) {
+            pDataList tmpData = new (DataList);
+            tmpData->next = nullptr;
+            ResponseData itemData = resp->list[idx];
+            char *key = strdup(itemData.key.c_str());
+            tmpData->key = key;
+            tmpData->len = itemData.len;
+            tmpData->type = DataType(itemData.type);
+            tmpData->desc = nullptr;
+            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
+            void *pr;
+            pr = malloc(itemData.len);
+            if (pr == nullptr) {
+                int ret = -1;
+                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+                return ret;
+            }
+            memcpy(pr, itemData.data.data(), itemData.len);
+            //char *data_ = new char[itemData.data.length()+1];
+            // strdup(.c_str());
+            tmpData->data = pr;
+            tmpData->status = DataStatus(itemData.status);
+            if (idx == 0) {
+                headPtr = tmpData;
+                curPtr = tmpData;
+            } else {
+                curPtr->next = tmpData;
+                curPtr = tmpData;
+            }
+            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
+                          tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
+                          tmpData->status, sid);
+        }
+        *respData = headPtr;
+    }
+    catch (py::cast_error &e) {
+        spdlog::get("stderr_console")->error("cast error: {}", e.what());
+        return e.what();
+    }
+    catch (py::error_already_set &e) {
+        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
+        return e.what();
+    }
 }
 
 int PyWrapper::wrapperTest() {
