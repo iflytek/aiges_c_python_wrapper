@@ -36,6 +36,7 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
             .def_readwrite("key", &DataListNode::key, py::return_value_policy::automatic_reference)
             .def_readwrite("data", &DataListNode::data, py::return_value_policy::automatic_reference)
             .def_readwrite("len", &DataListNode::len, py::return_value_policy::automatic_reference)
+            .def_readwrite("status", &DataListNode::status, py::return_value_policy::automatic_reference)
             .def_readwrite("type", &DataListNode::type, py::return_value_policy::automatic_reference)
             .def("get_data", &DataListNode::get_data, py::return_value_policy::reference);
 
