@@ -361,7 +361,7 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
         Response *resp;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
-        py::object r = _wrapperWrite(handle, sid, respData);
+        py::object r = _wrapperWrite(handle, sid);
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         resp = r.cast<Response *>();
         pDataList headPtr;
