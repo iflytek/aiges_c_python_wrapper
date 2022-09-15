@@ -341,7 +341,7 @@ int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) 
         int ret = 0;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
-        py::object r = _wrapperWrite(handle, sid, reqData);
+        py::object r = _wrapperWrite(handle, reqData, sid );
         ret = r.cast<int>();
         return ret;
     }
@@ -361,7 +361,7 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
         Response *resp;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
-        py::object r = _wrapperWrite(handle, sid);
+        py::object r = _wrapperRead(handle, sid);
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         resp = r.cast<Response *>();
         pDataList headPtr;
@@ -420,6 +420,7 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
         spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
         return -1;
     }
+    return 0;
 }
 
 int PyWrapper::wrapperTest() {
