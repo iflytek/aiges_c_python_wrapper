@@ -338,9 +338,12 @@ PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string>
 // 上行数据
 int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) {
     try {
+        int ret = 0;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperWrite(handle, sid, reqData);
+        ret = r.cast<int>();
+        return ret;
     }
     catch (py::cast_error &e) {
         spdlog::get("stderr_console")->error("cast error: {}", e.what());
@@ -355,6 +358,7 @@ int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) 
 // 下行数据
 int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
     try {
+        Response *resp;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperWrite(handle, sid, respData);
