@@ -172,7 +172,7 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
     for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
         dataNum++;
     }
-    std::string sid = GetHandleSid(handle);
+    std::string sid = GetHandleSid((char*)handle);
     spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，sid:{}", dataNum, sid);
 
     DataListCls req;
@@ -195,7 +195,7 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
         }
     }
     // 构造响应数据
-    ret = pyWrapper->wrapperWrite(handle, req, sid);
+    ret = pyWrapper->wrapperWrite((char*)handle, req, sid);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper write error!");
     }
@@ -205,9 +205,9 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
 
 int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
     int ret = 0;
-    std::string sid = GetHandleSid(handle);
+    std::string sid = GetHandleSid((char *)handle);
     // 构造响应数据
-    ret = pyWrapper->wrapperRead(handle, respData, sid);
+    ret = pyWrapper->wrapperRead((char*)handle, respData, sid);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper read error!");
     }
