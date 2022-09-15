@@ -347,11 +347,11 @@ int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) 
     }
     catch (py::cast_error &e) {
         spdlog::get("stderr_console")->error("cast error: {}", e.what());
-        return e.what();
+        return -1;
     }
     catch (py::error_already_set &e) {
         spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
-        return e.what();
+        return -1;
     }
 }
 
@@ -414,11 +414,11 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
     }
     catch (py::cast_error &e) {
         spdlog::get("stderr_console")->error("cast error: {}", e.what());
-        return e.what();
+        return -1;
     }
     catch (py::error_already_set &e) {
         spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
-        return e.what();
+        return -1;
     }
 }
 
