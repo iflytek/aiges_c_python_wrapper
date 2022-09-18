@@ -38,7 +38,7 @@ public:
 class ResponseData {
 public:
     std::string key;
-    std::string data;
+    py::bytes data;
     unsigned int len;
     int status;
     int type;

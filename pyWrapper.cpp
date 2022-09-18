@@ -260,7 +260,7 @@ int PyWrapper::wrapperOnceExec(std::map <std::string, std::string> params, DataL
                 spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
-            memcpy(pr, itemData.data.data(), itemData.len);
+            memcpy(pr, itemData.data.ptr(), itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
             tmpData->data = pr;
@@ -395,7 +395,7 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
                 spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
-            memcpy(pr, itemData.data.data(), itemData.len);
+            memcpy(pr, itemData.data.ptr(), itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
             tmpData->data = pr;
