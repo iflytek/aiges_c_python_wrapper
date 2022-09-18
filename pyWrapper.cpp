@@ -449,7 +449,7 @@ int PyWrapper::wrapperTest() {
         ResponseData d = l->list[i];
         std::cout << "Response key: " << d.key << std::endl;
         std::cout << "Response len" << d.len << std::endl;
-        std::cout << "response actual data Size " << d.data.length() << std::endl;
+//        std::cout << "response actual data Size " << d.data.length() << std::endl;
 
     }
     return 0;
