@@ -14,6 +14,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "aiges/type.h"
 #include "fswatch.h"
+#include "aiges/wrapper.h"
 
 #define gettid() syscall(SYS_gettid)
 #define PYBIND11_DETAILED_ERROR_MESSAGES
@@ -95,17 +96,30 @@ public:
 
     std::string wrapperError(int x);
 
-    int wrapperOnceExec(std::map <std::string, std::string> params, DataListCls reqData, pDataList *respData,
-                        std::string sid);
-
+    int wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
+                        pDataList *respData,
+                        std::string sid, wrapperCallback cb);
+    int wrapperOnceExecAsync(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
+                        std::string sid, wrapperCallback cb);
     int wrapperFini();
 
-    std::string wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, int *errNum, std::string sid);
+    std::string
+    wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, wrapperCallback cb, int *errNum,
+                  std::string sid);
 
-    int wrapperWrite(char *handle, DataListCls reqData,std::string sid);
-    int wrapperRead(char *handle, pDataList *respData,std::string sid);
+    int wrapperWrite(char *handle, DataListCls reqData, std::string sid);
+
+    int wrapperRead(char *handle, pDataList *respData, std::string sid);
+
+    int wrapperDestroy(std::string sid);
+
+    int wrapperExecFree(const char* usrTag);
 
     int wrapperTest();
+
+
+    void setCallBack(wrapperCallback cb);
+
 
 private:
     py::module_ _wrapper;
@@ -114,11 +128,14 @@ private:
     py::object _wrapperInit;
     py::object _wrapperFini;
     py::object _wrapperOnceExec;
+    py::object _wrapperOnceExecAsync;
     py::object _wrapperError;
     py::object _wrapperCreate;
     py::object _wrapperWrite;
     py::object _wrapperRead;
     py::object _wrapperTest;
+
+    wrapperCallback cb_;
 
 };
 
@@ -127,5 +144,23 @@ void SetHandleSid(char *handle, std::string sid);
 std::string GetHandleSid(char *handle);
 
 void DelHandleSid(char *handle);
+
+
+int callBack(Response *respData, std::string);
+
+
+void SetSidCallBack(wrapperCallback cb, std::string sid);
+
+wrapperCallback GetSidCB(std::string sid);
+
+void DelSidCallback(std::string sid);
+
+void SetSidUsrTag(std::string sid, const char *usrTag);
+
+const char *GetSidUsrTag(std::string sid);
+
+const std::string GetSidByUsrTag(const char *usrTag);
+
+void DelSidUsrTag(std::string sid);
 
 #endif
