@@ -352,7 +352,7 @@ wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapp
             break;
         }
     }
-    spdlog::debug("starting exec:  is:{},sid:{}", gettid(), sid);
+    spdlog::debug("starting exec async:  is:{},sid:{}", gettid(), sid);
     //构建请求参数
     std::map <std::string, std::string> pyParams;
 
@@ -361,7 +361,7 @@ wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapp
             continue;
         }
         pyParams.insert({p->key, p->value});
-        spdlog::debug("wrapper exec param, key:{},value:{},sid:{}", p->key, p->value, sid);
+        spdlog::debug("wrapper exec async param, key:{},value:{},sid:{}", p->key, p->value, sid);
     }
     //构建请求数据
     int dataNum = 0;

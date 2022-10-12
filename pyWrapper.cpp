@@ -541,7 +541,7 @@ int callBack(Response *resp, std::string sid) {
         spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
         return resp->errCode;
     }
-
+	char* ptr;
     int dataSize = resp->list.size();
     if (dataSize == 0) {
         spdlog::get("stderr_console")->error("error, not find any data from resp");
@@ -564,7 +564,10 @@ int callBack(Response *resp, std::string sid) {
             spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
             return ret;
         }
-        memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
+		ptr = PyBytes_AsString(itemData.data.ptr());
+	    Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+	    memcpy(pr, ptr,itemData.len );
+        // 还是有问题：：memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
         //char *data_ = new char[itemData.data.length()+1];
         // strdup(.c_str());
         tmpData->data = pr;
@@ -647,6 +650,7 @@ void DelHandleSid(char *handle) {
 
 void DelSidCallback(std::string sid) {
     RECORD_MUTEX.lock();
+    
     SID_CB.erase(sid);
     RECORD_MUTEX.unlock();
 }
