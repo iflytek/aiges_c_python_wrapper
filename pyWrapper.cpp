@@ -21,10 +21,53 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
+            .def(py::init([](const py::buffer &b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
+                    throw std::runtime_error("Incompatible buffer format! Please Pass Bytes...");
+                }
+                auto *v = new ResponseData(info.shape[0]);
+                v->data = info.ptr;
+                // memcpy( v->data, info.ptr, info.shape[0] );
+                return (v);
+            }))
+            .def("setData", [](ResponseData &r, const py::buffer &b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
+                    throw std::runtime_error("Incompatible buffer format! Please Pass Bytes..");
+                }
+                if (r.data == nullptr) {
+                    void *p = malloc(info.shape[0]);
+                    if (p == nullptr) {
+                        throw std::runtime_error("Can't Allocate memory!");
+                    }
+                    r.data = p;
+                }
+                r.len = info.shape[0];
+                r.data = info.ptr;
+                // memcpy(r.data, info.ptr, info.shape[0]);
+            })
+                    /* / Bare bones interface */
+            .def("setDataType",
+                 [](ResponseData &r, int i) {
+                     r.type = i;
+                 })
+                    /* / Provide buffer access */
+            .def_buffer([](ResponseData &r) -> py::buffer_info {
+                return (py::buffer_info(
+                        r.data,                                              /* Pointer to buffer */
+                        sizeof(unsigned char),                               /* Size of one scalar */
+                        py::format_descriptor<unsigned char>::format(),      /* Python struct-style format descriptor */
+                        1,                                                   /* Number of dimensions */
+                        {size_t(r.len)},                                 /* Buffer dimensions */
+                        {            /* Strides (in bytes) for each index */
+                                sizeof(unsigned char)}
+                ));
+            })
             .def_readwrite("key", &ResponseData::key, py::return_value_policy::automatic_reference)
-            .def_readwrite("data", &ResponseData::data, py::return_value_policy::automatic_reference)
+            .def_read("data", &ResponseData::data, py::return_value_policy::automatic_reference)
             .def_readwrite("status", &ResponseData::status, py::return_value_policy::automatic_reference)
-            .def_readwrite("len", &ResponseData::len, py::return_value_policy::automatic_reference)
+            .def_read("len", &ResponseData::len, py::return_value_policy::automatic_reference)
             .def_readwrite("type", &ResponseData::type, py::return_value_policy::automatic_reference);
 
     py::class_<Response> response(module, "Response");
@@ -483,7 +526,7 @@ int PyWrapper::wrapperDestroy(std::string sid) {
 int PyWrapper::wrapperExecFree(const char *usrTag) {
     std::string sid = GetSidByUsrTag(usrTag);
     if (sid != "")
-    DelSidUsrTag(sid);
+        DelSidUsrTag(sid);
     return 0;
 }
 
@@ -541,7 +584,7 @@ int callBack(Response *resp, std::string sid) {
         spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
         return resp->errCode;
     }
-	char* ptr;
+    char *ptr;
     int dataSize = resp->list.size();
     if (dataSize == 0) {
         spdlog::get("stderr_console")->error("error, not find any data from resp");
@@ -564,9 +607,9 @@ int callBack(Response *resp, std::string sid) {
             spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
             return ret;
         }
-		ptr = PyBytes_AsString(itemData.data.ptr());
-	    Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-	    memcpy(pr, ptr,itemData.len );
+        ptr = PyBytes_AsString(itemData.data.ptr());
+        Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+        memcpy(pr, ptr, itemData.len);
         // 还是有问题：：memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
         //char *data_ = new char[itemData.data.length()+1];
         // strdup(.c_str());
@@ -650,7 +693,7 @@ void DelHandleSid(char *handle) {
 
 void DelSidCallback(std::string sid) {
     RECORD_MUTEX.lock();
-    
+
     SID_CB.erase(sid);
     RECORD_MUTEX.unlock();
 }

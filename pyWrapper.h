@@ -38,8 +38,17 @@ public:
 
 class ResponseData {
 public:
+    ResponseData(std::string r_key, unsigned int r_len, int r_status, int r_type) : key(r_key), len(r_len),
+                                                                                    type(r_type), status(r_status) {
+
+    }
+
+    ResponseData() {
+
+    }
+
     std::string key;
-    py::bytes data;
+    void *data;
     unsigned int len;
     int status;
     int type;
@@ -99,8 +108,10 @@ public:
     int wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
                         pDataList *respData,
                         std::string sid, wrapperCallback cb);
+
     int wrapperOnceExecAsync(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
-                        std::string sid, wrapperCallback cb);
+                             std::string sid, wrapperCallback cb);
+
     int wrapperFini();
 
     std::string
@@ -113,7 +124,7 @@ public:
 
     int wrapperDestroy(std::string sid);
 
-    int wrapperExecFree(const char* usrTag);
+    int wrapperExecFree(const char *usrTag);
 
     int wrapperTest();
 
