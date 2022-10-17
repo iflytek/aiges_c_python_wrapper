@@ -47,6 +47,22 @@ public:
 
     }
 
+    void *get_data() {
+        return data;
+    }
+
+    void set_data(void *data_) {
+        data = data_;
+    }
+
+    unsigned int get_len() {
+        return len;
+    }
+
+    void set_len(unsigned int _len) {
+        len = _len;
+    }
+
     std::string key;
     void *data;
     unsigned int len;
