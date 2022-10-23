@@ -99,7 +99,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
             }
             if (std::string("log.dir") == std::string(p->key)) {
                 logDir = p->value;
-                logPath = p->value + "/wrapper.log";
+                logPath = std::string(p->value) + std::string("/wrapper.log");
                 continue;
             }
         }
