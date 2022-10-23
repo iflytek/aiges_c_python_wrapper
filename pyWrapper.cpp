@@ -272,8 +272,6 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             }
             ptr = PyBytes_AsString(itemData.data.ptr());
             Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-            printf("GetSIze, %d", size);
-            printf("item data len: %d", itemData.len);
             memcpy(pr, ptr, itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
@@ -286,9 +284,10 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
                 curPtr->next = tmpData;
                 curPtr = tmpData;
             }
-            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
-                          tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
+            spdlog::debug("get result,key:{},data:{},len:{},size:{}, type:{},status:{},sid:{}",
+                          tmpData->key, (char *) tmpData->data, tmpData->len, size, tmpData->type,
                           tmpData->status, sid);
+
         }
         *respData = headPtr;
     }
@@ -417,6 +416,7 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
         resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList curPtr;
+        char *ptr;
         // 先判断python有没有抛出错误. response中的 errorCode
         if (resp->errCode != 0) {
             spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
@@ -445,7 +445,9 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
                 spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
-            memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
+            ptr = PyBytes_AsString(itemData.data.ptr());
+            Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+            memcpy(pr, ptr, size);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
             tmpData->data = pr;
@@ -457,8 +459,8 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
                 curPtr->next = tmpData;
                 curPtr = tmpData;
             }
-            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
-                          tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
+            spdlog::debug("callback result,key:{},data:{},len:{},size,{},type:{},status:{},sid:{}",
+                          tmpData->key, (char *) tmpData->data, tmpData->len, size, tmpData->type,
                           tmpData->status, sid);
         }
         *respData = headPtr;
@@ -483,7 +485,7 @@ int PyWrapper::wrapperDestroy(std::string sid) {
 int PyWrapper::wrapperExecFree(const char *usrTag) {
     std::string sid = GetSidByUsrTag(usrTag);
     if (sid != "")
-    DelSidUsrTag(sid);
+        DelSidUsrTag(sid);
     return 0;
 }
 
@@ -541,7 +543,7 @@ int callBack(Response *resp, std::string sid) {
         spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
         return resp->errCode;
     }
-	char* ptr;
+    char *ptr;
     int dataSize = resp->list.size();
     if (dataSize == 0) {
         spdlog::get("stderr_console")->error("error, not find any data from resp");
@@ -564,9 +566,9 @@ int callBack(Response *resp, std::string sid) {
             spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
             return ret;
         }
-		ptr = PyBytes_AsString(itemData.data.ptr());
-	    Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-	    memcpy(pr, ptr,itemData.len );
+        ptr = PyBytes_AsString(itemData.data.ptr());
+        Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+        memcpy(pr, ptr, itemData.len);
         // 还是有问题：：memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
         //char *data_ = new char[itemData.data.length()+1];
         // strdup(.c_str());
@@ -579,8 +581,8 @@ int callBack(Response *resp, std::string sid) {
             curPtr->next = tmpData;
             curPtr = tmpData;
         }
-        spdlog::debug("callback result,key:{},data:{},len:{},type:{},status:{},sid:{}",
-                      tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
+        spdlog::debug("callback result,key:{},data:{},len:{},size,{},type:{},status:{},sid:{}",
+                      tmpData->key, (char *) tmpData->data, tmpData->len, size, tmpData->type,
                       tmpData->status, sid);
     }
 
@@ -650,7 +652,7 @@ void DelHandleSid(char *handle) {
 
 void DelSidCallback(std::string sid) {
     RECORD_MUTEX.lock();
-    
+
     SID_CB.erase(sid);
     RECORD_MUTEX.unlock();
 }
