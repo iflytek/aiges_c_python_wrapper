@@ -85,8 +85,8 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
     init_threads();
     pyWrapper = new PyWrapper();
-    std::string logDir = std::string("./log/server")
-    std::string logPath = std::string("./log/server/wrapper.log")
+    std::string logDir = std::string("./log/server");
+    std::string logPath = std::string("./log/server/wrapper.log");
     std::string loglvl = "debug";
     std::map <std::string, std::string> config;
 
