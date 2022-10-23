@@ -318,7 +318,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             //            }
             // ptr = PyBytes_AsString(itemData.data.ptr());
             // Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-            printf("GetSIze  data len: %d", itemData.len);
+            // printf("GetSIze  data len: %d", itemData.len);
             // memcpy(pr, ptr, itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
