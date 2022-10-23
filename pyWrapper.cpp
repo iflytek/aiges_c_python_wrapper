@@ -19,12 +19,58 @@ std::map<std::string, const char *> SID_USRTAG;
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
-    py::class_<ResponseData> responseData(module, "ResponseData");
+    py::class_<ResponseData> responseData(module, "ResponseData", py::buffer_protocol());
     responseData.def(py::init<>())
+            .def(py::init<std::string, unsigned int, int, int>())
+            .def(py::init([](const py::buffer &b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
+                    throw std::runtime_error("Incompatible buffer format! Please Pass Bytes...");
+                }
+                auto *v = new ResponseData();
+                v->len = info.shape[0];
+                v->data = info.ptr;
+                // memcpy( v->data, info.ptr, info.shape[0] );
+                return (v);
+            }))
+            .def("setData", [](ResponseData &r, const py::buffer &b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
+                    throw std::runtime_error("Incompatible buffer format! Please Pass Bytes..");
+                }
+                if (r.data == nullptr) {
+                    void *p = malloc(info.shape[0]);
+                    if (p == nullptr) {
+                        throw std::runtime_error("Can't Allocate memory!");
+                    }
+                    r.data = p;
+                }
+                r.len = info.shape[0];
+                r.data = info.ptr;
+                // memcpy(r.data, info.ptr, info.shape[0]);
+            })
+                    /* / Bare bones interface */
+            .def("setDataType",
+                 [](ResponseData &r, int i) {
+                     r.type = i;
+                 })
+                    /* / Provide buffer access */
+            .def_buffer([](ResponseData &r) -> py::buffer_info {
+                return (py::buffer_info(
+                        r.data,                                              /* Pointer to buffer */
+                        sizeof(unsigned char),                               /* Size of one scalar */
+                        py::format_descriptor<unsigned char>::format(),      /* Python struct-style format descriptor */
+                        1,                                                   /* Number of dimensions */
+                        {size_t(r.len)},                                 /* Buffer dimensions */
+                        {            /* Strides (in bytes) for each index */
+                                sizeof(unsigned char)}
+                ));
+            })
             .def_readwrite("key", &ResponseData::key, py::return_value_policy::automatic_reference)
-            .def_readwrite("data", &ResponseData::data, py::return_value_policy::automatic_reference)
+            .def_property_readonly("data",
+                          py::cpp_function(&ResponseData::get_data, py::return_value_policy::automatic_reference))
             .def_readwrite("status", &ResponseData::status, py::return_value_policy::automatic_reference)
-            .def_readwrite("len", &ResponseData::len, py::return_value_policy::automatic_reference)
+            .def_property_readonly("len", py::cpp_function(&ResponseData::get_len, py::return_value_policy::automatic_reference))
             .def_readwrite("type", &ResponseData::type, py::return_value_policy::automatic_reference);
 
     py::class_<Response> response(module, "Response");
@@ -263,19 +309,20 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
             // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-            void *pr;
-            pr = malloc(itemData.len);
-            if (pr == nullptr) {
-                int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
-                return ret;
-            }
-            ptr = PyBytes_AsString(itemData.data.ptr());
-            Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-            memcpy(pr, ptr, itemData.len);
+            //            void *pr;
+            //            pr = malloc(itemData.len);
+            //            if (pr == nullptr) {
+            //                int ret = -1;
+            //                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+            //                return ret;
+            //            }
+            // ptr = PyBytes_AsString(itemData.data.ptr());
+            // Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+            // printf("GetSIze  data len: %d", itemData.len);
+            // memcpy(pr, ptr, itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
-            tmpData->data = pr;
+            tmpData->data = itemData.data;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
@@ -284,10 +331,9 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
                 curPtr->next = tmpData;
                 curPtr = tmpData;
             }
-            spdlog::debug("get result,key:{},data:{},len:{},size:{}, type:{},status:{},sid:{}",
-                          tmpData->key, (char *) tmpData->data, tmpData->len, size, tmpData->type,
+            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
+                          tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
                           tmpData->status, sid);
-
         }
         *respData = headPtr;
     }
@@ -416,7 +462,6 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
         resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList curPtr;
-        char *ptr;
         // 先判断python有没有抛出错误. response中的 errorCode
         if (resp->errCode != 0) {
             spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
@@ -437,20 +482,18 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
             tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
-            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-            void *pr;
-            pr = malloc(itemData.len);
-            if (pr == nullptr) {
-                int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
-                return ret;
-            }
-            ptr = PyBytes_AsString(itemData.data.ptr());
-            Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-            memcpy(pr, ptr, size);
+//            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
+//            void *pr;
+//            pr = malloc(itemData.len);
+//            if (pr == nullptr) {
+//                int ret = -1;
+//                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+//                return ret;
+//            }
+//            memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
-            tmpData->data = pr;
+            tmpData->data = itemData.data;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
@@ -459,8 +502,8 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
                 curPtr->next = tmpData;
                 curPtr = tmpData;
             }
-            spdlog::debug("callback result,key:{},data:{},len:{},size,{},type:{},status:{},sid:{}",
-                          tmpData->key, (char *) tmpData->data, tmpData->len, size, tmpData->type,
+            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
+                          tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
                           tmpData->status, sid);
         }
         *respData = headPtr;
@@ -559,20 +602,20 @@ int callBack(Response *resp, std::string sid) {
         tmpData->type = DataType(itemData.type);
         tmpData->desc = nullptr;
         // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-        void *pr;
-        pr = malloc(itemData.len);
-        if (pr == nullptr) {
-            int ret = -1;
-            spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
-            return ret;
-        }
-        ptr = PyBytes_AsString(itemData.data.ptr());
-        Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-        memcpy(pr, ptr, itemData.len);
+//        void *pr;
+//        pr = malloc(itemData.len);
+//        if (pr == nullptr) {
+//            int ret = -1;
+//            spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+//            return ret;
+//        }
+//        ptr = PyBytes_AsString(itemData.data.ptr());
+//        Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+//        memcpy(pr, ptr, itemData.len);
         // 还是有问题：：memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
         //char *data_ = new char[itemData.data.length()+1];
         // strdup(.c_str());
-        tmpData->data = pr;
+        tmpData->data = itemData.data;
         tmpData->status = DataStatus(itemData.status);
         if (idx == 0) {
             headPtr = tmpData;
@@ -581,8 +624,8 @@ int callBack(Response *resp, std::string sid) {
             curPtr->next = tmpData;
             curPtr = tmpData;
         }
-        spdlog::debug("callback result,key:{},data:{},len:{},size,{},type:{},status:{},sid:{}",
-                      tmpData->key, (char *) tmpData->data, tmpData->len, size, tmpData->type,
+        spdlog::debug("callback result,key:{},data:{},len:{},type:{},status:{},sid:{}",
+                      tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
                       tmpData->status, sid);
     }
 
