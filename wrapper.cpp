@@ -5,6 +5,8 @@
 #include "aiges/wrapper.h"
 #include "pyWrapper.h"
 #include "fswatch.h" // 支持 wrapper.py 热加载
+#include <stdlib.h>
+#include <stdio.h>
 
 __attribute__ ((constructor)) static void so_init(void);
 
@@ -17,8 +19,8 @@ py::gil_scoped_release release; // 主线程中先释放release锁
 PyWrapper *pyWrapper;
 //
 
-const char *logDir = "./log";
-const char *wrapperLogFile = "./log/wrapper.log";
+//const char *logDir = "./log";
+//const char *wrapperLogFile = "./log/wrapper.log";
 
 
 void so_init(void) {
@@ -38,7 +40,7 @@ static void init_threads() {
     }
 }
 
-void initlog() {
+void initlog(std::string logDir, std::string logpath) {
     // change log pattern
     spdlog::set_pattern("[%l] [%Y-%m-%d %H:%M:%S.%f] [%t] %v");
 
@@ -48,12 +50,12 @@ void initlog() {
     SPDLOG_DEBUG("Some debug message");
 
     // Creating a directory
-    if (mkdir(logDir, 0777) == -1) {
-        printf("log目录创建失败或已存在,无需创建\n");
+    if (mkdir(logDir.c_str(), 0777) == -1) {
+        printf("log目录创建失败或已存在 %s\n", logpath);
     } else {
-        printf("log目录已创建\n");
+        printf("log目录已创建, %s \n", logpath);
     }
-    auto file_logger = spdlog::rotating_logger_mt("mspper", wrapperLogFile, 1048576 * 10, 50);
+    auto file_logger = spdlog::rotating_logger_mt("mspper", logpath.c_str(), 1048576 * 10, 50);
     // Console logger
     auto console_logger = spdlog::stdout_color_mt("stdout_console");
     auto err_logger = spdlog::stderr_color_mt("stderr_console");
@@ -83,9 +85,8 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
     init_threads();
     pyWrapper = new PyWrapper();
-
-    initlog();
-
+    std::string logDir = std::string("./log/server")
+    std::string logPath = std::string("./log/server/wrapper.log")
     std::string loglvl = "debug";
     std::map <std::string, std::string> config;
 
@@ -96,8 +97,15 @@ int WrapperAPI wrapperInit(pConfig cfg) {
                 loglvl = p->value;
                 continue;
             }
+            if (std::string("log.dir") == std::string(p->key)) {
+                logDir = p->value;
+                logPath = p->value + "/wrapper.log";
+                continue;
+            }
         }
     }
+
+    initlog(logDir, logPath);
 
     setLog(loglvl);
     printf("WrapperInit: 当前线程ID: %d \n", gettid());
@@ -132,7 +140,7 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
                          int *errNum) {
     std::string sid = "";
     if (cb == NULL) {
-        printf("cb is null\n");
+        printf("callback function is null\n");
     }
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
         if (NULL == sidP->key) {
