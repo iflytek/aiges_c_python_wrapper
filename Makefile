@@ -4,11 +4,11 @@ python_version_minor := $(word 2,${python_version_full})
 python_version_patch := $(word 3,${python_version_full})
 
 
-PY_GT_3_6 := $(shell [ $(python_version_major) -gt 3 -o \( $(python_version_major) -eq 3 -a $(python_version_minor) -ge 6 \) ] && echo true)
+PY_GT_3_8 := $(shell [ $(python_version_major) -gt 3 -o \( $(python_version_major) -eq 3 -a $(python_version_minor) -ge 8 \) ] && echo true)
 
 PYLIB=$(shell python3-config  --ldflags)
 PYINC=$(shell python3-config --cflags)
-ifeq ($(PY_GT_3_6),true)
+ifeq ($(PY_GT_3_8),true)
 PYLIB=$(shell python3-config  --ldflags  --embed)
 PYINC=$(shell python3-config --cflags --embed )
 endif
