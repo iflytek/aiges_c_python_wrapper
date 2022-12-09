@@ -14,7 +14,7 @@ PYINC=$(shell python3-config --cflags --embed )
 endif
 
 wrapper:
-	echo $(PYLIB)
+	echo $(PYLIB)git
 	g++  -Wall -pedantic -Wextra -fPIC -shared  -std=c++1y  -fvisibility=default  -Wno-attributes  $(PYINC) -g -O0 -I. -I./include/spdlog/include/ -I./include/ -o libwrapper.so pyWrapper.cpp fswatch.cpp wrapper.cpp  -L. -L /opt/conda/envs/loader/lib $(PYLIB) -rdynamic
 	mkdir -p wrapper_lib
 	cp libwrapper.so  ./wrapper_lib
