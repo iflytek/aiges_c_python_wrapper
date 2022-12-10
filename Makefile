@@ -6,7 +6,7 @@ python_version_patch := $(word 3,${python_version_full})
 
 PY_GT_3_8 := $(shell [ $(python_version_major) -gt 3 -o \( $(python_version_major) -eq 3 -a $(python_version_minor) -ge 8 \) ] && echo true)
 
-CC=x86_64-linux-gnu-g++
+CC=/opt/conda/envs/aiges/bin/x86_64-conda-linux-gnu-g++
 
 PYLIB=$(shell python3-config  --ldflags)
 PYINC=$(shell python3-config --cflags)
