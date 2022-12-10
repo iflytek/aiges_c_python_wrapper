@@ -11,6 +11,7 @@ CC=/opt/conda/envs/aiges/bin/x86_64-conda-linux-gnu-g++
 PYLIB=$(shell python3-config  --ldflags)
 PYINC=$(shell python3-config --cflags)
 ifeq ($(PY_GT_3_8),true)
+CC=g++
 PYLIB=$(shell python3-config  --ldflags  --embed)
 PYINC=$(shell python3-config --cflags --embed )
 endif
