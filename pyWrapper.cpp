@@ -136,27 +136,33 @@ DataListNode *DataListCls::get(std::string key) {
 PyWrapper::PyWrapper() {
     // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
     // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
-    dlopen(PythonSo, RTLD_GLOBAL | RTLD_NOW);
+	try {
+		dlopen(PythonSo, RTLD_GLOBAL | RTLD_NOW);
 
-    // if (config.count(wrapperFileKey) == 0)
-    py::gil_scoped_acquire acquire;
-    _wrapper = py::module::import(WrapperFile);
-    _obj = _wrapper.attr(WrapperClass)();
-    _wrapper_abs = _wrapper.attr("__file__").cast<std::string>(); // 获取加载的wrapper.py的绝对地址
+		// if (config.count(wrapperFileKey) == 0)
+		py::gil_scoped_acquire acquire;
+		_wrapper = py::module::import(WrapperFile);
+		_obj = _wrapper.attr(WrapperClass)();
+		_wrapper_abs = _wrapper.attr("__file__").cast<std::string>(); // 获取加载的wrapper.py的绝对地址
 
-    _wrapperInit = _obj.attr("wrapperInit");
-    _wrapperFini = _obj.attr("wrapperFini");
-    _wrapperOnceExec = _obj.attr("wrapperOnceExec");
-    _wrapperOnceExecAsync = _obj.attr("wrapperOnceExecAsync");
-    _wrapperError = _obj.attr("wrapperError");
-    // stream support
-    _wrapperCreate = _obj.attr("wrapperCreate");
-    _wrapperWrite = _obj.attr("wrapperWrite");
-    _wrapperRead = _obj.attr("wrapperRead");
-    _wrapperTest = _obj.attr("wrapperTestFunc");
+		_wrapperInit = _obj.attr("wrapperInit");
+		_wrapperFini = _obj.attr("wrapperFini");
+		_wrapperOnceExec = _obj.attr("wrapperOnceExec");
+		_wrapperOnceExecAsync = _obj.attr("wrapperOnceExecAsync");
+		_wrapperError = _obj.attr("wrapperError");
+		// stream support
+		_wrapperCreate = _obj.attr("wrapperCreate");
+		_wrapperWrite = _obj.attr("wrapperWrite");
+		_wrapperRead = _obj.attr("wrapperRead");
+		_wrapperTest = _obj.attr("wrapperTestFunc");
 
-    py::gil_scoped_release release;
-    StartMonitorWrapperClass(_wrapper_abs);
+		py::gil_scoped_release release;
+		StartMonitorWrapperClass(_wrapper_abs);}
+	} catch (py::error_already_set &e) {
+        spdlog::get("stderr_console")->error("_wrapperInit  error: {}", e.what());
+        exit(-1);
+        return ;
+    }
 
 }
 
