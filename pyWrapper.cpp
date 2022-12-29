@@ -283,7 +283,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
 
         }
         SetSidUsrTag(sid, usrTag);
-
+		params["sid"] = sid;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData);
@@ -366,7 +366,7 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         }
         int ret = 0;
         SetSidUsrTag(sid, usrTag);
-
+		params["sid"] = sid;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExecAsync(params, reqData, sid);
