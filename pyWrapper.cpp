@@ -157,7 +157,7 @@ PyWrapper::PyWrapper() {
 		_wrapperTest = _obj.attr("wrapperTestFunc");
 
 		py::gil_scoped_release release;
-		StartMonitorWrapperClass(_wrapper_abs);}
+		StartMonitorWrapperClass(_wrapper_abs);
 	} catch (py::error_already_set &e) {
         spdlog::get("stderr_console")->error("_wrapperInit  error: {}", e.what());
         exit(-1);
