@@ -38,13 +38,13 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
                 if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
                     throw std::runtime_error("Incompatible buffer format! Please Pass Bytes..");
                 }
-                if (r.data == nullptr) {
-                    void *p = malloc(info.shape[0]);
-                    if (p == nullptr) {
-                        throw std::runtime_error("Can't Allocate memory!");
-                    }
-                    r.data = p;
-                }
+//                if (r.data == nullptr) {
+//                    void *p = malloc(info.shape[0]);
+//                    if (p == nullptr) {
+//                        throw std::runtime_error("Can't Allocate memory!");
+//                    }
+//                    r.data = p;
+//                }
                 r.len = info.shape[0];
                 r.data = info.ptr;
                 // memcpy(r.data, info.ptr, info.shape[0]);
