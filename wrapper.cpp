@@ -84,7 +84,6 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
 int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
     init_threads();
-    pyWrapper = new PyWrapper();
     std::string logDir = std::string("./log/server");
     std::string logPath = std::string("./log/server/wrapper.log");
     std::string loglvl = "debug";
@@ -106,6 +105,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     }
 
     initlog(logDir, logPath);
+    pyWrapper = new PyWrapper();
 
     setLog(loglvl);
     printf("WrapperInit: 当前线程ID: %d \n", gettid());
