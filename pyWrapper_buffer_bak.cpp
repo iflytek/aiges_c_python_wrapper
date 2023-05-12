@@ -19,23 +19,58 @@ std::map<std::string, const char *> SID_USRTAG;
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
-    py::class_<ResponseData> responseData(module, "ResponseData");
+    py::class_<ResponseData> responseData(module, "ResponseData", py::buffer_protocol());
     responseData.def(py::init<>())
             .def(py::init<std::string, unsigned int, int, int>())
+            .def(py::init([](const py::buffer &b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
+                    throw std::runtime_error("Incompatible buffer format! Please Pass Bytes...");
+                }
+                auto *v = new ResponseData();
+                v->len = info.shape[0];
+                v->data = info.ptr;
+                // memcpy( v->data, info.ptr, info.shape[0] );
+                return (v);
+            }))
+            .def("setData", [](ResponseData &r, const py::buffer &b) {
+                py::buffer_info info = b.request();
+                if (info.format != py::format_descriptor<unsigned char>::format() || info.ndim != 1) {
+                    throw std::runtime_error("Incompatible buffer format! Please Pass Bytes..");
+                }
+//                if (r.data == nullptr) {
+//                    void *p = malloc(info.shape[0]);
+//                    if (p == nullptr) {
+//                        throw std::runtime_error("Can't Allocate memory!");
+//                    }
+//                    r.data = p;
+//                }
+                r.len = info.shape[0];
+                r.data = info.ptr;
+                // memcpy(r.data, info.ptr, info.shape[0]);
+            })
+                    /* / Bare bones interface */
             .def("setDataType",
                  [](ResponseData &r, int i) {
                      r.type = i;
                  })
-            .def("setData", [](ResponseData &r, const py::bytes &b) {
-                r.data = b;
-                Py_ssize_t size = PyBytes_GET_SIZE(b.ptr());
-                r.len = size;
-
+                    /* / Provide buffer access */
+            .def_buffer([](ResponseData &r) -> py::buffer_info {
+                return (py::buffer_info(
+                        r.data,                                              /* Pointer to buffer */
+                        sizeof(unsigned char),                               /* Size of one scalar */
+                        py::format_descriptor<unsigned char>::format(),      /* Python struct-style format descriptor */
+                        1,                                                   /* Number of dimensions */
+                        {size_t(r.len)},                                 /* Buffer dimensions */
+                        {            /* Strides (in bytes) for each index */
+                                sizeof(unsigned char)}
+                ));
             })
             .def_readwrite("key", &ResponseData::key, py::return_value_policy::automatic_reference)
-            .def_readwrite("data", &ResponseData::data, py::return_value_policy::automatic_reference)
+            .def_property_readonly("data",
+                          py::cpp_function(&ResponseData::get_data, py::return_value_policy::automatic_reference))
             .def_readwrite("status", &ResponseData::status, py::return_value_policy::automatic_reference)
-            .def_readwrite("len", &ResponseData::len, py::return_value_policy::automatic_reference)
+            .def_property_readonly("len", py::cpp_function(&ResponseData::get_len, py::return_value_policy::automatic_reference))
             .def_readwrite("type", &ResponseData::type, py::return_value_policy::automatic_reference);
 
     py::class_<Response> response(module, "Response");
@@ -101,27 +136,33 @@ DataListNode *DataListCls::get(std::string key) {
 PyWrapper::PyWrapper() {
     // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
     // https://stackoverflow.com/questions/67891197/ctypes-cpython-39-x86-64-linux-gnu-so-undefined-symbol-pyfloat-type-in-embedd
-    dlopen(PythonSo, RTLD_GLOBAL | RTLD_NOW);
+	try {
+		dlopen(PythonSo, RTLD_GLOBAL | RTLD_NOW);
 
-    // if (config.count(wrapperFileKey) == 0)
-    py::gil_scoped_acquire acquire;
-    _wrapper = py::module::import(WrapperFile);
-    _obj = _wrapper.attr(WrapperClass)();
-    _wrapper_abs = _wrapper.attr("__file__").cast<std::string>(); // 获取加载的wrapper.py的绝对地址
+		// if (config.count(wrapperFileKey) == 0)
+		py::gil_scoped_acquire acquire;
+		_wrapper = py::module::import(WrapperFile);
+		_obj = _wrapper.attr(WrapperClass)();
+		_wrapper_abs = _wrapper.attr("__file__").cast<std::string>(); // 获取加载的wrapper.py的绝对地址
 
-    _wrapperInit = _obj.attr("wrapperInit");
-    _wrapperFini = _obj.attr("wrapperFini");
-    _wrapperOnceExec = _obj.attr("wrapperOnceExec");
-    _wrapperOnceExecAsync = _obj.attr("wrapperOnceExecAsync");
-    _wrapperError = _obj.attr("wrapperError");
-    // stream support
-    _wrapperCreate = _obj.attr("wrapperCreate");
-    _wrapperWrite = _obj.attr("wrapperWrite");
-    _wrapperRead = _obj.attr("wrapperRead");
-    _wrapperTest = _obj.attr("wrapperTestFunc");
+		_wrapperInit = _obj.attr("wrapperInit");
+		_wrapperFini = _obj.attr("wrapperFini");
+		_wrapperOnceExec = _obj.attr("wrapperOnceExec");
+		_wrapperOnceExecAsync = _obj.attr("wrapperOnceExecAsync");
+		_wrapperError = _obj.attr("wrapperError");
+		// stream support
+		_wrapperCreate = _obj.attr("wrapperCreate");
+		_wrapperWrite = _obj.attr("wrapperWrite");
+		_wrapperRead = _obj.attr("wrapperRead");
+		_wrapperTest = _obj.attr("wrapperTestFunc");
 
-    py::gil_scoped_release release;
-    StartMonitorWrapperClass(_wrapper_abs);
+		py::gil_scoped_release release;
+		StartMonitorWrapperClass(_wrapper_abs);
+	} catch (py::error_already_set &e) {
+        spdlog::get("stderr_console")->error("_wrapperInit  error: {}", e.what());
+        exit(-1);
+        return ;
+    }
 
 }
 
@@ -242,7 +283,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
 
         }
         SetSidUsrTag(sid, usrTag);
-
+		params["sid"] = sid;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData);
@@ -274,21 +315,20 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
             // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-            void *pr;
-            pr = malloc(itemData.len);
-            if (pr == nullptr) {
-                int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
-                return ret;
-            }
-            ptr = PyBytes_AsString(itemData.data.ptr());
-            Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-//            printf("GetSIze, %d", size);
-//            printf("item data len: %d", itemData.len);
-            memcpy(pr, ptr, itemData.len);
+            //            void *pr;
+            //            pr = malloc(itemData.len);
+            //            if (pr == nullptr) {
+            //                int ret = -1;
+            //                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+            //                return ret;
+            //            }
+            // ptr = PyBytes_AsString(itemData.data.ptr());
+            // Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+            // printf("GetSIze  data len: %d", itemData.len);
+            // memcpy(pr, ptr, itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
-            tmpData->data = pr;
+            tmpData->data = itemData.data;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
@@ -326,7 +366,7 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         }
         int ret = 0;
         SetSidUsrTag(sid, usrTag);
-
+		params["sid"] = sid;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExecAsync(params, reqData, sid);
@@ -448,18 +488,18 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
             tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
-            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-            void *pr;
-            pr = malloc(itemData.len);
-            if (pr == nullptr) {
-                int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
-                return ret;
-            }
-            memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
+//            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
+//            void *pr;
+//            pr = malloc(itemData.len);
+//            if (pr == nullptr) {
+//                int ret = -1;
+//                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+//                return ret;
+//            }
+//            memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
-            tmpData->data = pr;
+            tmpData->data = itemData.data;
             tmpData->status = DataStatus(itemData.status);
             if (idx == 0) {
                 headPtr = tmpData;
@@ -568,20 +608,20 @@ int callBack(Response *resp, std::string sid) {
         tmpData->type = DataType(itemData.type);
         tmpData->desc = nullptr;
         // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-        void *pr;
-        pr = malloc(itemData.len);
-        if (pr == nullptr) {
-            int ret = -1;
-            spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
-            return ret;
-        }
-        ptr = PyBytes_AsString(itemData.data.ptr());
-        Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
-        memcpy(pr, ptr, itemData.len);
+//        void *pr;
+//        pr = malloc(itemData.len);
+//        if (pr == nullptr) {
+//            int ret = -1;
+//            spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+//            return ret;
+//        }
+//        ptr = PyBytes_AsString(itemData.data.ptr());
+//        Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+//        memcpy(pr, ptr, itemData.len);
         // 还是有问题：：memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
         //char *data_ = new char[itemData.data.length()+1];
         // strdup(.c_str());
-        tmpData->data = pr;
+        tmpData->data = itemData.data;
         tmpData->status = DataStatus(itemData.status);
         if (idx == 0) {
             headPtr = tmpData;

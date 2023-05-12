@@ -47,11 +47,11 @@ public:
 
     }
 
-    void *get_data() {
+    py::bytes get_data() {
         return data;
     }
 
-    void set_data(void *data_) {
+    void set_data(py::bytes data_) {
         data = data_;
     }
 
@@ -64,7 +64,7 @@ public:
     }
 
     std::string key;
-    void *data;
+    py::bytes data;
     unsigned int len;
     int status;
     int type;
@@ -124,10 +124,8 @@ public:
     int wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
                         pDataList *respData,
                         std::string sid, wrapperCallback cb);
-
     int wrapperOnceExecAsync(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
                              std::string sid, wrapperCallback cb);
-
     int wrapperFini();
 
     std::string
@@ -140,7 +138,7 @@ public:
 
     int wrapperDestroy(std::string sid);
 
-    int wrapperExecFree(const char *usrTag);
+    int wrapperExecFree(const char* usrTag);
 
     int wrapperTest();
 
