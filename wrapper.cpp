@@ -315,6 +315,19 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
 
 }
 
+int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
+
+    if (type == CTMeterCustom) {
+        if (func == NULL) {
+            printf("calculate function is null\n");
+        }
+        // 这里实际是往 python注册 wrapperMeterCustom 函数指针
+        int ret  = pyWrapper->wrapperSetCtrl(type, wrapperMeterCustom);
+        return ret;
+    }
+    return 0;
+}
+
 int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
     if (NULL != *respData) {
         pDataList ptr = *respData;

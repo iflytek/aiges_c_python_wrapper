@@ -12,20 +12,23 @@ extern "C" {
     1. 自定义计量接口:wrapperMeterCustom
     2. 自定义日志接口:wrapperTraceLog
 */
-int WrapperAPI wrapperSetCtrl(CtrlType type, void* func);
-typedef int (WrapperAPI *wrapperSetCtrlPtr)(CtrlType type, void* func);
+int WrapperAPI wrapperSetCtrl(CtrlType type, void *func);
+
+typedef int (WrapperAPI *wrapperSetCtrlPtr)(CtrlType type, void *func);
 
 /*
     wrapper服务层初始化
     @param  cfg         服务层配置对
 */
 int WrapperAPI wrapperInit(pConfig cfg);
+
 typedef int (WrapperAPI *wrapperInitPtr)(pConfig cfg);
 
 /*
     wrapper服务层逆初始化
 */
 int WrapperAPI wrapperFini();
+
 typedef int (WrapperAPI *wrapperFiniPtr)();
 
 /*
@@ -33,15 +36,17 @@ typedef int (WrapperAPI *wrapperFiniPtr)();
     @param  errNum      服务层异常错误码
     @return             错误码对应的错误描述信息
 */
-const char* WrapperAPI wrapperError(int errNum);
-typedef const char* (WrapperAPI *wrapperErrorPtr)(int errNum);
+const char *WrapperAPI wrapperError(int errNum);
+
+typedef const char *(WrapperAPI *wrapperErrorPtr)(int errNum);
 
 /*
     获取服务版本信息
     @return             服务版本信息
 */
-const char* WrapperAPI wrapperVersion();
-typedef const char* (WrapperAPI *wrapperVersionPtr)();
+const char *WrapperAPI wrapperVersion();
+
+typedef const char *(WrapperAPI *wrapperVersionPtr)();
 
 
 /// 以下接口为会话模式请求调用接口;
@@ -57,6 +62,7 @@ typedef const char* (WrapperAPI *wrapperVersionPtr)();
 */
 
 int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId);
+
 typedef int (WrapperAPI *wrapperLoadResPtr)(pDataList perData, unsigned int resId);
 
 /*
@@ -65,6 +71,7 @@ typedef int (WrapperAPI *wrapperLoadResPtr)(pDataList perData, unsigned int resI
     @return             接口错误码
 */
 int WrapperAPI wrapperUnloadRes(unsigned int resId);
+
 typedef int (WrapperAPI *wrapperUnloadResPtr)(unsigned int resId);
 
 /*
@@ -74,7 +81,18 @@ typedef int (WrapperAPI *wrapperUnloadResPtr)(unsigned int resId);
     @return ret         异步返回值,异常则返回非0值.
     @note   无需集成方实现(框架实现),由集成方于请求数据计算完毕后调用;
 */
-typedef int(*wrapperCallback)(const void* usrTag, pDataList respData, int ret);
+typedef int(*wrapperCallback)(const void *usrTag, pDataList respData, int ret);
+
+/*
+    自定义计量回调接口,开发者回调该接口用于记录相关自定义的计量信息
+    @param  usrTag      用于关联用户请求实例的tag，通过wrapperCreate/wrapperExec接口参数获取
+    @param  meterKey    自定义计量字段
+    @param  count       计量字段对应的计量值
+    @return             接口错误码，成功则返回0
+    @note               该接口调用需在会话周期内完成,即wrapperCreate-wrapperDestroy之间调用，或wrapperExec接口内完成调用
+*/
+typedef int(*wrapperMeterCustom)(const void *usrTag, const char *meterKey, int count);
+
 
 /*
     创建计算资源
@@ -87,8 +105,12 @@ typedef int(*wrapperCallback)(const void* usrTag, pDataList respData, int ret);
     @param  errNum      接口错误码[in/out]
     @return             引擎服务实例句柄,用于关联上下文;
 */
-const void* WrapperAPI wrapperCreate(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum);
-typedef const void* (WrapperAPI *wrapperCreatePtr)(const char* usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt, int* errNum);
+const void *
+WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback cb, unsigned int psrIds[], int psrCnt,
+                         int *errNum);
+
+typedef const void *(WrapperAPI *wrapperCreatePtr)(const char *usrTag, pParamList params, wrapperCallback cb,
+                                                   unsigned int psrIds[], int psrCnt, int *errNum);
 
 /*
     写入计算数据
@@ -96,8 +118,9 @@ typedef const void* (WrapperAPI *wrapperCreatePtr)(const char* usrTag, pParamLis
     @param  reqData     写入数据实体
     @return             接口错误码
 */
-int WrapperAPI wrapperWrite(const void* handle, pDataList reqData);
-typedef int (WrapperAPI *wrapperWritePtr)(const void* handle, pDataList reqData);
+int WrapperAPI wrapperWrite(const void *handle, pDataList reqData);
+
+typedef int (WrapperAPI *wrapperWritePtr)(const void *handle, pDataList reqData);
 
 /*
     读取计算结果
@@ -106,15 +129,17 @@ typedef int (WrapperAPI *wrapperWritePtr)(const void* handle, pDataList reqData)
     @return             接口错误码
     @note               respData内存由底层自行维护,在destroy阶段销毁
 */
-int WrapperAPI wrapperRead(const void* handle, pDataList* respData);
-typedef int (WrapperAPI *wrapperReadPtr)(const void* handle, pDataList* respData);
+int WrapperAPI wrapperRead(const void *handle, pDataList *respData);
+
+typedef int (WrapperAPI *wrapperReadPtr)(const void *handle, pDataList *respData);
 
 /*
     释放计算资源
     @param  handle      会话句柄,用于关联上下文;
 */
-int WrapperAPI wrapperDestroy(const void* handle);
-typedef int (WrapperAPI *wrapperDestroyPtr)(const void* handle);
+int WrapperAPI wrapperDestroy(const void *handle);
+
+typedef int (WrapperAPI *wrapperDestroyPtr)(const void *handle);
 
 
 /// 以下接口为非会话模式请求调用接口,对应引擎框架oneShot协议消息;
@@ -131,16 +156,21 @@ typedef int (WrapperAPI *wrapperDestroyPtr)(const void* handle);
     @return 接口错误码
     @note   同步操作接口, 需考虑上层并发调用可能
 */
-int WrapperAPI wrapperExec(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
-typedef int (WrapperAPI *wrapperExecPtr)(const char* usrTag, pParamList params, pDataList reqData, pDataList* respData, unsigned int psrIds[], int psrCnt);
+int WrapperAPI
+wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
+            int psrCnt);
+
+typedef int (WrapperAPI *wrapperExecPtr)(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData,
+                                         unsigned int psrIds[], int psrCnt);
 
 
 /*
     同步接口响应数据缓存释放接口
     @param  respData    由同步接口exec获取的响应结果数据
 */
-int WrapperAPI wrapperExecFree(const char* usrTag, pDataList* respData);
-typedef int (WrapperAPI *wrapperExecFreePtr)(const char* usrTag, pDataList* respData);
+int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData);
+
+typedef int (WrapperAPI *wrapperExecFreePtr)(const char *usrTag, pDataList *respData);
 
 /*
     非会话模式计算接口,对应oneShot请求
@@ -150,16 +180,21 @@ typedef int (WrapperAPI *wrapperExecFreePtr)(const char* usrTag, pDataList* resp
     @param  timeout     异步超时时间,集成方实现该超时控制,ms;
     @note   异步操作接口, 需考虑上层并发调用可能
 */
-int WrapperAPI wrapperExecAsync(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
-typedef int (WrapperAPI *wrapperExecAsyncPtr)(const char* usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
+int WrapperAPI
+wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout,
+                 unsigned int psrIds[], int psrCnt);
+
+typedef int (WrapperAPI *wrapperExecAsyncPtr)(const char *usrTag, pParamList params, pDataList reqData,
+                                              wrapperCallback callback, int timeout, unsigned int psrIds[], int psrCnt);
 
 /*
     调试信息输出接口
     @return 会话调试信息;
     @note   单次会话destroy前调用一次;
 */
-const char* WrapperAPI wrapperDebugInfo(const void* handle);
-typedef const char* (WrapperAPI *wrapperDebugInfoPtr)(const void* handle);
+const char *WrapperAPI wrapperDebugInfo(const void *handle);
+
+typedef const char *(WrapperAPI *wrapperDebugInfoPtr)(const void *handle);
 
 
 #ifdef __cplusplus

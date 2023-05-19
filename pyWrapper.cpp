@@ -18,6 +18,7 @@ std::map <std::string, wrapperCallback> SID_CB;
 std::map<std::string, const char *> SID_USRTAG;
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
+    module.def("callback_metric", &PyWrapper::callbackMetric, py::return_value_policy::automatic_reference);
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
@@ -367,6 +368,13 @@ std::string PyWrapper::wrapperError(int err) {
 
 }
 
+int PyWrapper::wrapperSetCtrl(CtrlType type, wrapperMeterCustom mc) {
+    if (type == CTMeterCustom) {
+        metric_cb = mc;
+    }
+    return 0;
+}
+
 std::string
 PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, wrapperCallback cb,
                          int *errNum, std::string sid) {
@@ -534,6 +542,10 @@ int PyWrapper::wrapperTest() {
     //   printf("%d", ret);
 
 
+}
+
+int PyWrapper::callbackMetric(const void *usrTag, const char *meterKey, int count) {
+    return metric_cb(usrTag, meterKey, count);
 }
 
 int callBack(Response *resp, std::string sid) {
