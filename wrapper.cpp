@@ -77,10 +77,6 @@ void setLog(std::string loglvl) {
     spdlog::set_level(lvl); // Set global log level to debug
 }
 
-int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
-    return 0;
-}
-
 int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
     init_threads();
@@ -322,7 +318,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
             printf("calculate function is null\n");
         }
         // 这里实际是往 python注册 wrapperMeterCustom 函数指针
-        int ret  = pyWrapper->wrapperSetCtrl(type, wrapperMeterCustom);
+        int ret = pyWrapper->wrapperSetCtrl(type, wrapperMeterCustom);
         return ret;
     }
     return 0;
