@@ -318,7 +318,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
             printf("calculate function is null\n");
         }
         // 这里实际是往 python注册 wrapperMeterCustom 函数指针
-        int ret = pyWrapper->wrapperSetCtrl(type, wrapperMeterCustom);
+        int ret = pyWrapper->wrapperSetCtrl(type, (wrapperMeterCustom) func);
         return ret;
     }
     return 0;
