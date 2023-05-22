@@ -276,8 +276,8 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
             item.key = p->key;
 
             // 直接拷贝
-//            size_t len = static_cast<size_t>(p->len);
-//            item.data = py::bytes((char *) (p->data), len);
+            size_t len = static_cast<size_t>(p->len);
+            item.data = py::bytes((char *) (p->data), len);
             //
             // 写法2：
             //            Py_ssize_t len = static_cast<Py_ssize_t>(p->len);
