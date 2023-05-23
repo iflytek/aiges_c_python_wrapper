@@ -11,6 +11,7 @@ const char *wrapperFileClass = "wrapper.class";
 const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
 const char *PythonSo = "libpython3.so";
+wrapperMeterCustom g_metric_cb;
 
 std::mutex RECORD_MUTEX;
 std::map <std::string, std::string> SID_RECORD;
@@ -18,7 +19,7 @@ std::map <std::string, wrapperCallback> SID_CB;
 std::map<std::string, const char *> SID_USRTAG;
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
-    module.def("callback_metric", &PyWrapper::callbackMetric, py::return_value_policy::automatic_reference);
+    module.def("callback_metric", &callbackMetric, py::return_value_policy::automatic_reference);
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
@@ -246,7 +247,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
 
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
-        py::object r = _wrapperOnceExec(params, reqData);
+        py::object r = _wrapperOnceExec(params, reqData, usrTag);
         // 此段根据python的返回 ，回写 respData
         Response *resp;
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
@@ -370,7 +371,7 @@ std::string PyWrapper::wrapperError(int err) {
 
 int PyWrapper::wrapperSetCtrl(CtrlType type, wrapperMeterCustom mc) {
     if (type == CTMeterCustom) {
-        metric_cb = mc;
+        g_metric_cb = mc;
     }
     return 0;
 }
@@ -544,8 +545,9 @@ int PyWrapper::wrapperTest() {
 
 }
 
-int PyWrapper::callbackMetric(const void *usrTag, const char *meterKey, int count) {
-    return metric_cb(usrTag, meterKey, count);
+int callbackMetric(const char *usrTag, const char *meterKey, int count) {
+    printf("%s, %s, %d\n", usrTag, meterKey, count);
+    return g_metric_cb(usrTag, meterKey, count);
 }
 
 int callBack(Response *resp, std::string sid) {

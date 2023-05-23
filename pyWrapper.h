@@ -145,8 +145,6 @@ public:
     int wrapperExecFree(const char *usrTag);
 
     int wrapperTest();
-    int callbackMetric(const void *usrTag, const char *meterKey, int count);
-
 
     void setCallBack(wrapperCallback cb);
 
@@ -180,6 +178,7 @@ void DelHandleSid(char *handle);
 
 int callBack(Response *respData, std::string);
 
+int callbackMetric(const char *usrTag, const char *meterKey, int count);
 
 void SetSidCallBack(wrapperCallback cb, std::string sid);
 

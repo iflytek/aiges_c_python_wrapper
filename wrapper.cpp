@@ -17,6 +17,8 @@ py::scoped_interpreter python;  // 全局解释器
 py::gil_scoped_release release; // 主线程中先释放release锁
 // 全局pywrapper类实例
 PyWrapper *pyWrapper;
+wrapperMeterCustom global_metric_cb;
+
 //
 
 //const char *logDir = "./log";
@@ -105,6 +107,10 @@ int WrapperAPI wrapperInit(pConfig cfg) {
 
     setLog(loglvl);
     printf("WrapperInit: 当前线程ID: %d \n", gettid());
+    if (global_metric_cb != NULL) {
+        pyWrapper->wrapperSetCtrl(CTMeterCustom, global_metric_cb);
+    }
+
     ret = pyWrapper->wrapperInit(config);
     return ret;
 }
@@ -316,10 +322,12 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
     if (type == CTMeterCustom) {
         if (func == NULL) {
             printf("calculate function is null\n");
+            return 0;
         }
+        global_metric_cb = (wrapperMeterCustom) func;
         // 这里实际是往 python注册 wrapperMeterCustom 函数指针
-        int ret = pyWrapper->wrapperSetCtrl(type, (wrapperMeterCustom) func);
-        return ret;
+        //int ret = pyWrapper->wrapperSetCtrl(type, (wrapperMeterCustom*) func);
+        return 0;
     }
     return 0;
 }
