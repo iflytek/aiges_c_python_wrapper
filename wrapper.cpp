@@ -337,7 +337,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
         pDataList ptr = *respData;
         while (ptr != NULL) {
             if (ptr->len > 0) {
-//                free(ptr->data);
+                free(ptr->data);
                 ptr->data = NULL;
             }
             if (strlen(ptr->key) > 0) {

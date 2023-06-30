@@ -34,35 +34,35 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
                 r.len = size;
 
             })
-            .def_readwrite("key", &ResponseData::key, py::return_value_policy::automatic_reference)
-            .def_readwrite("data", &ResponseData::data, py::return_value_policy::automatic_reference)
-            .def_readwrite("status", &ResponseData::status, py::return_value_policy::automatic_reference)
-            .def_readwrite("len", &ResponseData::len, py::return_value_policy::automatic_reference)
-            .def_readwrite("type", &ResponseData::type, py::return_value_policy::automatic_reference);
+            .def_readwrite("key", &ResponseData::key, py::return_value_policy::copy)
+            .def_readwrite("data", &ResponseData::data, py::return_value_policy::copy)
+            .def_readwrite("status", &ResponseData::status, py::return_value_policy::copy)
+            .def_readwrite("len", &ResponseData::len, py::return_value_policy::copy)
+            .def_readwrite("type", &ResponseData::type, py::return_value_policy::copy);
 
     py::class_<Response> response(module, "Response");
     response.def(py::init<>())
-            .def_readwrite("list", &Response::list, py::return_value_policy::automatic_reference)
-            .def_readwrite("error_code", &Response::errCode, py::return_value_policy::automatic_reference)
-            .def("response_err", &Response::responseErr, py::return_value_policy::automatic_reference);
+            .def_readwrite("list", &Response::list, py::return_value_policy::copy)
+            .def_readwrite("error_code", &Response::errCode, py::return_value_policy::copy)
+            .def("response_err", &Response::responseErr, py::return_value_policy::copy);
 
     py::class_<DataListNode> dataListNode(module, "DataListNode");
     dataListNode.def(py::init<>())
-            .def_readwrite("key", &DataListNode::key, py::return_value_policy::automatic_reference)
-            .def_readwrite("data", &DataListNode::data, py::return_value_policy::automatic_reference)
-            .def_readwrite("len", &DataListNode::len, py::return_value_policy::automatic_reference)
-            .def_readwrite("status", &DataListNode::status, py::return_value_policy::automatic_reference)
-            .def_readwrite("type", &DataListNode::type, py::return_value_policy::automatic_reference)
+            .def_property_readonly("key", &DataListNode::get_key, py::return_value_policy::reference)
+            .def_property_readonly("data", &DataListNode::get_data, py::return_value_policy::reference)
+            .def_property_readonly("len", &DataListNode::get_len, py::return_value_policy::reference)
+            .def_property_readonly("status", &DataListNode::get_status, py::return_value_policy::reference)
+            .def_property_readonly("type", &DataListNode::get_type, py::return_value_policy::reference)
             .def("get_data", &DataListNode::get_data, py::return_value_policy::reference);
 
     py::class_<DataListCls> dataListCls(module, "DataListCls");
     dataListCls.def(py::init<>())
-            .def_readwrite("list", &DataListCls::list, py::return_value_policy::automatic_reference)
+            .def_property_readonly("list", &DataListCls::get_list, py::return_value_policy::reference)
             .def("get", &DataListCls::get, py::return_value_policy::reference);
 
     py::class_<SessionCreateResponse> sessionCreateResponse(module, "SessionCreateResponse");
     sessionCreateResponse.def(py::init<>())
-            .def_readwrite("handle", &SessionCreateResponse::handle, py::return_value_policy::automatic_reference)
+            .def_readwrite("handle", &SessionCreateResponse::handle, py::return_value_policy::copy)
             .def_readwrite("error_code", &SessionCreateResponse::errCode, py::return_value_policy::reference);
 }
 
@@ -90,6 +90,21 @@ py::bytes DataListNode::get_data() {
     return data;
 }
 
+std::string DataListNode::get_key() {
+    return key;
+}
+
+unsigned int DataListNode::get_len() {
+    return len;
+}
+
+int DataListNode::get_status() {
+    return status;
+}
+
+int DataListNode::get_type() {
+    return type;
+}
 DataListNode *DataListCls::get(std::string key) {
     for (int idx = 0; idx < list.size(); idx++) {
         DataListNode *node = &list[idx];
@@ -99,6 +114,10 @@ DataListNode *DataListCls::get(std::string key) {
     }
     return nullptr;
 }
+std::vector <DataListNode> DataListCls::get_list() {
+    return list;
+}
+
 
 PyWrapper::PyWrapper() {
     // 仅仅为了 加载下python lib库使 其部分函数可被导出使用
@@ -244,7 +263,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
 
         }
         SetSidUsrTag(sid, usrTag);
-
+        params["sid"] = sid;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData, usrTag);
@@ -313,6 +332,10 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
         spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
         return -1;
     }
+    catch (const std::exception &e) {
+        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
+        return -1;
+    }
 
     return 0;
 
@@ -328,7 +351,7 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         }
         int ret = 0;
         SetSidUsrTag(sid, usrTag);
-
+        params["sid"] = sid;
         py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExecAsync(params, reqData, sid);
