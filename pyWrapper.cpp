@@ -11,7 +11,9 @@ const char *wrapperFileClass = "wrapper.class";
 const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
 const char *PythonSo = "libpython3.so";
+
 wrapperMeterCustom g_metric_cb;
+wrapperTraceLog g_trace_cb;
 
 std::mutex RECORD_MUTEX;
 std::map <std::string, std::string> SID_RECORD;
@@ -20,6 +22,7 @@ std::map<std::string, const char *> SID_USRTAG;
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     module.def("callback_metric", &callbackMetric, py::return_value_policy::automatic_reference);
+    module.def("callback_trace", &callbackT, py::return_value_policy::automatic_reference);
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
@@ -371,9 +374,16 @@ std::string PyWrapper::wrapperError(int err) {
 
 }
 
-int PyWrapper::wrapperSetCtrl(CtrlType type, wrapperMeterCustom mc) {
+int PyWrapper::wrapperSetMetricFunc(CtrlType type, wrapperMeterCustom mc) {
     if (type == CTMeterCustom) {
         g_metric_cb = mc;
+    }
+    return 0;
+}
+
+int PyWrapper::wrapperSetTraceFunc(CtrlType type, wrapperTraceLog mc) {
+    if (type == CTTraceLog) {
+        g_trace_cb = mc;
     }
     return 0;
 }
@@ -546,8 +556,13 @@ int PyWrapper::wrapperTest() {
 }
 
 int callbackMetric(const char *usrTag, const char *meterKey, int count) {
-    printf("%s, %s, %d\n", usrTag, meterKey, count);
+    printf("callback Metric: %s, %s, %d\n", usrTag, meterKey, count);
     return g_metric_cb(usrTag, meterKey, count);
+}
+
+int callbackTrace(const char *usrTag, const char *key, const char *value) {
+    printf("callback Trace: %s, %s, %d\n", usrTag, key, value);
+    return g_trace_cb(usrTag, key, value);
 }
 
 int callBack(Response *resp, std::string sid) {
@@ -648,8 +663,8 @@ const std::string GetSidByUsrTag(const char *usrTag) {
     RECORD_MUTEX.lock();
     //通过value找 key
     for (std::map<std::string, const char *>::iterator it = SID_USRTAG.begin(); it != SID_USRTAG.end(); it++) {
-        if (it->second == usrTag){
-    		RECORD_MUTEX.unlock();
+        if (it->second == usrTag) {
+            RECORD_MUTEX.unlock();
             return it->first;
 
         }

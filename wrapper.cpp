@@ -18,6 +18,7 @@ py::gil_scoped_release release; // 主线程中先释放release锁
 // 全局pywrapper类实例
 PyWrapper *pyWrapper;
 wrapperMeterCustom global_metric_cb;
+wrapperTraceLog global_trace_cb;
 
 //
 
@@ -108,7 +109,12 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     setLog(loglvl);
     printf("WrapperInit: 当前线程ID: %d \n", gettid());
     if (global_metric_cb != NULL) {
-        pyWrapper->wrapperSetCtrl(CTMeterCustom, global_metric_cb);
+        printf("Metric Custom func set! \n");
+        pyWrapper->wrapperSetMetricFunc(CTMeterCustom, global_metric_cb);
+    }
+    if (global_trace_cb != NULL) {
+        printf("Trace log func set! \n");
+        pyWrapper->wrapperSetTraceFunc(CTTraceLog, global_trace_cb);
     }
 
     ret = pyWrapper->wrapperInit(config);
@@ -329,6 +335,14 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
         // 这里实际是往 python注册 wrapperMeterCustom 函数指针
         //int ret = pyWrapper->wrapperSetCtrl(type, (wrapperMeterCustom*) func);
         return 0;
+    } else if (type == CTTraceLog) {
+        if (func == NULL) {
+            printf("trace log function is null\n");
+            return 0;
+        }
+        global_trace_cb = (wrapperTraceLog) func;
+        return 0;
+
     }
     return 0;
 }

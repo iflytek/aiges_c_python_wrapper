@@ -134,7 +134,9 @@ public:
     wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, wrapperCallback cb, int *errNum,
                   std::string sid);
 
-    int wrapperSetCtrl(CtrlType type, wrapperMeterCustom mc);
+    int wrapperSetMetricFunc(CtrlType type, wrapperMeterCustom mc);
+
+    int wrapperSetTraceFunc(CtrlType type, wrapperTraceLog mc);
 
     int wrapperWrite(char *handle, DataListCls reqData, std::string sid);
 
@@ -179,6 +181,8 @@ void DelHandleSid(char *handle);
 int callBack(Response *respData, std::string);
 
 int callbackMetric(const char *usrTag, const char *meterKey, int count);
+
+int callbackTrace(const char *usrTag, const char *key, const char *value);
 
 void SetSidCallBack(wrapperCallback cb, std::string sid);
 
