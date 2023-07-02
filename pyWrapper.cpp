@@ -22,7 +22,7 @@ std::map<std::string, const char *> SID_USRTAG;
 
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     module.def("callback_metric", &callbackMetric, py::return_value_policy::automatic_reference);
-    module.def("callback_trace", &callbackT, py::return_value_policy::automatic_reference);
+    module.def("callback_trace", &callbackTrace, py::return_value_policy::automatic_reference);
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
