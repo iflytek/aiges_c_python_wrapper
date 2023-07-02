@@ -264,7 +264,6 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
         }
         SetSidUsrTag(sid, usrTag);
         params["sid"] = sid;
-        py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData, usrTag);
         // 此段根据python的返回 ，回写 respData
@@ -352,7 +351,6 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         int ret = 0;
         SetSidUsrTag(sid, usrTag);
         params["sid"] = sid;
-        py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperOnceExecAsync(params, reqData, sid);
         // 此段根据python的返回 ，回写 respData
@@ -433,7 +431,6 @@ PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string>
 int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) {
     try {
         int ret = 0;
-        py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperWrite(handle, reqData, sid);
         ret = r.cast<int>();
@@ -453,7 +450,6 @@ int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) 
 int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
     try {
         Response *resp;
-        py::gil_scoped_acquire acquire;
         // 执行python exec 推理
         py::object r = _wrapperRead(handle, sid);
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
@@ -667,11 +663,17 @@ const char *GetSidUsrTag(std::string sid) {
 }
 
 const std::string GetSidByUsrTag(const char *usrTag) {
+    RECORD_MUTEX.lock();
     //通过value找 key
     for (std::map<std::string, const char *>::iterator it = SID_USRTAG.begin(); it != SID_USRTAG.end(); it++) {
-        if (it->second == usrTag)
+        if (it->second == usrTag){
+    		RECORD_MUTEX.unlock();
             return it->first;
+
+        }
     }
+    RECORD_MUTEX.unlock();
+
     return "";
 }
 
