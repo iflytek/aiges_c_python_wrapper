@@ -220,7 +220,6 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
 
 int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
     int ret = 0;
-    py::gil_scoped_acquire acquire;
     std::string sid = GetHandleSid((char *) handle);
     // 构造响应数据
     printf("start read...sid %s\n", sid.c_str());
@@ -249,8 +248,6 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
             int psrCnt) {
     int ret = 0;
     std::string sid = "";
-    py::gil_scoped_acquire acquire;
-
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
         if (NULL == sidP->key) {
             continue;
@@ -278,17 +275,17 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
     }
     spdlog::debug("call wrapper exec: building req data, data num:{}，sid:{}", dataNum, sid);
 
-    DataListCls *req = new DataListCls();
+    DataListCls req;
     pDataList p = reqData;
     if (dataNum > 0) {
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
 
-            DataListNode *item = DataListNode();
-            item->key = p->key;
+            DataListNode item;
+            item.key = p->key;
 
             // 直接拷贝
             size_t len = static_cast<size_t>(p->len);
-            item->data = py::bytes((char *) (p->data), len);
+            item.data = py::bytes((char *) (p->data), len);
             //
             // 写法2：
             //            Py_ssize_t len = static_cast<Py_ssize_t>(p->len);
@@ -301,11 +298,11 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
             //            item.data = py::bytes(data);
             // todo 有无0拷贝方法？
 
-            item->len = p->len;
+            item.len = p->len;
             char t = static_cast<int>(p->type);
-            item->type = p->type;
+            item.type = p->type;
             spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
-            req->list.push_back(item);
+            req.list.push_back(item);
             p = p->next;
         }
     }
@@ -342,7 +339,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
         pDataList ptr = *respData;
         while (ptr != NULL) {
             if (ptr->len > 0) {
-                free(ptr->data);
+//                free(ptr->data);
                 ptr->data = NULL;
             }
             if (strlen(ptr->key) > 0) {
@@ -373,8 +370,6 @@ wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapp
                  unsigned int psrIds[], int psrCnt) {
     int ret = 0;
     std::string sid = "";
-    py::gil_scoped_acquire acquire;
-
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
         if (NULL == sidP->key) {
             continue;
