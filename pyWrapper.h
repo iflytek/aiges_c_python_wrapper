@@ -94,14 +94,6 @@ public:
     int type;
 
     py::bytes get_data();
-
-    std::string get_key();
-
-    unsigned int get_len();
-
-    int get_status();
-
-    int get_type();
 };
 
 // 请求的数据结构 用以和pybind11 交互
@@ -110,7 +102,6 @@ public:
     std::vector <DataListNode> list;
 
     DataListNode *get(std::string key);
-    std::vector <DataListNode> get_list();
 };
 
 
