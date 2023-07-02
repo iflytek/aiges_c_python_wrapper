@@ -189,8 +189,6 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
 
     DataListCls req;
     pDataList p = reqData;
-    py::gil_scoped_acquire acquire;
-
     if (dataNum > 0) {
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
             DataListNode item;
@@ -246,6 +244,7 @@ int WrapperAPI wrapperDestroy(const void *handle) {
 int WrapperAPI
 wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList *respData, unsigned int psrIds[],
             int psrCnt) {
+    py::gil_scoped_acquire acquire;
     int ret = 0;
     std::string sid = "";
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {

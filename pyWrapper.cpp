@@ -643,6 +643,7 @@ const char *GetSidUsrTag(std::string sid) {
     return usrTag;
 }
 
+
 const std::string GetSidByUsrTag(const char *usrTag) {
     RECORD_MUTEX.lock();
     //通过value找 key
