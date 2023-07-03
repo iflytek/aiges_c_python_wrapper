@@ -259,13 +259,13 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
         char *ptr;
         // 先判断python有没有抛出错误. response中的 errorCode
         if (resp->errCode != 0) {
-            spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
+            spdlog::error("find error from python: {}", resp->errCode);
             return resp->errCode;
         }
 
         int dataSize = resp->list.size();
         if (dataSize == 0) {
-            spdlog::get("stderr_console")->error("error, not find any data from resp");
+            spdlog::error("error, not find any data from resp");
             return -1;
         }
         for (int idx = 0; idx < dataSize; idx++) {
@@ -282,7 +282,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             pr = malloc(itemData.len);
             if (pr == nullptr) {
                 int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+                spdlog::error("can't malloc memory for data,  sid:{}", sid);
                 return ret;
             }
             ptr = PyBytes_AsString(itemData.data.ptr());
@@ -308,15 +308,15 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
         *respData = headPtr;
     }
     catch (py::cast_error &e) {
-        spdlog::get("stderr_console")->error("cast error: {}", e.what());
+        spdlog::error("cast error: {}", e.what());
         return -1;
     }
     catch (py::error_already_set &e) {
-        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
+        spdlog::error("error_already_set error: {}", e.what());
         return -1;
     }
     catch (const std::exception &e) {
-        spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
+        spdlog::error("error_already_set error: {}", e.what());
         return -1;
     }
 

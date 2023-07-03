@@ -315,7 +315,7 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
     // 构造响应数据
     ret = pyWrapper->wrapperOnceExec(usrTag, pyParams, req, respData, sid, nullptr);
     if (ret != 0) {
-        spdlog::get("stderr_console")->error("wrapper exec error!");
+        spdlog::error("wrapper exec error!");
         return ret;
     }
     spdlog::debug("onceExec ret Success: {}", ret);
