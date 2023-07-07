@@ -241,12 +241,11 @@ int PyWrapper::wrapperFini() {
 
 int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
                                pDataList *respData, std::string sid, wrapperCallback cb) {
+    SetSidUsrTag(sid, usrTag);
     try {
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
-
         }
-        SetSidUsrTag(sid, usrTag);
         params["sid"] = sid;
         // 执行python exec 推理
         py::object r = _wrapperOnceExec(params, reqData, usrTag);
@@ -260,12 +259,14 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
         // 先判断python有没有抛出错误. response中的 errorCode
         if (resp->errCode != 0) {
             spdlog::error("find error from python: {}", resp->errCode);
+            DelSidUsrTag(sid);
             return resp->errCode;
         }
 
         int dataSize = resp->list.size();
         if (dataSize == 0) {
             spdlog::error("error, not find any data from resp");
+            DelSidUsrTag(sid);
             return -1;
         }
         for (int idx = 0; idx < dataSize; idx++) {
@@ -283,6 +284,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             if (pr == nullptr) {
                 int ret = -1;
                 spdlog::error("can't malloc memory for data,  sid:{}", sid);
+                DelSidUsrTag(sid);
                 return ret;
             }
             ptr = PyBytes_AsString(itemData.data.ptr());
@@ -309,17 +311,22 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
     }
     catch (py::cast_error &e) {
         spdlog::error("cast error: {}", e.what());
+        DelSidUsrTag(sid);
         return -1;
     }
     catch (py::error_already_set &e) {
         spdlog::error("error_already_set error: {}", e.what());
+        DelSidUsrTag(sid);
+
         return -1;
     }
     catch (const std::exception &e) {
         spdlog::error("error_already_set error: {}", e.what());
+        DelSidUsrTag(sid);
+
         return -1;
     }
-
+    DelSidUsrTag(sid);
     return 0;
 
 }
