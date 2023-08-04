@@ -295,7 +295,8 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             //char *data_ = new char[itemData.data.length()+1];
             // strdup(.c_str());
             tmpData->data = pr;
-            tmpData->status = DataStatus(itemData.status);
+            //tmpData->status = DataStatus(itemData.status);
+            tmpData -> status = DataOnce
             if (idx == 0) {
                 headPtr = tmpData;
                 curPtr = tmpData;
