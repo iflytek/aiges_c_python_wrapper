@@ -536,6 +536,11 @@ int PyWrapper::wrapperExecFree(const char *usrTag) {
 
 int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
     DataListCls perData;
+    //构建请求数据
+    int dataNum = 0;
+    for (pDataList tmpDataPtr = perData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
+        dataNum++;
+    }
     if (dataNum > 0) {
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
             DataListNode item;
@@ -549,7 +554,7 @@ int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
             char t = static_cast<int>(p->type);
             item.type = p->type;
             item.status = p->status;
-            spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
+            spdlog::debug("reqDatatype :{}，resID:{}", p->type, resId);
             perData.list.push_back(item);
             p = p->next;
         }
