@@ -538,7 +538,7 @@ int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
     DataListCls perData;
     //构建请求数据
     int dataNum = 0;
-    for (pDataList tmpDataPtr = perData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
+    for (pDataList tmpDataPtr = p; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
         dataNum++;
     }
     if (dataNum > 0) {
