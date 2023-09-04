@@ -249,7 +249,7 @@ int PyWrapper::wrapperFini() {
 }
 
 int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
-                               pDataList *respData, std::string sid, wrapperCallback cb, unsigned int  psrId ) {
+                               pDataList *respData, std::string sid, wrapperCallback cb, unsigned int psrId) {
     SetSidUsrTag(sid, usrTag);
     try {
         if (cb != nullptr) {
@@ -305,7 +305,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
             // strdup(.c_str());
             tmpData->data = pr;
             //tmpData->status = DataStatus(itemData.status);
-            tmpData -> status = DataOnce;
+            tmpData->status = DataOnce;
             if (idx == 0) {
                 headPtr = tmpData;
                 curPtr = tmpData;
@@ -556,12 +556,15 @@ int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
     }
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
-    py::object r = _wrapperLoadRes(perData, resId);
-    return  0;
+    int ret = _wrapperLoadRes(perData, resId).cast<int>();;
+    return ret;
 }
 
 int PyWrapper::wrapperUnloadRes(unsigned int resId) {
-    return 0;
+    py::gil_scoped_acquire acquire;
+    // 执行python exec 推理
+    int ret = _wrapperUnloadRes(resId).cast<int>();;
+    return ret;
 }
 
 int PyWrapper::wrapperTest() {
