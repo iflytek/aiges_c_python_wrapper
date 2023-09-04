@@ -123,16 +123,16 @@ public:
 
     int wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
                         pDataList *respData,
-                        std::string sid, wrapperCallback cb);
+                        std::string sid, wrapperCallback cb, unsigned int psrId);
 
     int wrapperOnceExecAsync(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
-                             std::string sid, wrapperCallback cb);
+                             std::string sid, wrapperCallback cb, unsigned int psrId);
 
     int wrapperFini();
 
     std::string
     wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, wrapperCallback cb, int *errNum,
-                  std::string sid);
+                  std::string sid, unsigned int psrId);
 
     int wrapperSetMetricFunc(CtrlType type, wrapperMeterCustom mc);
 
@@ -147,6 +147,10 @@ public:
     int wrapperExecFree(const char *usrTag);
 
     int wrapperTest();
+
+    int wrapperLoadRes(pDataList perData, unsigned int resId);
+
+    int wrapperUnloadRes(unsigned int resId);
 
     void setCallBack(wrapperCallback cb);
 
@@ -164,6 +168,8 @@ private:
     py::object _wrapperCreate;
     py::object _wrapperWrite;
     py::object _wrapperRead;
+    py::object _wrapperLoadRes;
+    py::object _wrapperUnloadRes;
     py::object _wrapperTest;
 
     wrapperCallback cb_;

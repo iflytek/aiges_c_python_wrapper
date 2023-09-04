@@ -105,7 +105,7 @@ class Wrapper(WrapperBase):
         ret:错误码。无错误码时返回0
     '''
 
-    def wrapperOnceExec(cls, params: {}, reqData: DataListCls) -> Response:
+    def wrapperOnceExec(cls, params: {}, reqData: DataListCls, usrTag: str = "", psrID: int = 0) -> Response:
         log.info("got reqdata , %s" % reqData.list)
         #        print(type(reqData.list[0].data))
         #        print(type(reqData.list[0].data))
@@ -155,11 +155,17 @@ class Wrapper(WrapperBase):
             return "user error defined here"
         return ""
 
-    def wrapperCreate(cls, params: {}, errNum: int, sid: str) -> str:
+    def wrapperCreate(cls, params: {}, errNum: int, sid: str, persId: int = 0) -> str:
         errNum = 5
         print(params)
         handle = "ccch"
         return handle
+
+    def wrapperLoadRes(self, reqData: DataListCls, resId: int) -> int:
+        return 0
+
+    def wrapperUnloadRes(self, resId: int) -> int:
+        return 0
 
     def wrapperTestFunc(cls, data: [], respData: []):
         r = Response()

@@ -136,11 +136,13 @@ const char *WrapperAPI wrapperVersion() {
 }
 
 int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
-    return 0;
+    int ret = pyWrapper->wrapperLoadRes(perData, resId);
+    return ret;
 }
 
 int WrapperAPI wrapperUnloadRes(unsigned int resId) {
-    return 0;
+    int ret = pyWrapper->wrapperUnloadRes(resId);
+    return ret;
 }
 
 const void *
@@ -171,7 +173,13 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
         spdlog::debug("wrapper create param, key:{},value:{},sid:{}", p->key, p->value, sid);
     }
 
-    std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams, cb, errNum, sid);
+    unsigned int psrId = 0;
+    if (psrCnt > 0) {
+        // 对于python加载器只运行有1个psr资源
+        psrId = psrIds[0];
+    }
+
+    std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams, cb, errNum, sid, psrId);
     char *handlePtr = strdup(handle.c_str());
     if (*errNum != 0) {
         spdlog::debug("wrapper exec Error, errNum:{}, sid:{}", *errNum, sid);
@@ -199,7 +207,6 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
         for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
             DataListNode item;
             item.key = p->key;
-
             // 直接拷贝
             size_t len = static_cast<size_t>(p->len);
             item.data = py::bytes((char *) (p->data), len);
@@ -311,9 +318,13 @@ wrapperExec(const char *usrTag, pParamList params, pDataList reqData, pDataList 
             p = p->next;
         }
     }
-
+    unsigned int psrId = 0;
+    if (psrCnt > 0) {
+        // 对于python加载器只运行有1个psr资源
+        psrId = psrIds[0];
+    }
     // 构造响应数据
-    ret = pyWrapper->wrapperOnceExec(usrTag, pyParams, req, respData, sid, nullptr);
+    ret = pyWrapper->wrapperOnceExec(usrTag, pyParams, req, respData, sid, nullptr, psrId);
     if (ret != 0) {
         spdlog::error("wrapper exec error!");
         return ret;
@@ -430,8 +441,13 @@ wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapp
         }
     }
 
+    unsigned int psrId = 0;
+    if (psrCnt > 0) {
+        // 对于python加载器只运行有1个psr资源
+        psrId = psrIds[0];
+    }
     // 构造响应数据
-    ret = pyWrapper->wrapperOnceExecAsync(usrTag, pyParams, req, sid, callback);
+    ret = pyWrapper->wrapperOnceExecAsync(usrTag, pyParams, req, sid, callback, psrId);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper exec async error!");
         return ret;

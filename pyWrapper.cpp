@@ -119,6 +119,10 @@ PyWrapper::PyWrapper() {
     _wrapperOnceExec = _obj.attr("wrapperOnceExec");
     _wrapperOnceExecAsync = _obj.attr("wrapperOnceExecAsync");
     _wrapperError = _obj.attr("wrapperError");
+
+    // 个性化
+    _wrapperLoadRes = _obj.attr("wrapperLoadRes");
+    _wrapperUnloadRes = _obj.attr("wrapperUnloadRes");
     // stream support
     _wrapperCreate = _obj.attr("wrapperCreate");
     _wrapperWrite = _obj.attr("wrapperWrite");
@@ -153,6 +157,8 @@ PyWrapper::~PyWrapper() {
     _wrapperCreate.release();
     _wrapperWrite.release();
     _wrapperRead.release();
+    _wrapperUnloadRes.release();
+    _wrapperLoadRes.release();
     pybind11::gil_scoped_release release;
 }
 
@@ -174,6 +180,9 @@ void PyWrapper::ReloadWrapper() {
     _wrapperCreate = _obj.attr("wrapperCreate");
     _wrapperWrite = _obj.attr("wrapperWrite");
     _wrapperRead = _obj.attr("wrapperRead");
+
+    _wrapperLoadRes = _obj.attr("wrapperLoadRes");
+    _wrapperUnloadRes = _obj.attr("wrapperUnloadRes");
     pybind11::gil_scoped_release release;
 }
 
@@ -240,7 +249,7 @@ int PyWrapper::wrapperFini() {
 }
 
 int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
-                               pDataList *respData, std::string sid, wrapperCallback cb) {
+                               pDataList *respData, std::string sid, wrapperCallback cb, unsigned int  psrId ) {
     SetSidUsrTag(sid, usrTag);
     try {
         if (cb != nullptr) {
@@ -248,7 +257,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
         }
         params["sid"] = sid;
         // 执行python exec 推理
-        py::object r = _wrapperOnceExec(params, reqData, usrTag);
+        py::object r = _wrapperOnceExec(params, reqData, usrTag, psrId);
         // 此段根据python的返回 ，回写 respData
         Response *resp;
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
@@ -334,7 +343,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
 
 
 int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
-                                    std::string sid, wrapperCallback cb) {
+                                    std::string sid, wrapperCallback cb, unsigned int psrId) {
     try {
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
@@ -344,7 +353,7 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         SetSidUsrTag(sid, usrTag);
         params["sid"] = sid;
         // 执行python exec 推理
-        py::object r = _wrapperOnceExecAsync(params, reqData, sid);
+        py::object r = _wrapperOnceExecAsync(params, reqData, sid, psrId);
         // 此段根据python的返回 ，回写 respData
         spdlog::info("start wrapperExecAsync cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         ret = r.cast<int>();
@@ -398,7 +407,7 @@ int PyWrapper::wrapperSetTraceFunc(CtrlType type, wrapperTraceLog mc) {
 
 std::string
 PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, wrapperCallback cb,
-                         int *errNum, std::string sid) {
+                         int *errNum, std::string sid, unsigned int psrId) {
     SessionCreateResponse *resp;
     SetSidCallBack(cb, sid);
     SetSidUsrTag(sid, usrTag);
@@ -406,7 +415,7 @@ PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string>
     try {
         py::gil_scoped_acquire acquire;
         // 此段根据python的返回 ，回写 respData
-        py::object r = _wrapperCreate(params, sid);
+        py::object r = _wrapperCreate(params, sid, psrId);
         resp = r.cast<SessionCreateResponse *>();
         *errNum = resp->errCode;
         if (*errNum != 0) {
@@ -522,6 +531,36 @@ int PyWrapper::wrapperExecFree(const char *usrTag) {
     std::string sid = GetSidByUsrTag(usrTag);
     if (sid != "")
         DelSidUsrTag(sid);
+    return 0;
+}
+
+int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
+    DataListCls perData;
+    if (dataNum > 0) {
+        for (int tmpIdx = 0; tmpIdx < dataNum; tmpIdx++) {
+            DataListNode item;
+            item.key = p->key;
+
+            // 直接拷贝
+            size_t len = static_cast<size_t>(p->len);
+            item.data = py::bytes((char *) (p->data), len);
+
+            item.len = p->len;
+            char t = static_cast<int>(p->type);
+            item.type = p->type;
+            item.status = p->status;
+            spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
+            perData.list.push_back(item);
+            p = p->next;
+        }
+    }
+    py::gil_scoped_acquire acquire;
+    // 执行python exec 推理
+    py::object r = _wrapperLoadRes(perData, resId);
+    return  0;
+}
+
+int PyWrapper::wrapperUnloadRes(unsigned int resId) {
     return 0;
 }
 
