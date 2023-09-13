@@ -19,13 +19,22 @@ py::gil_scoped_release release; // 主线程中先释放release锁
 PyWrapper *pyWrapper;
 wrapperMeterCustom global_metric_cb;
 wrapperTraceLog global_trace_cb;
+// REsID 和 PERSID 映射维护
+std::mutex RES_MUTEX;
+std::map <unsigned int, std::string> RESID_MAP;
 
 //
 
 //const char *logDir = "./log";
 //const char *wrapperLogFile = "./log/wrapper.log";
 
-
+std::string GetPatchID(unsigned int perID) {
+    std::string rlt;
+    RES_MUTEX.lock();
+    rlt = RESID_MAP[perID];
+    RES_MUTEX.unlock();
+    return rlt;
+}
 void so_init(void) {
     printf("libwrapper so init.\n");
 }
@@ -136,12 +145,42 @@ const char *WrapperAPI wrapperVersion() {
 }
 
 int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
-    int ret = pyWrapper->wrapperLoadRes(perData, resId);
+    if (perData == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Null");
+        return -1;
+    }
+    if (perData->desc == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc Null");
+        return -1;
+    }
+    if (perData->desc->key == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc Key Null");
+        return -1;
+    }
+    string patch_key = perData->desc->key;
+    string fixKey = "patch_id";
+
+    if (patch_key.compare(fixKey) != 0) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc Key Null");
+        return -1;
+    }
+    if (perData->desc->value == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc PatchId Value Null");
+        return -1;
+    }
+    string patch_Id = perData->desc->value;
+    RES_MUTEX.lock();
+    RESID_MAP[resId] = patch_Id;
+    RES_MUTEX.unlock();
+    int ret = pyWrapper->wrapperLoadRes(perData, patch_Id);
+
     return ret;
 }
 
 int WrapperAPI wrapperUnloadRes(unsigned int resId) {
-    int ret = pyWrapper->wrapperUnloadRes(resId);
+    std::string patchId;
+    patchId = GetPatchID(resId)
+    int ret = pyWrapper->wrapperUnloadRes(patchId);
     return ret;
 }
 
