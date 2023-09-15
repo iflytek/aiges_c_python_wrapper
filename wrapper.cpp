@@ -179,7 +179,7 @@ int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
 
 int WrapperAPI wrapperUnloadRes(unsigned int resId) {
     std::string patchId;
-    patchId = GetPatchID(resId)
+    patchId = GetPatchID(resId);
     int ret = pyWrapper->wrapperUnloadRes(patchId);
     return ret;
 }
