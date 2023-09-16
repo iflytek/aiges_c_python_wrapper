@@ -157,8 +157,8 @@ int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
         spdlog::debug("wrapper LoadResource Error, perData Desc Key Null");
         return -1;
     }
-    string patch_key = perData->desc->key;
-    string fixKey = "patch_id";
+    std::string patch_key = perData->desc->key;
+    std::string fixKey = "patch_id";
 
     if (patch_key.compare(fixKey) != 0) {
         spdlog::debug("wrapper LoadResource Error, perData Desc Key Null");
@@ -168,7 +168,7 @@ int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
         spdlog::debug("wrapper LoadResource Error, perData Desc PatchId Value Null");
         return -1;
     }
-    string patch_Id = perData->desc->value;
+    std::string patch_Id = perData->desc->value;
     RES_MUTEX.lock();
     RESID_MAP[resId] = patch_Id;
     RES_MUTEX.unlock();
