@@ -534,7 +534,7 @@ int PyWrapper::wrapperExecFree(const char *usrTag) {
     return 0;
 }
 
-int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
+int PyWrapper::wrapperLoadRes(pDataList p, std::string  patch_id) {
     DataListCls perData;
     //构建请求数据
     int dataNum = 0;
@@ -554,21 +554,21 @@ int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
             char t = static_cast<int>(p->type);
             item.type = p->type;
             item.status = p->status;
-            spdlog::debug("reqDatatype :{}，resID:{}", p->type, resId);
+            spdlog::debug("reqDatatype :{}，patch_id:{}", p->type, patch_id);
             perData.list.push_back(item);
             p = p->next;
         }
     }
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
-    int ret = _wrapperLoadRes(perData, resId).cast<int>();;
+    int ret = _wrapperLoadRes(perData, patch_id).cast<int>();;
     return ret;
 }
 
-int PyWrapper::wrapperUnloadRes(std::string resId) {
+int PyWrapper::wrapperUnloadRes(std::string patch_id) {
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
-    int ret = _wrapperUnloadRes(resId).cast<int>();;
+    int ret = _wrapperUnloadRes(patch_id).cast<int>();;
     return ret;
 }
 

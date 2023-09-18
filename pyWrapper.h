@@ -148,7 +148,7 @@ public:
 
     int wrapperTest();
 
-    int wrapperLoadRes(pDataList perData, unsigned int resId);
+    int wrapperLoadRes(pDataList perData, std::string  resId);
 
     int wrapperUnloadRes(std::string resId);
 
