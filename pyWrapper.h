@@ -150,7 +150,7 @@ public:
 
     int wrapperLoadRes(pDataList perData, unsigned int resId);
 
-    int wrapperUnloadRes(unsigned int resId);
+    int wrapperUnloadRes(std::string resId);
 
     void setCallBack(wrapperCallback cb);
 

@@ -565,7 +565,7 @@ int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
     return ret;
 }
 
-int PyWrapper::wrapperUnloadRes(unsigned int resId) {
+int PyWrapper::wrapperUnloadRes(std::string resId) {
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
     int ret = _wrapperUnloadRes(resId).cast<int>();;
