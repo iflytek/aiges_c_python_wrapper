@@ -239,6 +239,7 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
     }
     std::string sid = GetHandleSid((char *) handle);
     spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，sid:{}", dataNum, sid);
+    py::gil_scoped_acquire acquire;
 
     DataListCls req;
     pDataList p = reqData;
@@ -269,6 +270,7 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
 }
 
 int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
+    py::gil_scoped_acquire acquire;
     int ret = 0;
     std::string sid = GetHandleSid((char *) handle);
     // 构造响应数据
