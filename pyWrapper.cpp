@@ -230,7 +230,7 @@ int PyWrapper::wrapperInit(std::map <std::string, std::string> config) {
     catch (py::error_already_set &e) {
         spdlog::get("stderr_console")->error("_wrapperInit  error_already_set error: {}", e.what());
         return -1;
-    }∂
+    }
 }
 
 int PyWrapper::wrapperFini() {
