@@ -14,6 +14,7 @@ const char *PythonSo = "libpython3.so";
 
 wrapperMeterCustom g_metric_cb;
 wrapperTraceLog g_trace_cb;
+wrapperCallback g_resp_cb;
 
 std::mutex RECORD_MUTEX;
 std::map <std::string, std::string> SID_RECORD;
@@ -347,7 +348,6 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
     try {
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
-
         }
         int ret = 0;
         SetSidUsrTag(sid, usrTag);
@@ -595,7 +595,6 @@ int PyWrapper::wrapperTest() {
     }
     for (int i = 0; i < l->list.size(); ++i) {
         ResponseData d = l->list[i];
-//        std::cout << "Response key: " << d.key << std::endl;
         //      std::cout << "Response len" << d.len << std::endl;
         //    std::cout << "response actual data Size " << d.data.length() << std::endl;
 
@@ -680,23 +679,18 @@ int callBack(Response *resp, std::string sid) {
     }
 
     cb_(usrTag, headPtr, 0);
-    printf("ok\n:");
+    spdlog::debug("call c's callback ok");
     return 0;
 
 }
 
 void SetSidCallBack(wrapperCallback cb, std::string sid) {
-    RECORD_MUTEX.lock();
-    SID_CB[sid] = cb;
-    RECORD_MUTEX.unlock();
+    g_resp_cb = cb;
 }
 
 wrapperCallback GetSidCB(std::string sid) {
-    wrapperCallback cb;
-    RECORD_MUTEX.lock();
-    cb = SID_CB[sid];
-    RECORD_MUTEX.unlock();
-    return cb;
+    // ugly
+    return g_resp_cb;
 }
 
 void SetSidUsrTag(std::string sid, const char *usrTag) {
