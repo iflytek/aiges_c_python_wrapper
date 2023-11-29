@@ -128,6 +128,7 @@ PyWrapper::PyWrapper() {
     _wrapperCreate = _obj.attr("wrapperCreate");
     _wrapperWrite = _obj.attr("wrapperWrite");
     _wrapperRead = _obj.attr("wrapperRead");
+    _wrapperDestroy = _obj.attr("wrapperDestroy");
     _wrapperTest = _obj.attr("wrapperTestFunc");
 
     py::gil_scoped_release release;
@@ -521,10 +522,14 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
     return 0;
 }
 
-int PyWrapper::wrapperDestroy(std::string sid) {
+int PyWrapper::wrapperDestroy(std::string sid, char * handle) {
     DelSidCallback(sid);
     DelSidUsrTag(sid);
-    return 0;
+    py::object r = _wrapperDestroy(handle);
+    // 此段根据python的返回 ，回写 respData
+    spdlog::info("Destroy .. thread_id: {}, sid: {}", gettid(), sid);
+    ret = r.cast<int>();
+    return ret;
 }
 
 int PyWrapper::wrapperExecFree(const char *usrTag) {

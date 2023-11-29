@@ -142,7 +142,7 @@ public:
 
     int wrapperRead(char *handle, pDataList *respData, std::string sid);
 
-    int wrapperDestroy(std::string sid);
+    int wrapperDestroy(std::string sid, char * handle);
 
     int wrapperExecFree(const char *usrTag);
 
@@ -166,6 +166,8 @@ private:
     py::object _wrapperOnceExecAsync;
     py::object _wrapperError;
     py::object _wrapperCreate;
+    py::object _wrapperDestroy;
+
     py::object _wrapperWrite;
     py::object _wrapperRead;
     py::object _wrapperLoadRes;

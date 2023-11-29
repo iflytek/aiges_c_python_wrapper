@@ -286,8 +286,9 @@ int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
 
 int WrapperAPI wrapperDestroy(const void *handle) {
     int ret = 0;
+    py::gil_scoped_acquire acquire;
     std::string sid = GetHandleSid((char *) handle);
-    ret = pyWrapper->wrapperDestroy(sid);
+    ret = pyWrapper->wrapperDestroy(sid, (char *) handle);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper destroy error!");
     }
