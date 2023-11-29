@@ -528,7 +528,7 @@ int PyWrapper::wrapperDestroy(std::string sid, char * handle) {
     py::object r = _wrapperDestroy(handle);
     // 此段根据python的返回 ，回写 respData
     spdlog::info("Destroy .. thread_id: {}, sid: {}", gettid(), sid);
-    ret = r.cast<int>();
+    int ret = r.cast<int>();
     return ret;
 }
 
