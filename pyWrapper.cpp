@@ -350,6 +350,8 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
         }
+        py::gil_scoped_acquire acquire;
+
         int ret = 0;
         SetSidUsrTag(sid, usrTag);
         params["sid"] = sid;
@@ -635,10 +637,12 @@ int callBack(Response *resp, std::string sid) {
 
     pDataList headPtr;
     pDataList curPtr;
+    int ret ;
     // 先判断python有没有抛出错误. response中的 errorCode
     if (resp->errCode != 0) {
         spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
-        return resp->errCode;
+        ret = cb_(usrTag, NULL,resp->errCode);
+        return ret;
     }
     char *ptr;
     int dataSize = resp->list.size();
