@@ -68,12 +68,11 @@ void initlog(std::string logDir, std::string logpath) {
         printf("log目录已创建, %s \n", logpath);
     }
     auto file_logger = spdlog::rotating_logger_mt("mspper", logpath.c_str(), 1048576 * 10, 50);
-    file_logger->flush_on(spdlog::level::debug);
     // Console logger
     auto console_logger = spdlog::stdout_color_mt("stdout_console");
     auto err_logger = spdlog::stderr_color_mt("stderr_console");
     spdlog::set_default_logger(file_logger);
-    spdlog::flush_on(spdlog::level::err);
+    spdlog::flush_on(spdlog::level::debug);
     spdlog::flush_every(std::chrono::seconds(5));
 }
 
