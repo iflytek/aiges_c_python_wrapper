@@ -224,7 +224,7 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
         spdlog::debug("wrapper create Error, errNum:{}, sid:{}", *errNum, sid);
         return NULL;
     }
-    SetHandleSid(handlePtr, sid);
+//    SetHandleSid(handlePtr, sid);
     return static_cast<const void *>(handlePtr);
 
 }
@@ -236,8 +236,8 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
     for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
         dataNum++;
     }
-    std::string sid = GetHandleSid((char *) handle);
-    spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，sid:{}", dataNum, sid);
+//    std::string sid = GetHandleSid((char *) handle);
+    spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，hanlde:{}", dataNum, handle);
     py::gil_scoped_acquire acquire;
 
     DataListCls req;
@@ -254,13 +254,13 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
             char t = static_cast<int>(p->type);
             item.type = p->type;
             item.status = p->status;
-            spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
+            spdlog::debug("reqDatatype :{}，wrapper handle:{}", p->type, handle);
             req.list.push_back(item);
             p = p->next;
         }
     }
     // 构造响应数据
-    ret = pyWrapper->wrapperWrite((char *) handle, req, sid);
+    ret = pyWrapper->wrapperWrite((char *) handle, req);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper write error!");
     }
@@ -271,10 +271,9 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
 int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
     py::gil_scoped_acquire acquire;
     int ret = 0;
-    std::string sid = GetHandleSid((char *) handle);
     // 构造响应数据
-    printf("start read...sid %s\n", sid.c_str());
-    ret = pyWrapper->wrapperRead((char *) handle, respData, sid);
+    printf("start read...sid %s\n", handle);
+    ret = pyWrapper->wrapperRead((char *) handle, respData);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper read error!");
     }
@@ -286,8 +285,7 @@ int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
 int WrapperAPI wrapperDestroy(const void *handle) {
     int ret = 0;
     py::gil_scoped_acquire acquire;
-    std::string sid = GetHandleSid((char *) handle);
-    ret = pyWrapper->wrapperDestroy(sid, (char *) handle);
+    ret = pyWrapper->wrapperDestroy( (char *) handle);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper destroy error!");
     }
@@ -417,10 +415,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
             ptr = tmp;
         }
     }
-    std::string sid = GetSidByUsrTag(usrTag);
-    if (sid != "") {
-        DelSidUsrTag(sid);
-    }
+
     // 构造响应数据
     int ret = pyWrapper->wrapperExecFree(usrTag);
     if (ret != 0) {
