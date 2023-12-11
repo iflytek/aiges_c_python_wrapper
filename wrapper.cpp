@@ -68,6 +68,7 @@ void initlog(std::string logDir, std::string logpath) {
         printf("log目录已创建, %s \n", logpath);
     }
     auto file_logger = spdlog::rotating_logger_mt("mspper", logpath.c_str(), 1048576 * 10, 50);
+    file_logger->flush_on(spdlog::level::debug);
     // Console logger
     auto console_logger = spdlog::stdout_color_mt("stdout_console");
     auto err_logger = spdlog::stderr_color_mt("stderr_console");
@@ -93,7 +94,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
     init_threads();
     std::string logDir = std::string("./log/server");
-    std::string logPath = std::string("./log/server/wrapper.log");
+    std::string logPath = std::string("./log/server/c_wrapper.log");
     std::string loglvl = "debug";
     std::map <std::string, std::string> config;
 
@@ -106,7 +107,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
             }
             if (std::string("log.dir") == std::string(p->key)) {
                 logDir = p->value;
-                logPath = std::string(p->value) + std::string("/wrapper.log");
+                logPath = std::string(p->value) + std::string("/c_wrapper.log");
                 continue;
             }
         }
