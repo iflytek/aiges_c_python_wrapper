@@ -355,7 +355,7 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         int ret = 0;
         params["sid"] = sid;
         // 执行python exec 推理
-        py::object r = _wrapperOnceExecAsync(params, reqData, sid, psrId);
+        py::object r = _wrapperOnceExecAsync(params, reqData, usrTag, psrId);
         // 此段根据python的返回 ，回写 respData
         spdlog::info("start wrapperExecAsync cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         ret = r.cast<int>();
