@@ -95,7 +95,7 @@ py::bytes DataListNode::get_data() {
 }
 
 DataListNode *DataListCls::get(std::string key) {
-    for (int idx = 0; idx < list.size(); idx++) {
+    for (size_t idx = 0; idx < list.size(); idx++) {
         DataListNode *node = &list[idx];
         if (strcmp(node->key.c_str(), key.c_str()) == 0) {
             return node;
@@ -203,7 +203,7 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     FSInotify *ino = new FSInotify();
     pthread_t _pid;
     std::vector <std::string> s;
-    printf("starting monitoring %s, pid is: %d\n", wrapperFileAbs.c_str(), _pid);
+    printf("starting monitoring %s, pid is: %lu\n", wrapperFileAbs.c_str(), _pid);
     s.push_back(wrapperFileAbs);
     std::map <std::string, EventHandle> funs;
 
@@ -212,7 +212,7 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     ino->InitWatchFile(s, this);
     int ret = ino->StartWatchThread(funs, _pid);
     if (ret != 0) {
-        printf("Error starting monitoring %s, pid is: %d\n", wrapperFileAbs.c_str(), _pid);
+        printf("Error starting monitoring %s, pid is: %lu\n", wrapperFileAbs.c_str(), _pid);
     }
 }
 
@@ -299,7 +299,7 @@ int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::s
                 return ret;
             }
             ptr = PyBytes_AsString(itemData.data.ptr());
-            Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
+            // Py_ssize_t size = PyBytes_GET_SIZE(itemData.data.ptr());
 //            printf("GetSIze, %d", size);
 //            printf("item data len: %d", itemData.len);
             memcpy(pr, ptr, itemData.len);
@@ -551,7 +551,7 @@ int PyWrapper::wrapperLoadRes(pDataList p, std::string  patch_id) {
             item.data = py::bytes((char *) (p->data), len);
 
             item.len = p->len;
-            char t = static_cast<int>(p->type);
+            // char t = static_cast<int>(p->type);
             item.type = p->type;
             item.status = p->status;
             spdlog::debug("reqDatatype :{}，patch_id:{}", p->type, patch_id);
@@ -593,7 +593,7 @@ int PyWrapper::wrapperTest() {
         std::cout << e.what() << std::endl;
         return -1;
     }
-    for (int i = 0; i < l->list.size(); ++i) {
+    for (size_t i = 0; i < l->list.size(); ++i) {
         ResponseData d = l->list[i];
         //      std::cout << "Response len" << d.len << std::endl;
         //    std::cout << "response actual data Size " << d.data.length() << std::endl;
@@ -615,7 +615,7 @@ int callbackMetric(const char *usrTag, const char *meterKey, int count) {
 }
 
 int callbackTrace(const char *usrTag, const char *key, const char *value) {
-    printf("callback Trace: %s, %s, %d\n", usrTag, key, value);
+    printf("callback Trace: %s, %s, %s\n", usrTag, key, value);
     return g_trace_cb(usrTag, key, value);
 }
 
@@ -626,8 +626,8 @@ int callBack(Response *resp, char *usrTag) {
         printf("null cb....\n");
         return -1;
     }
-    pDataList headPtr;
-    pDataList curPtr;
+    pDataList headPtr = nullptr;
+    pDataList curPtr = nullptr;
     int ret ;
     // 先判断python有没有抛出错误. response中的 errorCode
     if (resp->errCode != 0) {
@@ -679,7 +679,19 @@ int callBack(Response *resp, char *usrTag) {
     }
 
     int cb_ret = cb_(usrTag, headPtr, 0);
-    spdlog::debug("call c's callback,usrTag:{} ret {}",usrTag, cb_ret);
+    while (headPtr != nullptr) {
+        pDataList ptr = headPtr;
+        headPtr = headPtr->next;
+        if (ptr->key) {
+            free(ptr->key);
+        }
+        if (ptr->data) {
+            free(ptr->data);
+        }
+        delete ptr;
+    }
+
+    spdlog::debug("call c's callback, usrTag:{} ret {}",usrTag, cb_ret);
     return 0;
 
 }
