@@ -54,9 +54,9 @@ void initlog(std::string logDir, std::string logpath) {
 
     // Creating a directory
     if (mkdir(logDir.c_str(), 0777) == -1) {
-        printf("log目录创建失败或已存在 %s\n", logpath);
+        printf("log目录创建失败或已存在 %s\n", logpath.c_str());
     } else {
-        printf("log目录已创建, %s \n", logpath);
+        printf("log目录已创建, %s \n", logpath.c_str());
     }
     auto file_logger = spdlog::rotating_logger_mt("mspper", logpath.c_str(), 1048576 * 10, 50);
     // Console logger
@@ -107,7 +107,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     pyWrapper = new PyWrapper();
 
     setLog(loglvl);
-    printf("WrapperInit: 当前线程ID: %d \n", gettid());
+    printf("WrapperInit: 当前线程ID: %ld \n", gettid());
     if (global_metric_cb != NULL) {
         printf("Metric Custom func set! \n");
         pyWrapper->wrapperSetMetricFunc(CTMeterCustom, global_metric_cb);
@@ -122,7 +122,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
 }
 
 int WrapperAPI wrapperFini() {
-    printf("WrapperFini: 当前线程ID: %d \n", gettid());
+    printf("WrapperFini: 当前线程ID: %ld \n", gettid());
     pyWrapper->wrapperFini();
     return 0;
 }

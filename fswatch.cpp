@@ -208,9 +208,9 @@ int main() {
     EventHandle e = test;
     funs.insert({"IN_MOVE_SELF", test});
     ino.InitWatchFile(s, NULL);
-    printf("pid,%d\n", _pid);
+    printf("pid,%lu\n", _pid);
     int ret = ino.StartWatchThread(funs, _pid);
-    printf("aftpid,%d\n", _pid);
+    printf("aftpid,%lu\n", _pid);
     ret = pthread_join(_pid, NULL);
     printf("%d\n", ret);
     return 0;

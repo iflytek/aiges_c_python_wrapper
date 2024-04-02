@@ -66,8 +66,8 @@ public:
     std::string key;
     py::bytes data;
     unsigned int len;
-    int status;
     int type;
+    int status;
 };
 
 class Response {
