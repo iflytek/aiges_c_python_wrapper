@@ -350,7 +350,6 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
         }
-        py::gil_scoped_acquire acquire;
 
         int ret = 0;
         params["sid"] = sid;

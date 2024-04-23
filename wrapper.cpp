@@ -428,6 +428,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
 int WrapperAPI
 wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout,
                  unsigned int psrIds[], int psrCnt) {
+    py::gil_scoped_acquire acquire;
     int ret = 0;
     std::string sid = "";
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {
