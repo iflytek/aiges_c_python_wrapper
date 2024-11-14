@@ -14,6 +14,7 @@ const char *PythonSo = "libpython3.so";
 
 wrapperMeterCustom g_metric_cb;
 wrapperTraceLog g_trace_cb;
+wrapperCallback g_resp_cb;
 
 std::mutex RECORD_MUTEX;
 std::map <std::string, std::string> SID_RECORD;
@@ -127,10 +128,11 @@ PyWrapper::PyWrapper() {
     _wrapperCreate = _obj.attr("wrapperCreate");
     _wrapperWrite = _obj.attr("wrapperWrite");
     _wrapperRead = _obj.attr("wrapperRead");
+    _wrapperDestroy = _obj.attr("wrapperDestroy");
     _wrapperTest = _obj.attr("wrapperTestFunc");
 
     py::gil_scoped_release release;
-    StartMonitorWrapperClass(_wrapper_abs);
+//    StartMonitorWrapperClass(_wrapper_abs);
 
 }
 
@@ -205,7 +207,7 @@ void PyWrapper::StartMonitorWrapperClass(std::string wrapperFileAbs) {
     s.push_back(wrapperFileAbs);
     std::map <std::string, EventHandle> funs;
 
-    // 变化后，重载wrapper
+    /** 变化后，重载wrapper **/
     funs.insert({"IN_MOVE_SELF", reloadWrapper});
     ino->InitWatchFile(s, this);
     int ret = ino->StartWatchThread(funs, _pid);
@@ -250,7 +252,7 @@ int PyWrapper::wrapperFini() {
 
 int PyWrapper::wrapperOnceExec(const char *usrTag, std::map <std::string, std::string> params, DataListCls reqData,
                                pDataList *respData, std::string sid, wrapperCallback cb, unsigned int psrId) {
-    SetSidUsrTag(sid, usrTag);
+//    SetSidUsrTag(sid, usrTag);
     try {
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
@@ -347,13 +349,12 @@ int PyWrapper::wrapperOnceExecAsync(const char *usrTag, std::map <std::string, s
     try {
         if (cb != nullptr) {
             SetSidCallBack(cb, sid);
-
         }
+
         int ret = 0;
-        SetSidUsrTag(sid, usrTag);
         params["sid"] = sid;
         // 执行python exec 推理
-        py::object r = _wrapperOnceExecAsync(params, reqData, sid, psrId);
+        py::object r = _wrapperOnceExecAsync(params, reqData, usrTag, psrId);
         // 此段根据python的返回 ，回写 respData
         spdlog::info("start wrapperExecAsync cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
         ret = r.cast<int>();
@@ -410,12 +411,11 @@ PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string>
                          int *errNum, std::string sid, unsigned int psrId) {
     SessionCreateResponse *resp;
     SetSidCallBack(cb, sid);
-    SetSidUsrTag(sid, usrTag);
 
     try {
         py::gil_scoped_acquire acquire;
         // 此段根据python的返回 ，回写 respData
-        py::object r = _wrapperCreate(params, sid, psrId);
+        py::object r = _wrapperCreate(params, sid, psrId, usrTag);
         resp = r.cast<SessionCreateResponse *>();
         *errNum = resp->errCode;
         if (*errNum != 0) {
@@ -436,11 +436,11 @@ PyWrapper::wrapperCreate(const char *usrTag, std::map <std::string, std::string>
 }
 
 // 上行数据
-int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) {
+int PyWrapper::wrapperWrite(char *handle, DataListCls reqData) {
     try {
         int ret = 0;
         // 执行python exec 推理
-        py::object r = _wrapperWrite(handle, reqData, sid);
+        py::object r = _wrapperWrite(handle, reqData);
         ret = r.cast<int>();
         return ret;
     }
@@ -455,12 +455,12 @@ int PyWrapper::wrapperWrite(char *handle, DataListCls reqData, std::string sid) 
 }
 
 // 下行数据
-int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
+int PyWrapper::wrapperRead(char *handle, pDataList *respData) {
     try {
         Response *resp;
         // 执行python exec 推理
-        py::object r = _wrapperRead(handle, sid);
-        spdlog::debug("start cast python resp to c++ object, thread_id: {}, sid: {}", gettid(), sid);
+        py::object r = _wrapperRead(handle);
+        spdlog::debug("start cast python resp to c++ object, thread_id: {}, handle: {}", gettid(), handle);
         resp = r.cast<Response *>();
         pDataList headPtr;
         pDataList curPtr;
@@ -489,7 +489,7 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
             pr = malloc(itemData.len);
             if (pr == nullptr) {
                 int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+                spdlog::get("stderr_console")->error("can't malloc memory for data,  handle:{}", handle);
                 return ret;
             }
             memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
@@ -504,9 +504,9 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
                 curPtr->next = tmpData;
                 curPtr = tmpData;
             }
-            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},sid:{}",
+            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},handle:{}",
                           tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
-                          tmpData->status, sid);
+                          tmpData->status, handle);
         }
         *respData = headPtr;
     }
@@ -521,20 +521,19 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData, std::string sid) {
     return 0;
 }
 
-int PyWrapper::wrapperDestroy(std::string sid) {
-    DelSidCallback(sid);
-    DelSidUsrTag(sid);
-    return 0;
+int PyWrapper::wrapperDestroy(char * handle) {
+    py::object r = _wrapperDestroy(handle);
+    // 此段根据python的返回 ，回写 respData
+    spdlog::info("Destroy .. thread_id: {}, handle: {}", gettid(), handle);
+    int ret = r.cast<int>();
+    return ret;
 }
 
 int PyWrapper::wrapperExecFree(const char *usrTag) {
-    std::string sid = GetSidByUsrTag(usrTag);
-    if (sid != "")
-        DelSidUsrTag(sid);
     return 0;
 }
 
-int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
+int PyWrapper::wrapperLoadRes(pDataList p, std::string  patch_id) {
     DataListCls perData;
     //构建请求数据
     int dataNum = 0;
@@ -554,21 +553,21 @@ int PyWrapper::wrapperLoadRes(pDataList p, unsigned int resId) {
             // char t = static_cast<int>(p->type);
             item.type = p->type;
             item.status = p->status;
-            spdlog::debug("reqDatatype :{}，resID:{}", p->type, resId);
+            spdlog::debug("reqDatatype :{}，patch_id:{}", p->type, patch_id);
             perData.list.push_back(item);
             p = p->next;
         }
     }
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
-    int ret = _wrapperLoadRes(perData, resId).cast<int>();;
+    int ret = _wrapperLoadRes(perData, patch_id).cast<int>();;
     return ret;
 }
 
-int PyWrapper::wrapperUnloadRes(unsigned int resId) {
+int PyWrapper::wrapperUnloadRes(std::string patch_id) {
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
-    int ret = _wrapperUnloadRes(resId).cast<int>();;
+    int ret = _wrapperUnloadRes(patch_id).cast<int>();;
     return ret;
 }
 
@@ -595,7 +594,6 @@ int PyWrapper::wrapperTest() {
     }
     for (size_t i = 0; i < l->list.size(); ++i) {
         ResponseData d = l->list[i];
-//        std::cout << "Response key: " << d.key << std::endl;
         //      std::cout << "Response len" << d.len << std::endl;
         //    std::cout << "response actual data Size " << d.data.length() << std::endl;
 
@@ -620,21 +618,21 @@ int callbackTrace(const char *usrTag, const char *key, const char *value) {
     return g_trace_cb(usrTag, key, value);
 }
 
-int callBack(Response *resp, std::string sid) {
+int callBack(Response *resp, char *usrTag) {
     wrapperCallback cb_;
-    cb_ = GetSidCB(sid);
+    cb_ = g_resp_cb;
     if (cb_ == NULL) {
         printf("null cb....\n");
         return -1;
     }
-    const char *usrTag = GetSidUsrTag(sid);
 
     pDataList headPtr = nullptr;
     pDataList curPtr = nullptr;
     // 先判断python有没有抛出错误. response中的 errorCode
     if (resp->errCode != 0) {
         spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
-        return resp->errCode;
+        ret = cb_(usrTag, NULL,resp->errCode);
+        return ret;
     }
     char *ptr;
     int dataSize = resp->list.size();
@@ -656,7 +654,7 @@ int callBack(Response *resp, std::string sid) {
         pr = malloc(itemData.len);
         if (pr == nullptr) {
             int ret = -1;
-            spdlog::get("stderr_console")->error("can't malloc memory for data,  sid:{}", sid);
+            spdlog::get("stderr_console")->error("can't malloc memory for data,  usrTag:{}", usrTag);
             return ret;
         }
         ptr = PyBytes_AsString(itemData.data.ptr());
@@ -674,9 +672,9 @@ int callBack(Response *resp, std::string sid) {
             curPtr->next = tmpData;
             curPtr = tmpData;
         }
-        spdlog::debug("callback result,key:{},data:{},len:{},type:{},status:{},sid:{}",
+        spdlog::debug("callback result,key:{},data:{},len:{},type:{},status:{},usrTag:{}",
                       tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
-                      tmpData->status, sid);
+                      tmpData->status, usrTag);
     }
 
     int cb_ret = cb_(usrTag, headPtr, 0);
@@ -698,17 +696,12 @@ int callBack(Response *resp, std::string sid) {
 }
 
 void SetSidCallBack(wrapperCallback cb, std::string sid) {
-    RECORD_MUTEX.lock();
-    SID_CB[sid] = cb;
-    RECORD_MUTEX.unlock();
+    g_resp_cb = cb;
 }
 
 wrapperCallback GetSidCB(std::string sid) {
-    wrapperCallback cb;
-    RECORD_MUTEX.lock();
-    cb = SID_CB[sid];
-    RECORD_MUTEX.unlock();
-    return cb;
+    // ugly
+    return g_resp_cb;
 }
 
 void SetSidUsrTag(std::string sid, const char *usrTag) {

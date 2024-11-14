@@ -19,13 +19,22 @@ py::gil_scoped_release release; // 主线程中先释放release锁
 PyWrapper *pyWrapper;
 wrapperMeterCustom global_metric_cb;
 wrapperTraceLog global_trace_cb;
+// REsID 和 PERSID 映射维护
+std::mutex RES_MUTEX;
+std::map <unsigned int, std::string> RESID_MAP;
 
 //
 
 //const char *logDir = "./log";
 //const char *wrapperLogFile = "./log/wrapper.log";
 
-
+std::string GetPatchID(unsigned int perID) {
+    std::string rlt;
+    RES_MUTEX.lock();
+    rlt = RESID_MAP[perID];
+    RES_MUTEX.unlock();
+    return rlt;
+}
 void so_init(void) {
     printf("libwrapper so init.\n");
 }
@@ -63,7 +72,7 @@ void initlog(std::string logDir, std::string logpath) {
     auto console_logger = spdlog::stdout_color_mt("stdout_console");
     auto err_logger = spdlog::stderr_color_mt("stderr_console");
     spdlog::set_default_logger(file_logger);
-    spdlog::flush_on(spdlog::level::err);
+    spdlog::flush_on(spdlog::level::debug);
     spdlog::flush_every(std::chrono::seconds(5));
 }
 
@@ -84,7 +93,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     int ret = 0;
     init_threads();
     std::string logDir = std::string("./log/server");
-    std::string logPath = std::string("./log/server/wrapper.log");
+    std::string logPath = std::string("./log/server/c_wrapper.log");
     std::string loglvl = "debug";
     std::map <std::string, std::string> config;
 
@@ -97,7 +106,7 @@ int WrapperAPI wrapperInit(pConfig cfg) {
             }
             if (std::string("log.dir") == std::string(p->key)) {
                 logDir = p->value;
-                logPath = std::string(p->value) + std::string("/wrapper.log");
+                logPath = std::string(p->value) + std::string("/c_wrapper.log");
                 continue;
             }
         }
@@ -136,12 +145,42 @@ const char *WrapperAPI wrapperVersion() {
 }
 
 int WrapperAPI wrapperLoadRes(pDataList perData, unsigned int resId) {
-    int ret = pyWrapper->wrapperLoadRes(perData, resId);
+    if (perData == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Null");
+        return -1;
+    }
+    if (perData->desc == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc Null");
+        return -1;
+    }
+    if (perData->desc->key == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc Key Null");
+        return -1;
+    }
+    std::string patch_key = perData->desc->key;
+    std::string fixKey = "patch_id";
+
+    if (patch_key.compare(fixKey) != 0) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc Key Null");
+        return -1;
+    }
+    if (perData->desc->value == NULL) {
+        spdlog::debug("wrapper LoadResource Error, perData Desc PatchId Value Null");
+        return -1;
+    }
+    std::string patch_Id = perData->desc->value;
+    RES_MUTEX.lock();
+    RESID_MAP[resId] = patch_Id;
+    RES_MUTEX.unlock();
+    int ret = pyWrapper->wrapperLoadRes(perData, patch_Id);
+
     return ret;
 }
 
 int WrapperAPI wrapperUnloadRes(unsigned int resId) {
-    int ret = pyWrapper->wrapperUnloadRes(resId);
+    std::string patchId;
+    patchId = GetPatchID(resId);
+    int ret = pyWrapper->wrapperUnloadRes(patchId);
     return ret;
 }
 
@@ -182,11 +221,10 @@ WrapperAPI wrapperCreate(const char *usrTag, pParamList params, wrapperCallback 
     std::string handle = pyWrapper->wrapperCreate(usrTag, pyParams, cb, errNum, sid, psrId);
     char *handlePtr = strdup(handle.c_str());
     if (*errNum != 0) {
-        spdlog::debug("wrapper exec Error, errNum:{}, sid:{}", *errNum, sid);
-
+        spdlog::debug("wrapper create Error, errNum:{}, sid:{}", *errNum, sid);
         return NULL;
     }
-    SetHandleSid(handlePtr, sid);
+//    SetHandleSid(handlePtr, sid);
     return static_cast<const void *>(handlePtr);
 
 }
@@ -198,8 +236,9 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
     for (pDataList tmpDataPtr = reqData; tmpDataPtr != NULL; tmpDataPtr = tmpDataPtr->next) {
         dataNum++;
     }
-    std::string sid = GetHandleSid((char *) handle);
-    spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，sid:{}", dataNum, sid);
+//    std::string sid = GetHandleSid((char *) handle);
+    spdlog::debug("call wrapper wrapperWrite: building req data, data num:{}，hanlde:{}", dataNum, handle);
+    py::gil_scoped_acquire acquire;
 
     DataListCls req;
     pDataList p = reqData;
@@ -215,13 +254,13 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
             char t = static_cast<int>(p->type);
             item.type = p->type;
             item.status = p->status;
-            spdlog::debug("reqDatatype :{}，sid:{}", p->type, sid);
+            spdlog::debug("reqDatatype :{}，wrapper handle:{}", p->type, handle);
             req.list.push_back(item);
             p = p->next;
         }
     }
     // 构造响应数据
-    ret = pyWrapper->wrapperWrite((char *) handle, req, sid);
+    ret = pyWrapper->wrapperWrite((char *) handle, req);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper write error!");
     }
@@ -230,11 +269,11 @@ int WrapperAPI wrapperWrite(const void *handle, pDataList reqData) {
 }
 
 int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
+    py::gil_scoped_acquire acquire;
     int ret = 0;
-    std::string sid = GetHandleSid((char *) handle);
     // 构造响应数据
-    printf("start read...sid %s\n", sid.c_str());
-    ret = pyWrapper->wrapperRead((char *) handle, respData, sid);
+    printf("start read...sid %p\n", handle);
+    ret = pyWrapper->wrapperRead((char *) handle, respData);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper read error!");
     }
@@ -245,8 +284,8 @@ int WrapperAPI wrapperRead(const void *handle, pDataList *respData) {
 
 int WrapperAPI wrapperDestroy(const void *handle) {
     int ret = 0;
-    std::string sid = GetHandleSid((char *) handle);
-    ret = pyWrapper->wrapperDestroy(sid);
+    py::gil_scoped_acquire acquire;
+    ret = pyWrapper->wrapperDestroy( (char *) handle);
     if (ret != 0) {
         spdlog::get("stderr_console")->error("wrapper destroy error!");
     }
@@ -376,10 +415,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
             ptr = tmp;
         }
     }
-    std::string sid = GetSidByUsrTag(usrTag);
-    if (sid != "") {
-        DelSidUsrTag(sid);
-    }
+
     // 构造响应数据
     int ret = pyWrapper->wrapperExecFree(usrTag);
     if (ret != 0) {
@@ -392,6 +428,7 @@ int WrapperAPI wrapperExecFree(const char *usrTag, pDataList *respData) {
 int WrapperAPI
 wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapperCallback callback, int timeout,
                  unsigned int psrIds[], int psrCnt) {
+    py::gil_scoped_acquire acquire;
     int ret = 0;
     std::string sid = "";
     for (pParamList sidP = params; sidP != NULL; sidP = sidP->next) {

@@ -138,19 +138,19 @@ public:
 
     int wrapperSetTraceFunc(CtrlType type, wrapperTraceLog mc);
 
-    int wrapperWrite(char *handle, DataListCls reqData, std::string sid);
+    int wrapperWrite(char *handle, DataListCls reqData);
 
-    int wrapperRead(char *handle, pDataList *respData, std::string sid);
+    int wrapperRead(char *handle, pDataList *respData);
 
-    int wrapperDestroy(std::string sid);
+    int wrapperDestroy( char * handle);
 
     int wrapperExecFree(const char *usrTag);
 
     int wrapperTest();
 
-    int wrapperLoadRes(pDataList perData, unsigned int resId);
+    int wrapperLoadRes(pDataList perData, std::string  resId);
 
-    int wrapperUnloadRes(unsigned int resId);
+    int wrapperUnloadRes(std::string resId);
 
     void setCallBack(wrapperCallback cb);
 
@@ -166,6 +166,8 @@ private:
     py::object _wrapperOnceExecAsync;
     py::object _wrapperError;
     py::object _wrapperCreate;
+    py::object _wrapperDestroy;
+
     py::object _wrapperWrite;
     py::object _wrapperRead;
     py::object _wrapperLoadRes;
@@ -184,7 +186,7 @@ std::string GetHandleSid(char *handle);
 void DelHandleSid(char *handle);
 
 
-int callBack(Response *respData, std::string);
+int callBack(Response *respData, char *usrTag);
 
 int callbackMetric(const char *usrTag, const char *meterKey, int count);
 
