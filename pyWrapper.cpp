@@ -625,7 +625,7 @@ int callBack(Response *resp, char *usrTag) {
         printf("null cb....\n");
         return -1;
     }
-
+    int ret;
     pDataList headPtr = nullptr;
     pDataList curPtr = nullptr;
     // 先判断python有没有抛出错误. response中的 errorCode
