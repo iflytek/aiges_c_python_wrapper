@@ -120,6 +120,7 @@ PyWrapper::PyWrapper() {
     _wrapperOnceExec = _obj.attr("wrapperOnceExec");
     _wrapperOnceExecAsync = _obj.attr("wrapperOnceExecAsync");
     _wrapperError = _obj.attr("wrapperError");
+    _wrapperNotify = _obj.attr("wrapperNotify");
 
     // 个性化
     _wrapperLoadRes = _obj.attr("wrapperLoadRes");
@@ -161,6 +162,7 @@ PyWrapper::~PyWrapper() {
     _wrapperRead.release();
     _wrapperUnloadRes.release();
     _wrapperLoadRes.release();
+    _wrapperNotify.release();
     pybind11::gil_scoped_release release;
 }
 
@@ -177,6 +179,7 @@ void PyWrapper::ReloadWrapper() {
     _wrapperOnceExec = _obj.attr("wrapperOnceExec");
     _wrapperError = _obj.attr("wrapperError");
     _wrapperTest = _obj.attr("wrapperTestFunc");
+    _wrapperNotify = _obj.attr("wrapperNotify");
     // stream support
 
     _wrapperCreate = _obj.attr("wrapperCreate");
@@ -568,6 +571,12 @@ int PyWrapper::wrapperUnloadRes(std::string patch_id) {
     py::gil_scoped_acquire acquire;
     // 执行python exec 推理
     int ret = _wrapperUnloadRes(patch_id).cast<int>();;
+    return ret;
+}
+
+int PyWrapper::wrapperNotify(pDataList* data) {
+    py::gil_scoped_acquire acquire;
+    int ret = _wrapperNotify(*data).cast<int>();;
     return ret;
 }
 

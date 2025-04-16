@@ -495,3 +495,16 @@ wrapperExecAsync(const char *usrTag, pParamList params, pDataList reqData, wrapp
 }
 
 const char *WrapperAPI wrapperDebugInfo(const void *handle) { return NULL; }
+
+int WrapperAPI wrapperNotify(pDataList *data) {
+    spdlog::debug("wrapperNotify");
+
+    int ret = 0;
+    ret = pyWrapper->wrapperNotify(data);
+    if (ret != 0) {
+        spdlog::get("stderr_console")->error("wrapper notify error!");
+        return ret;
+    }
+    
+    return ret;
+}
