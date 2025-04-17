@@ -709,6 +709,7 @@ int callbackTrace(const char *usrTag, const char *key, const char *value) {
     return g_trace_cb(usrTag, key, value);
 }
 
+// Implementation of callbackLbExtra
 int callbackLbExtra(pParamList labels) {
     wrapperLbExtra cb_;
     cb_ = g_lb_cb;

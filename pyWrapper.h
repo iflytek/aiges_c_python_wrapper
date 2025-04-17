@@ -188,6 +188,8 @@ std::string GetHandleSid(char *handle);
 
 void DelHandleSid(char *handle);
 
+// Forward declaration of callbackLbExtra
+int callbackLbExtra(pParamList labels);
 
 int callBack(Response *respData, char *usrTag);
 
