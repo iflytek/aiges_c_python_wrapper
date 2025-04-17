@@ -40,7 +40,7 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
             spdlog::debug("Python callback_lb_extra called with dict size: {}", params.size());
             
             // Convert Python dict to pParamList
-            for (auto item : params) {
+            for (auto item : params.items()) {
                 pParamList node = new ParamList();
                 node->next = nullptr;
                 
