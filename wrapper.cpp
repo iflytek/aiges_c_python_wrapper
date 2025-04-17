@@ -409,7 +409,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
             printf("wrapperMetrics  function is null\n");
             return 0;
         }
-        global_trace_cb = (wrapperMetrics) func;
+        global_metrics_cb = (wrapperMetrics) func;
         return 0;
 
     }else if (type == CTLbExtra) {
@@ -417,7 +417,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
             printf("Lb up log function is null\n");
             return 0;
         }
-        global_trace_cb = (wrapperLbExtra) func;
+        global_lb_cb = (wrapperLbExtra) func;
         return 0;
 
     }
