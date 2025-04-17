@@ -131,11 +131,11 @@ int WrapperAPI wrapperInit(pConfig cfg) {
     }
     if (global_lb_cb != NULL) {
         printf("LB Extra Upload func set! \n");
-        pyWrapper->wrapperSetLbCbFunc(CTTraceLog, global_lb_cb);
+        pyWrapper->wrapperSetLbCbFunc(CTLbExtra, global_lb_cb);
     }
     if (global_metrics_cb != NULL) {
         printf("Metrics Custom func  func set! \n");
-        pyWrapper->wrapperSetMetricsFunc(CTTraceLog, global_metrics_cb);
+        pyWrapper->wrapperSetMetricsFunc(CTMetricsLog, global_metrics_cb);
     }
     ret = pyWrapper->wrapperInit(config);
     return ret;
