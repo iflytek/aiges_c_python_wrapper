@@ -404,6 +404,22 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
         global_trace_cb = (wrapperTraceLog) func;
         return 0;
 
+    }else if (type == CTMetricsLog) {
+        if (func == NULL) {
+            printf("wrapperMetrics  function is null\n");
+            return 0;
+        }
+        global_trace_cb = (wrapperMetrics) func;
+        return 0;
+
+    }else if (type == CTLbExtra) {
+        if (func == NULL) {
+            printf("Lb up log function is null\n");
+            return 0;
+        }
+        global_trace_cb = (wrapperLbExtra) func;
+        return 0;
+
     }
     return 0;
 }
