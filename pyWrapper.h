@@ -134,9 +134,12 @@ public:
     wrapperCreate(const char *usrTag, std::map <std::string, std::string> params, wrapperCallback cb, int *errNum,
                   std::string sid, unsigned int psrId);
 
-    int wrapperSetMetricFunc(CtrlType type, wrapperMeterCustom mc);
+    int wrapperSetMetCustomFunc(CtrlType type, wrapperMeterCustom mc);
 
     int wrapperSetTraceFunc(CtrlType type, wrapperTraceLog mc);
+
+    int wrapperSetLbCbFunc(CtrlType type, wrapperLbExtra mc);
+    int wrapperSetMetricsFunc(CtrlType type, wrapperMetrics mc);
 
     int wrapperWrite(char *handle, DataListCls reqData);
 

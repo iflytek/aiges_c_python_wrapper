@@ -17,8 +17,12 @@ py::scoped_interpreter python;  // 全局解释器
 py::gil_scoped_release release; // 主线程中先释放release锁
 // 全局pywrapper类实例
 PyWrapper *pyWrapper;
-wrapperMeterCustom global_metric_cb;
+wrapperMeterCustom global_meter_cb;
 wrapperTraceLog global_trace_cb;
+
+wrapperLbExtra  global_lb_cb;
+wrapperMetrics global_metrics_cb;
+
 // REsID 和 PERSID 映射维护
 std::mutex RES_MUTEX;
 std::map <unsigned int, std::string> RESID_MAP;
@@ -117,15 +121,22 @@ int WrapperAPI wrapperInit(pConfig cfg) {
 
     setLog(loglvl);
     printf("WrapperInit: 当前线程ID: %ld \n", gettid());
-    if (global_metric_cb != NULL) {
-        printf("Metric Custom func set! \n");
-        pyWrapper->wrapperSetMetricFunc(CTMeterCustom, global_metric_cb);
+    if (global_meter_cb != NULL) {
+        printf("Meter Custom func set! \n");
+        pyWrapper->wrapperSetMetCustomFunc(CTMeterCustom, global_meter_cb);
     }
     if (global_trace_cb != NULL) {
         printf("Trace log func set! \n");
         pyWrapper->wrapperSetTraceFunc(CTTraceLog, global_trace_cb);
     }
-
+    if (global_lb_cb != NULL) {
+        printf("LB Extra Upload func set! \n");
+        pyWrapper->wrapperSetLbCbFunc(CTTraceLog, global_lb_cb);
+    }
+    if (global_metrics_cb != NULL) {
+        printf("Metrics Custom func  func set! \n");
+        pyWrapper->wrapperSetMetricsFunc(CTTraceLog, global_metrics_cb);
+    }
     ret = pyWrapper->wrapperInit(config);
     return ret;
 }
@@ -381,7 +392,7 @@ int WrapperAPI wrapperSetCtrl(CtrlType type, void *func) {
             printf("calculate function is null\n");
             return 0;
         }
-        global_metric_cb = (wrapperMeterCustom) func;
+        global_meter_cb = (wrapperMeterCustom) func;
         // 这里实际是往 python注册 wrapperMeterCustom 函数指针
         //int ret = pyWrapper->wrapperSetCtrl(type, (wrapperMeterCustom*) func);
         return 0;

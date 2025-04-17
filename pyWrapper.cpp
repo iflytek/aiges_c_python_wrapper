@@ -12,9 +12,14 @@ const char *WrapperFile = "wrapper";
 const char *WrapperClass = "Wrapper";
 const char *PythonSo = "libpython3.so";
 
-wrapperMeterCustom g_metric_cb;
+//
+wrapperMeterCustom g_meter_cb;
+
 wrapperTraceLog g_trace_cb;
 wrapperCallback g_resp_cb;
+// for pd
+wrapperLbExtra  g_lb_cb;
+wrapperMetrics g_metrics_cb;
 
 std::mutex RECORD_MUTEX;
 std::map <std::string, std::string> SID_RECORD;
@@ -24,6 +29,79 @@ std::map<std::string, const char *> SID_USRTAG;
 PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
     module.def("callback_metric", &callbackMetric, py::return_value_policy::automatic_reference);
     module.def("callback_trace", &callbackTrace, py::return_value_policy::automatic_reference);
+    
+    // Simple interface for callback_lb_extra that takes a Python dict
+    module.def("callback_lb_extra", [](py::dict params) {
+        pParamList head = nullptr;
+        pParamList current = nullptr;
+        
+        try {
+            // Log the input parameters for debugging
+            spdlog::debug("Python callback_lb_extra called with dict size: {}", params.size());
+            
+            // Convert Python dict to pParamList
+            for (auto item : params) {
+                pParamList node = new ParamList();
+                node->next = nullptr;
+                
+                try {
+                    // Convert key
+                    std::string key = py::cast<std::string>(item.first);
+                    node->key = strdup(key.c_str());
+                    
+                    // Convert value
+                    std::string value = py::cast<std::string>(item.second);
+                    node->value = strdup(value.c_str());
+                    node->vlen = value.length();
+                    
+                    spdlog::debug("Converting key-value pair: {}={}", key, value);
+                    
+                    if (head == nullptr) {
+                        head = node;
+                        current = node;
+                    } else {
+                        current->next = node;
+                        current = node;
+                    }
+                } catch (const std::exception& e) {
+                    // Clean up the current node if conversion fails
+                    if (node->key) free(node->key);
+                    if (node->value) free(node->value);
+                    delete node;
+                    throw std::runtime_error("Failed to convert key-value pair: " + std::string(e.what()));
+                }
+            }
+            
+            // Call the C++ callback
+            int ret = callbackLbExtra(head);
+            spdlog::debug("C++ callback_lb_extra returned: {}", ret);
+            
+            // Clean up
+            pParamList p = head;
+            while (p != nullptr) {
+                pParamList next = p->next;
+                if (p->key) free(p->key);
+                if (p->value) free(p->value);
+                delete p;
+                p = next;
+            }
+            
+            return ret;
+        } catch (const std::exception& e) {
+            // Clean up in case of exception
+            spdlog::error("Exception in callback_lb_extra: {}", e.what());
+            pParamList p = head;
+            while (p != nullptr) {
+                pParamList next = p->next;
+                if (p->key) free(p->key);
+                if (p->value) free(p->value);
+                delete p;
+                p = next;
+            }
+            throw;  // Re-throw the exception to Python
+        }
+    }, py::return_value_policy::automatic_reference);
+
     module.def("callback", &callBack, py::return_value_policy::automatic_reference);
     py::class_<ResponseData> responseData(module, "ResponseData");
     responseData.def(py::init<>())
@@ -392,13 +470,26 @@ std::string PyWrapper::wrapperError(int err) {
 
 }
 
-int PyWrapper::wrapperSetMetricFunc(CtrlType type, wrapperMeterCustom mc) {
+int PyWrapper::wrapperSetMetCustomFunc(CtrlType type, wrapperMeterCustom mc) {
     if (type == CTMeterCustom) {
-        g_metric_cb = mc;
+        g_meter_cb = mc;
     }
     return 0;
 }
 
+int PyWrapper::wrapperSetMetricsFunc(CtrlType type, wrapperMetrics mc) {
+    if (type == CTMetricsLog) {
+        g_metrics_cb = mc;
+    }
+    return 0;
+}
+
+int PyWrapper::wrapperSetLbCbFunc(CtrlType type, wrapperLbExtra mc) {
+    if (type == CTLbExtra) {
+        g_lb_cb = mc;
+    }
+    return 0;
+}
 int PyWrapper::wrapperSetTraceFunc(CtrlType type, wrapperTraceLog mc) {
     if (type == CTTraceLog) {
         g_trace_cb = mc;
@@ -610,13 +701,41 @@ int PyWrapper::wrapperTest() {
 
 int callbackMetric(const char *usrTag, const char *meterKey, int count) {
     printf("callback Metric: %s, %s, %d\n", usrTag, meterKey, count);
-    return g_metric_cb(usrTag, meterKey, count);
+    return g_meter_cb(usrTag, meterKey, count);
 }
 
 int callbackTrace(const char *usrTag, const char *key, const char *value) {
     printf("callback Trace: %s, %s, %s\n", usrTag, key, value);
     return g_trace_cb(usrTag, key, value);
 }
+
+int callbackLbExtra(pParamList labels) {
+    wrapperLbExtra cb_;
+    cb_ = g_lb_cb;
+    if (cb_ == NULL) {
+        spdlog::get("stderr_console")->error("null lb cb....");
+        return -1;
+    }
+    
+    // Log the labels
+    if (labels) {
+        std::stringstream ss;
+        ss << "[";
+        for (pParamList p = labels; p != NULL; p = p->next) {
+            if (p != labels) ss << ", ";
+            ss << (p->key ? p->key : "NULL") << "=" 
+               << (p->value ? p->value : "NULL");
+        }
+        ss << "]";
+        spdlog::debug("callback LB Extra: labels={}", ss.str());
+    } else {
+        spdlog::debug("callback LB Extra: labels=NULL");
+    }
+    
+    return cb_(labels);
+}
+
+//todo metrics
 
 int callBack(Response *resp, char *usrTag) {
     wrapperCallback cb_;

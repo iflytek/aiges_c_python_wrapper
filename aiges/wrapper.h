@@ -105,6 +105,16 @@ typedef int(*wrapperTraceLog)(const char* usrTag, const char* key, const char* v
 
 
 /*
+    自定义metric
+*/
+typedef int(*wrapperMetrics)(const char* usrTag,const char *key, pParamList labels, int64_t value);
+
+/*
+    自定义lb extra
+*/
+typedef int(*wrapperLbExtra)(pParamList labels);
+
+/*
     创建计算资源
     @param  params      会话参数对
     @param  cb          异步回调:若同步响应则cb为null,通过wrapperRead获取结果
