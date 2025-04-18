@@ -40,21 +40,41 @@ PYBIND11_EMBEDDED_MODULE(aiges_embed, module) {
             spdlog::debug("Python callback_lb_extra called with dict size: {}", params.size());
             
             // Convert Python dict to pParamList
-            for (auto item : params.items()) {
+            for (auto item : params) {
                 pParamList node = new ParamList();
                 node->next = nullptr;
                 
                 try {
+                    // Get key and value from the dictionary item
+                    py::handle key_handle = item.first;
+                    py::handle value_handle = item.second;
+                    
                     // Convert key
-                    std::string key = py::cast<std::string>(item.first);
+                    std::string key = py::cast<std::string>(key_handle);
                     node->key = strdup(key.c_str());
                     
-                    // Convert value
-                    std::string value = py::cast<std::string>(item.second);
-                    node->value = strdup(value.c_str());
-                    node->vlen = value.length();
+                    // Convert value - handle None and empty values
+                    if (value_handle.is_none()) {
+                        node->value = nullptr;
+                        node->vlen = 0;
+                    } else {
+                        try {
+                            std::string value = py::cast<std::string>(value_handle);
+                            if (value.empty()) {
+                                node->value = nullptr;
+                                node->vlen = 0;
+                            } else {
+                                node->value = strdup(value.c_str());
+                                node->vlen = value.length();
+                            }
+                        } catch (const py::cast_error&) {
+                            // If value cannot be cast to string, treat as empty
+                            node->value = nullptr;
+                            node->vlen = 0;
+                        }
+                    }
                     
-                    spdlog::debug("Converting key-value pair: {}={}", key, value);
+                    spdlog::debug("Converting key-value pair: {}={}", key, node->value ? node->value : "{}");
                     
                     if (head == nullptr) {
                         head = node;
@@ -724,8 +744,18 @@ int callbackLbExtra(pParamList labels) {
         ss << "[";
         for (pParamList p = labels; p != NULL; p = p->next) {
             if (p != labels) ss << ", ";
-            ss << (p->key ? p->key : "NULL") << "=" 
-               << (p->value ? p->value : "NULL");
+            
+            // Ensure key is valid
+            const char* key_str = p->key ? p->key : "";
+            
+            // Handle value based on vlen and value pointer
+            if (p->vlen == 0 || p->value == NULL) {
+                ss << key_str << "={}";
+            } else {
+                // Ensure value is null-terminated
+                std::string value_str(p->value, p->vlen);
+                ss << key_str << "=" << value_str;
+            }
         }
         ss << "]";
         spdlog::debug("callback LB Extra: labels={}", ss.str());
