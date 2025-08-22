@@ -458,13 +458,12 @@ int PyWrapper::wrapperWrite(char *handle, DataListCls reqData) {
 int PyWrapper::wrapperRead(char *handle, pDataList *respData) {
     try {
         Response *resp;
-        // 执行python exec 推理
         py::object r = _wrapperRead(handle);
         spdlog::debug("start cast python resp to c++ object, thread_id: {}, handle: {}", gettid(), handle);
         resp = r.cast<Response *>();
-        pDataList headPtr;
-        pDataList curPtr;
-        // 先判断python有没有抛出错误. response中的 errorCode
+        pDataList headPtr = nullptr;
+        pDataList curPtr = nullptr;
+        
         if (resp->errCode != 0) {
             spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
             return resp->errCode;
@@ -475,28 +474,46 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData) {
             spdlog::get("stderr_console")->error("error, not find any data from resp");
             return -1;
         }
+
         for (int idx = 0; idx < dataSize; idx++) {
-            pDataList tmpData = new (DataList);
+            pDataList tmpData = new DataList();
             tmpData->next = nullptr;
             ResponseData itemData = resp->list[idx];
+            
             char *key = strdup(itemData.key.c_str());
             tmpData->key = key;
-            tmpData->len = itemData.len;
             tmpData->type = DataType(itemData.type);
             tmpData->desc = nullptr;
-            // 这里判断数据类型,todo 未来根据数据类型 决定是否拷贝，比如某些数据比较大，可以不拷贝
-            void *pr;
-            pr = malloc(itemData.len);
-            if (pr == nullptr) {
-                int ret = -1;
-                spdlog::get("stderr_console")->error("can't malloc memory for data,  handle:{}", handle);
-                return ret;
-            }
-            memcpy(pr, (const void *) itemData.data.ptr(), itemData.len);
-            //char *data_ = new char[itemData.data.length()+1];
-            // strdup(.c_str());
-            tmpData->data = pr;
             tmpData->status = DataStatus(itemData.status);
+
+            try {
+                // 将py::bytes转换为std::string
+                std::string data_str = py::cast<std::string>(itemData.data);
+                tmpData->len = data_str.length();
+                
+                // 分配内存（多1字节用于字符串安全）
+                void *pr = malloc(tmpData->len + 1);
+                if (pr == nullptr) {
+                    spdlog::get("stderr_console")->error("can't malloc memory for data, handle:{}, size:{}", 
+                                                        handle, tmpData->len);
+                    delete tmpData;
+                    free(key);
+                    return -1;
+                }
+
+                // 复制数据
+                memcpy(pr, data_str.c_str(), tmpData->len);
+                ((char*)pr)[tmpData->len] = '\0';   // 末尾补 \0
+                tmpData->data = pr;
+
+            } catch (const py::cast_error& e) {
+                spdlog::get("stderr_console")->error("Failed to cast bytes to string: {}", e.what());
+                delete tmpData;
+                free(key);
+                return -1;
+            }
+
+            // 构建链表
             if (idx == 0) {
                 headPtr = tmpData;
                 curPtr = tmpData;
@@ -504,9 +521,12 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData) {
                 curPtr->next = tmpData;
                 curPtr = tmpData;
             }
-            spdlog::debug("get result,key:{},data:{},len:{},type:{},status:{},handle:{}",
-                          tmpData->key, (char *) tmpData->data, tmpData->len, tmpData->type,
-                          tmpData->status, handle);
+
+            // 调试信息：打印数据预览
+            std::string preview((char*)tmpData->data, std::min(50, (int)tmpData->len));
+            spdlog::debug("get result,key:{},preview:'{}',len:{},type:{},status:{},handle:{}",
+                         tmpData->key, preview, tmpData->len, tmpData->type,
+                         tmpData->status, handle);
         }
         *respData = headPtr;
     }
@@ -516,6 +536,10 @@ int PyWrapper::wrapperRead(char *handle, pDataList *respData) {
     }
     catch (py::error_already_set &e) {
         spdlog::get("stderr_console")->error("error_already_set error: {}", e.what());
+        return -1;
+    }
+    catch (const std::exception &e) {
+        spdlog::get("stderr_console")->error("std exception: {}", e.what());
         return -1;
     }
     return 0;
