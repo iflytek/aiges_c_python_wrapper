@@ -154,6 +154,8 @@ public:
 
     void setCallBack(wrapperCallback cb);
 
+    int wrapperNotify(pDataList* data);
+
     wrapperMeterCustom metric_cb;
 
 private:
@@ -167,6 +169,7 @@ private:
     py::object _wrapperError;
     py::object _wrapperCreate;
     py::object _wrapperDestroy;
+    py::object _wrapperNotify;
 
     py::object _wrapperWrite;
     py::object _wrapperRead;
