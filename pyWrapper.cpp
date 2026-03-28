@@ -631,7 +631,7 @@ int callBack(Response *resp, char *usrTag) {
     // 先判断python有没有抛出错误. response中的 errorCode
     if (resp->errCode != 0) {
         spdlog::get("stderr_console")->error("find error from python: {}", resp->errCode);
-        ret = cb_(usrTag, NULL,resp->errCode);
+        int ret = cb_(usrTag, NULL,resp->errCode);
         return ret;
     }
     char *ptr;
